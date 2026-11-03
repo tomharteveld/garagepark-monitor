@@ -34,12 +34,14 @@ gcloud iam service-accounts describe "$SA" >/dev/null 2>&1 || \
 retry gcloud iam service-accounts describe "$SA" >/dev/null 2>&1
 
 echo "BigQuery dataset $DATASET ($LOCATION)"
-bq --location="$LOCATION" show "$PROJECT_ID:$DATASET" >/dev/null 2>&1 || \
-  bq --location="$LOCATION" mk --dataset --description "GaragePark lokale Search & AI monitor" "$PROJECT_ID:$DATASET"
+bq --headless --location="$LOCATION" show "$PROJECT_ID:$DATASET" >/dev/null 2>&1 || \
+  bq --headless --location="$LOCATION" mk --dataset --description "GaragePark lokale Search & AI monitor" "$PROJECT_ID:$DATASET"
 
 echo "IAM: run jobs in the project, edit only this dataset"
 retry gcloud projects add-iam-policy-binding "$PROJECT_ID" --member "serviceAccount:$SA" --role roles/bigquery.jobUser --condition=None >/dev/null
-retry bq add-iam-policy-binding --member="serviceAccount:$SA" --role="roles/bigquery.dataEditor" "$PROJECT_ID:$DATASET" >/dev/null
+# GRANT via SQL: works without the interactive first-run prompt of the bq tool
+retry bq --headless --project_id="$PROJECT_ID" query --nouse_legacy_sql --quiet \
+  "GRANT \`roles/bigquery.dataEditor\` ON SCHEMA \`${PROJECT_ID}.${DATASET}\` TO 'serviceAccount:${SA}'" >/dev/null
 
 echo "Workload Identity pool + provider (trusts only $GITHUB_REPO)"
 gcloud iam workload-identity-pools describe "$POOL" --location=global >/dev/null 2>&1 || \
