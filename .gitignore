@@ -1,0 +1,9 @@
+# client data stays in BigQuery and workflow artifacts, never in git
+data/raw/*.jsonl.gz
+site/
+smoke-site/
+__pycache__/
+.pytest_cache/
+*.json.key
+gcp-key*.json
+.env

@@ -1,0 +1,147 @@
+client:
+  name: GaragePark
+  own_domain: garagepark.nl
+  own_brand: GaragePark
+  own_pattern: GaragePark|Garage Park|garagepark\.nl
+scrape:
+  language_code: nl
+  device: mobile
+  os: ios
+  depth: 20
+  max_workers: 12
+  engines:
+    google_organic: true
+    google_ai_mode: true
+    chatgpt: false
+  prompt_template: Waar kan ik een {keyword} in de omgeving van {city}
+dashboard:
+  detail_runs: 2
+  history_runs: 26
+cities:
+  Almelo: 1010600
+  Almere: 1010318
+  Breda: 1010474
+  Den Bosch: 1010517
+  Diemen: 1010557
+  Amsterdam: 1010543
+  Haarlem: 1010561
+  Hengelo: 1010608
+  Heinenoord: 1010711
+  Hulst: 9050970
+  Nieuwegein: 1010651
+  Utrecht: 1010659
+  Nijmegen: 1010397
+  Noordwijk: 9051066
+  Roosendaal: 1010515
+  Rosmalen: 1010516
+  Sittard: 1010460
+  Sneek: 1010342
+  Terneuzen: 1010685
+  Venlo: 1010465
+  Wateringen: 9051215
+  Den Haag: 1010752
+keywords:
+  opslagruimte huren: 8100
+  opslag ruimte huren: 8100
+  huren opslagruimte: 8100
+  huren garagebox: 5400
+  huur garagebox: 5400
+  garagebox huren: 5400
+  garagebox kopen: 4400
+  opslag huren: 2400
+  huren opslagbox: 2400
+  opslagbox huren: 2400
+  garageboxen: 2400
+  garagebox: 2400
+  opslagruimte: 1900
+brands:
+  GaragePark:
+    domain: garagepark.nl
+    pattern: null
+  Shurgard:
+    domain: shurgard.com
+    pattern: shurgard
+  Boxie24:
+    domain: boxie24.com
+    pattern: boxie\s?24
+  1BOX:
+    domain: 1box.nl
+    pattern: \b1\s?box\b
+  XLBox:
+    domain: xlboxnederland.nl
+    pattern: xl\s?box
+  Allsafe:
+    domain: allsafe.nl
+    pattern: allsafe
+  Eurobox:
+    domain: euroboxselfstorage.nl
+    pattern: eurobox
+  Boxcomplex:
+    domain: boxcomplex.nl
+    pattern: boxcomplex
+  BOX Garage:
+    domain: box-garage.com
+    pattern: box[\s-]garage
+  Storage Share:
+    domain: storage-share.nl
+    pattern: storage[\s-]share
+  Opslagman:
+    domain: opslagman.nl
+    pattern: opslagman
+  Opslagmarkt:
+    domain: opslagmarkt.nl
+    pattern: opslagmarkt
+  Marktplaats:
+    domain: marktplaats.nl
+    pattern: marktplaats
+  Kubox:
+    domain: kubox.nl
+    pattern: kubox
+  Safestore:
+    domain: nl.safestore.com
+    pattern: safe\s?store
+  Bo-rent:
+    domain: borent.nl
+    pattern: bo-?rent
+  Easystorage:
+    domain: easystorage.nl
+    pattern: easy\s?storage
+  Huren.nl:
+    domain: huren.nl
+    pattern: huren\.nl
+  Parkeerplaats.nl:
+    domain: parkeerplaats.nl
+    pattern: parkeerplaats\.nl
+  Spacewinner:
+    domain: spacewinner.nl
+    pattern: spacewinner
+  Meneer Opslag:
+    domain: meneeropslag.nl
+    pattern: meneer\s?opslag
+  Opslagzoeker:
+    domain: opslagzoeker.nl
+    pattern: opslagzoeker
+  Boxyourself:
+    domain: boxyourself.nl
+    pattern: box\s?yourself
+  Funda in business:
+    domain: fundainbusiness.nl
+    pattern: funda
+  Bedrijfspand.com:
+    domain: bedrijfspand.com
+    pattern: bedrijfspand\.com
+  Opslagunits.nl:
+    domain: opslagunits.nl
+    pattern: opslagunits
+  Boxopslag:
+    domain: boxopslag.nl
+    pattern: boxopslag
+  Garagebox Nederland:
+    domain: garageboxnederland.nl
+    pattern: garagebox\s?nederland
+  Easybox:
+    domain: easybox.nl
+    pattern: easybox
+  Pakhuis Opslag:
+    domain: null
+    pattern: pakhuis opslag

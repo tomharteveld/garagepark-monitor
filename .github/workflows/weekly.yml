@@ -1,0 +1,146 @@
+name: GaragePark weekly monitor
+
+# Public repository: nothing with client data is kept as a workflow artifact or printed to the log.
+# Raw runs go straight to BigQuery; the Pages artifact is deleted right after deployment.
+
+on:
+  schedule:
+    - cron: '17 4 * * 1'          # every Monday 04:17 UTC (05:17 / 06:17 Amsterdam)
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'full = scrape + BigQuery + dashboard · rebuild = dashboard from BigQuery only · backfill = load the encrypted runs in data/backfill · smoke = 6 calls, nothing stored'
+        type: choice
+        options: [full, rebuild, backfill, smoke]
+        default: full
+
+permissions:
+  contents: read
+  id-token: write      # OIDC token for Google Workload Identity Federation
+  pages: write
+  actions: write       # delete the Pages artifact after deploying
+
+concurrency:
+  group: garagepark-monitor
+  cancel-in-progress: false
+
+env:
+  PYTHONPATH: src
+  MODE: ${{ inputs.mode || 'full' }}
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  BQ_DATASET: ${{ vars.BQ_DATASET || 'garagepark_monitor' }}
+  BQ_LOCATION: ${{ vars.BQ_LOCATION || 'EU' }}
+
+jobs:
+  scrape:
+    if: ${{ (inputs.mode || 'full') != 'rebuild' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Scrape DataForSEO
+        if: ${{ env.MODE == 'full' || env.MODE == 'smoke' }}
+        env:
+          DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
+          DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
+        run: python -m gpmon.scrape ${{ env.MODE == 'smoke' && '--limit 6 --max-error-rate 1' || '' }}
+
+      - name: Smoke test dashboard (built, checked, not stored)
+        if: ${{ env.MODE == 'smoke' }}
+        run: python -m gpmon.dashboard --source local --out "$RUNNER_TEMP/smoke-site" --path smoke
+
+      - name: Decrypt backfill runs
+        if: ${{ env.MODE == 'backfill' }}
+        env:
+          BACKFILL_KEY: ${{ secrets.BACKFILL_KEY }}
+        run: |
+          test -n "$BACKFILL_KEY" || { echo "Secret BACKFILL_KEY ontbreekt"; exit 1; }
+          mkdir -p data/raw
+          for f in data/backfill/*.enc; do
+            openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:BACKFILL_KEY -in "$f" -out "data/raw/$(basename "$f" .enc)"
+          done
+          ls -la data/raw
+
+      - name: Google auth (Workload Identity Federation)
+        if: ${{ (env.MODE == 'full' || env.MODE == 'backfill') && vars.GCP_WIF_PROVIDER != '' }}
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+      - name: Google auth (service account key)
+        if: ${{ (env.MODE == 'full' || env.MODE == 'backfill') && vars.GCP_WIF_PROVIDER == '' }}
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Load into BigQuery
+        if: ${{ env.MODE == 'full' || env.MODE == 'backfill' }}
+        run: python -m gpmon.bq load data/raw/run_*.jsonl.gz
+
+  build:
+    needs: scrape
+    if: ${{ always() && (needs.scrape.result == 'success' || needs.scrape.result == 'skipped') && (inputs.mode || 'full') != 'smoke' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Google auth (Workload Identity Federation)
+        if: ${{ vars.GCP_WIF_PROVIDER != '' }}
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+      - name: Google auth (service account key)
+        if: ${{ vars.GCP_WIF_PROVIDER == '' }}
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Build dashboard from BigQuery
+        env:
+          DASHBOARD_PATH: ${{ secrets.DASHBOARD_PATH }}   # secret sub path, keeps the URL unguessable
+        run: |
+          test -n "$DASHBOARD_PATH" || { echo "Secret DASHBOARD_PATH ontbreekt"; exit 1; }
+          python -m gpmon.dashboard --source bq --out site
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Delete Pages artifact (public repo)
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ids=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --jq '.artifacts[].id')
+          for id in $ids; do gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id"; done
+          echo "Removed artifacts: ${ids:-none}"
+
+      - name: Summary
+        run: |
+          echo "Dashboard bijgewerkt op ${{ steps.deployment.outputs.page_url }} (onder het geheime pad)." >> "$GITHUB_STEP_SUMMARY"
+          echo "De iframe in Follo Tools toont deze versie automatisch." >> "$GITHUB_STEP_SUMMARY"

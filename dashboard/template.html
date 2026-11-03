@@ -1,0 +1,793 @@
+<title>GaragePark Lokale Zichtbaarheid</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=DM+Serif+Display&family=DM+Serif+Text&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: Follo monitor shell. Fixed sidebar with engines, filter bar, then summary before detail per tab. Purple family only. */
+:root{
+  --bg:#F3F1F8; --surface:#FFFFFF; --surface-2:#F8F6FC; --tint:#F2EEFF; --tint-2:#E4DBFF;
+  --deep:#1E0032; --deep-2:#2C0A5C; --brand:#3B0F96; --accent:#784DFF; --accent-soft:#B9A3FF;
+  --fg:#140828; --muted:#4B4753; --subtle:#8B8794; --line:#E6E4EC; --on-deep:#FFFFFF; --on-deep-muted:#C9BCF0;
+  --heat-0:#F4F2F9; --heat-1:#E4DBFF; --heat-2:#C4B0FF; --heat-3:#9C7DFF; --heat-4:#6A3CF0; --heat-5:#3B0F96;
+  --good:#1E8F6B; --bad:#C2410C;
+  --shadow:0 8px 32px rgba(20,8,40,.06);
+  --font-title:'DM Serif Text',Georgia,serif; --font-num:'DM Serif Display','DM Serif Text',Georgia,serif;
+  --font-head:'Archivo','Helvetica Neue',Arial,sans-serif; --font-body:'Inter','Helvetica Neue',Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#120020; --surface:#1C0833; --surface-2:#22103D; --tint:#2A1450; --tint-2:#3A1F6B;
+  --deep:#2A0A52; --deep-2:#36106A; --brand:#B9A3FF; --accent:#9A78FF; --accent-soft:#6A4CC9;
+  --fg:#F4F0FF; --muted:#C4BBD6; --subtle:#8E84A3; --line:#33204F; --on-deep:#FFFFFF; --on-deep-muted:#C9BCF0;
+  --heat-0:#241238; --heat-1:#33195C; --heat-2:#4A2A8A; --heat-3:#6A45C2; --heat-4:#8A66F0; --heat-5:#B9A3FF;
+  --good:#4FD1A5; --bad:#FB8B5B; --shadow:0 8px 32px rgba(0,0,0,.35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#120020; --surface:#1C0833; --surface-2:#22103D; --tint:#2A1450; --tint-2:#3A1F6B;
+  --deep:#2A0A52; --deep-2:#36106A; --brand:#B9A3FF; --accent:#9A78FF; --accent-soft:#6A4CC9;
+  --fg:#F4F0FF; --muted:#C4BBD6; --subtle:#8E84A3; --line:#33204F; --on-deep:#FFFFFF; --on-deep-muted:#C9BCF0;
+  --heat-0:#241238; --heat-1:#33195C; --heat-2:#4A2A8A; --heat-3:#6A45C2; --heat-4:#8A66F0; --heat-5:#B9A3FF;
+  --good:#4FD1A5; --bad:#FB8B5B; --shadow:0 8px 32px rgba(0,0,0,.35); color-scheme:dark}
+*{box-sizing:border-box} [hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:14px;line-height:1.5}
+a{color:var(--accent)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh}
+/* Sidebar */
+.side{background:var(--surface);border-right:1px solid var(--line);padding:28px 16px;position:sticky;top:env(safe-area-inset-top,0px);height:100vh;display:flex;flex-direction:column;gap:22px}
+.logo img{height:26px;width:auto;display:block}
+.logo .dark{display:none}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .logo .light{display:none}:root:not([data-theme="light"]) .logo .dark{display:block}}
+:root[data-theme="dark"] .logo .light{display:none} :root[data-theme="dark"] .logo .dark{display:block}
+.client{border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;gap:10px;align-items:center}
+.client .mono{width:34px;height:34px;border-radius:10px;background:var(--deep);color:var(--on-deep);display:grid;place-items:center;font-family:var(--font-head);font-weight:700}
+.client b{font-family:var(--font-head);display:block;font-size:14px}
+.client small{color:var(--muted);font-size:12px}
+.navlabel{font-family:var(--font-head);color:var(--accent);font-size:12px;letter-spacing:.04em;padding-left:12px}
+nav.tabs{display:flex;flex-direction:column;gap:4px}
+nav.tabs a{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:14px;text-decoration:none;color:var(--fg);font-weight:500}
+nav.tabs a svg{width:18px;height:18px;flex:none}
+nav.tabs a:hover{background:var(--tint)}
+nav.tabs a.on{background:var(--deep);color:var(--on-deep)}
+nav.tabs a .soon{margin-left:auto;font-size:10px;font-family:var(--font-head);background:var(--tint);color:var(--brand);padding:2px 7px;border-radius:999px}
+nav.tabs a.on .soon{background:rgba(255,255,255,.15);color:var(--on-deep)}
+.side .foot{margin-top:auto;font-size:12px;color:var(--muted);display:grid;gap:4px;padding-left:12px}
+.side .foot b{color:var(--fg);font-family:var(--font-head)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:6px;vertical-align:middle}
+/* Main */
+main{min-width:0}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:18px;padding-left:max(32px,env(safe-area-inset-left,0px));padding-right:max(32px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--line);background:var(--surface-2)}
+.crumb{color:var(--muted)} .crumb b{color:var(--brand);font-family:var(--font-head)}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--tint);color:var(--brand);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:500;white-space:nowrap}
+.wrap{padding-block:28px 64px;padding-left:max(32px,env(safe-area-inset-left,0px));padding-right:max(32px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px;max-width:1440px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.eyebrow{color:var(--accent);font-family:var(--font-head);font-size:13px;letter-spacing:.02em;margin:0 0 6px}
+h1{font-family:var(--font-title);font-weight:400;font-size:clamp(34px,4.4vw,52px);line-height:1.05;margin:0;text-wrap:balance}
+h1 .p{color:var(--accent)}
+.lede{color:var(--muted);margin:10px 0 0;max-width:62ch}
+.filters{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.filters label{display:grid;gap:4px;font-size:12px;color:var(--muted)}
+select,input[type=search]{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:10px 38px 10px 16px;font:inherit;font-weight:600;font-family:var(--font-head);min-width:180px;background-image:linear-gradient(45deg,transparent 50%,var(--accent) 50%),linear-gradient(135deg,var(--accent) 50%,transparent 50%);background-position:calc(100% - 20px) 50%,calc(100% - 15px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+input[type=search]{background-image:none;padding-right:16px;font-family:var(--font-body);font-weight:400;min-width:220px}
+.selbar{background:var(--surface);border-radius:24px;box-shadow:var(--shadow);padding:16px 24px;display:flex;gap:28px;flex-wrap:wrap;align-items:center}
+.selbar .k{display:flex;gap:6px;align-items:baseline}
+.selbar .k b{font-family:var(--font-head);font-size:18px}
+.selbar .k span{color:var(--muted);font-size:13px}
+.selbar .sep{width:1px;height:24px;background:var(--line)}
+/* Hero band */
+.band{background:var(--deep);color:var(--on-deep);border-radius:28px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);overflow:hidden}
+.band>div{padding:32px 36px;display:flex;flex-direction:column;gap:10px;justify-content:center}
+.band>div+div{border-left:1px solid rgba(255,255,255,.12)}
+.band .eyebrow{color:var(--on-deep-muted)}
+.band h2{font-family:var(--font-title);font-weight:400;font-size:clamp(30px,3.4vw,42px);line-height:1.05;margin:0}
+.band h2 .hl{color:var(--accent-soft)}
+.band p{margin:0;color:var(--on-deep-muted)}
+.band .big{font-family:var(--font-title);font-size:clamp(26px,2.8vw,34px);line-height:1.1;color:var(--on-deep)}
+/* Sections */
+section h3{font-family:var(--font-head);font-size:21px;font-weight:700;margin:0;text-wrap:balance}
+section .sub{color:var(--muted);margin:4px 0 16px;font-size:13.5px}
+.grid{display:grid;gap:20px}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card{background:var(--surface);border-radius:24px;box-shadow:var(--shadow);padding:22px 24px;min-width:0}
+.card h4{font-family:var(--font-head);font-size:17px;margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card .cap{color:var(--muted);font-size:12.5px;margin:2px 0 0}
+.go{width:34px;height:34px;border-radius:50%;background:var(--tint);color:var(--brand);display:grid;place-items:center;border:0;cursor:pointer;flex:none;text-decoration:none}
+.go:hover{background:var(--tint-2)}
+.stats{display:grid;grid-template-columns:1fr 1fr;margin-top:18px}
+.stats>div{padding-right:14px;display:grid;gap:2px;align-content:start}
+.stats>div+div{border-left:1px solid var(--line);padding-left:18px}
+.stat-l{font-size:13px;color:var(--fg)}
+.num{font-family:var(--font-num);font-size:44px;line-height:1.05;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.num.sm{font-size:32px}
+.of{font-size:12px;color:var(--muted)}
+.delta{font-size:12px;font-weight:600;color:var(--accent);font-family:var(--font-head);margin-top:6px}
+.empty{color:var(--subtle);font-size:12.5px;margin-top:6px}
+.kpi{display:grid;gap:2px}
+.kpi .num{font-size:38px}
+.bar{height:5px;border-radius:5px;background:var(--heat-0);overflow:hidden;margin-top:12px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:5px}
+.muted-card{background:var(--surface-2);box-shadow:none;border:1px dashed var(--line)}
+/* Tables */
+.tcard{background:var(--surface);border-radius:24px;box-shadow:var(--shadow);overflow:hidden;min-width:0}
+.thead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:22px 24px 14px;flex-wrap:wrap}
+.thead h4{font-family:var(--font-head);font-size:17px;margin:0}
+.thead p{color:var(--muted);font-size:12.5px;margin:2px 0 0;max-width:70ch}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{background:var(--tint);color:var(--brand);font-family:var(--font-head);font-size:12.5px;text-align:left;padding:11px 14px;white-space:nowrap;cursor:pointer;user-select:none;font-weight:700}
+th.r,td.r{text-align:right}
+td{padding:11px 14px;border-top:1px solid var(--line);vertical-align:middle}
+tbody tr:hover td{background:var(--surface-2)}
+tr.own td{background:var(--tint)!important;font-weight:600}
+tr.own td:first-child{box-shadow:inset 3px 0 var(--accent)}
+tr.click{cursor:pointer}
+.rank{display:inline-grid;place-items:center;min-width:26px;height:26px;border-radius:8px;font-family:var(--font-head);font-size:12px;color:var(--muted)}
+tr.own .rank{background:var(--brand);color:var(--surface)}
+.wij{background:var(--brand);color:var(--surface);border-radius:6px;font-size:11px;padding:2px 6px;margin-left:6px;font-family:var(--font-head)}
+.meter{display:flex;align-items:center;gap:10px;justify-content:flex-end}
+.meter span.t{width:76px;height:5px;border-radius:5px;background:var(--heat-0);overflow:hidden;display:block}
+.meter span.t i{display:block;height:100%;background:var(--accent)}
+.meter b{min-width:46px;text-align:right}
+.trunc{max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.tfoot{padding:12px 24px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tfoot button{background:none;border:0;color:var(--accent);font-weight:600;cursor:pointer;padding:0}
+/* Heatmap */
+.heat td{padding:0;border-top:1px solid var(--surface)}
+.heat td.lab{padding:9px 14px;white-space:nowrap;font-weight:500}
+.heat td.c{min-width:64px}
+.heat td.c button{display:block;width:100%;height:100%;border:0;padding:10px 6px;text-align:center;font-family:var(--font-head);font-weight:600;font-size:12.5px;cursor:pointer;border-left:2px solid var(--surface)}
+.heat th{text-align:center;white-space:normal;line-height:1.2;min-width:64px}
+.heat th:first-child{text-align:left}
+.h0{background:var(--heat-0);color:var(--subtle)} .h1{background:var(--heat-1);color:var(--brand)} .h2{background:var(--heat-2);color:var(--deep)}
+.h3{background:var(--heat-3);color:#FFFFFF} .h4{background:var(--heat-4);color:#FFFFFF} .h5{background:var(--heat-5);color:#FFFFFF}
+.legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:middle;margin-right:4px}
+/* Chips */
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:600;font-family:var(--font-head);white-space:nowrap}
+.chip.yes{background:var(--brand);color:var(--surface)} .chip.no{background:var(--heat-0);color:var(--subtle)} .chip.soft{background:var(--tint);color:var(--brand)}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+/* Feature cards */
+.feat{cursor:pointer;text-align:left;border:0;width:100%}
+.feat:hover{box-shadow:0 10px 36px rgba(60,20,140,.12)}
+.feat .num{font-size:36px;margin-top:10px}
+/* Chart */
+.chart svg{width:100%;height:auto;display:block}
+.chart text{fill:var(--subtle);font-size:11px;font-family:var(--font-body)}
+.chart .gl{stroke:var(--line)}
+/* Modal */
+.ov{position:fixed;inset:0;background:rgba(18,0,32,.55);z-index:50;display:flex;justify-content:flex-end}
+.drawer{background:var(--bg);width:min(780px,100%);height:100%;overflow-y:auto;padding-block:max(24px,env(safe-area-inset-top,0px)) 48px;padding-left:max(28px,env(safe-area-inset-left,0px));padding-right:max(28px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+.drawer .x{align-self:flex-end;border:0;background:var(--tint);color:var(--brand);border-radius:999px;padding:8px 14px;cursor:pointer;font-weight:600}
+.drawer h2{font-family:var(--font-head);font-size:22px;margin:0;text-wrap:balance}
+.answer{background:var(--surface);border-radius:20px;padding:22px 24px;box-shadow:var(--shadow);line-height:1.6;max-width:none}
+.answer h5{font-family:var(--font-head);font-size:15px;margin:16px 0 6px}
+.answer ul{padding-left:20px;margin:6px 0} .answer li{margin:4px 0}
+.answer p{margin:8px 0}
+.answer mark{background:var(--tint-2);color:var(--fg);padding:0 3px;border-radius:4px;font-weight:600}
+.answer sup a{font-size:10px;text-decoration:none;background:var(--tint);border-radius:4px;padding:0 4px;margin-left:2px}
+.src{display:grid;gap:8px}
+.src a.s{display:grid;gap:2px;background:var(--surface);border-radius:14px;padding:12px 14px;text-decoration:none;color:var(--fg);border:1px solid var(--line)}
+.src a.s.own{border-color:var(--accent);background:var(--tint)}
+.src a.s small{color:var(--muted)}
+.src a.s span.d{font-family:var(--font-head);font-weight:600;font-size:12.5px;color:var(--brand)}
+.serp{display:grid;gap:6px}
+.serp .r{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;background:var(--surface);border-radius:12px;padding:9px 12px;align-items:center}
+.serp .r.own{background:var(--tint);outline:1px solid var(--accent)}
+.serp .r b{font-family:var(--font-head);color:var(--muted)}
+.serp .r small{color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.note{background:var(--surface-2);border-radius:16px;padding:14px 16px;color:var(--muted);font-size:13px;border:1px solid var(--line)}
+.note b{color:var(--fg)}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+
+#view{display:flex;flex-direction:column;gap:28px}
+#view>section{margin:0}
+.heat td.lab a{color:var(--fg);text-decoration:none;font-weight:600}
+.heat td.lab a:hover{color:var(--accent);text-decoration:underline}
+.heat td.r{padding:9px 18px 9px 14px;white-space:nowrap}
+.heat th.r{padding-right:18px}
+.subtabs{display:flex;gap:6px;flex-wrap:wrap;background:var(--surface);border-radius:999px;padding:6px;box-shadow:var(--shadow);align-self:flex-start;max-width:100%;overflow-x:auto}
+.subtabs button{border:0;background:none;border-radius:999px;padding:9px 16px;font-family:var(--font-head);font-weight:600;font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.subtabs button:hover{color:var(--fg);background:var(--tint)}
+.subtabs button.on{background:var(--deep);color:var(--on-deep)}
+.seg{display:inline-flex;background:var(--tint);border-radius:999px;padding:4px;gap:2px}
+.seg button{border:0;background:none;border-radius:999px;padding:7px 14px;font-family:var(--font-head);font-weight:600;font-size:12.5px;color:var(--brand);cursor:pointer}
+.seg button.on{background:var(--deep);color:var(--on-deep)}
+table.stk td{padding:9px 10px}
+table.stk th.sqh{text-align:center;font-size:11.5px;padding:11px 6px;cursor:default}
+table.stk td.sqc{text-align:center;width:46px}
+.sq{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:9px;font-family:var(--font-head);font-weight:700;font-size:12px}
+.sq.on{background:var(--accent);color:#FFFFFF}
+.sq.on i{width:6px;height:6px;border-radius:50%;background:#FFFFFF;display:block}
+.sq.off{color:var(--subtle);background:var(--surface-2)}
+.sq.none{color:var(--subtle);background:transparent}
+.ent{border:0;background:var(--tint);border-radius:12px;padding:8px 14px;display:inline-flex;gap:12px;align-items:baseline;cursor:pointer;font-family:var(--font-head);font-weight:700;font-size:13.5px;color:var(--fg)}
+.ent span{font-weight:500;font-size:11.5px;color:var(--accent)}
+.ent.me{background:var(--deep);color:var(--on-deep)} .ent.me span{color:var(--on-deep-muted)}
+.ent:hover{background:var(--tint-2)} .ent.me:hover{background:var(--deep-2)}
+.lnk{border:0;background:none;color:var(--accent);font-size:11.5px;cursor:pointer;padding:0;margin-left:4px}
+.kw{font-weight:500}
+a.plain{color:var(--fg);text-decoration:none;font-weight:400;display:inline-flex;align-items:center;gap:6px;max-width:100%}
+a.plain:hover{color:var(--accent)} a.plain .ext{color:var(--accent);flex:none}
+a.plain .trunc{max-width:520px}
+table.urls tr.own td{font-weight:400}
+
+.mapcard{display:flex;flex-direction:column;gap:16px}
+.maphead{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.maphead .seg{flex-wrap:wrap}
+.mapgrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:28px;align-items:start}
+.mapwrap svg{width:100%;height:auto;display:block;max-height:720px}
+.mapwrap .land{fill:var(--tint);stroke:var(--accent-soft);stroke-width:1.2;stroke-linejoin:round}
+.mapwrap .nb{fill:var(--surface-2);stroke:var(--line);stroke-width:1}
+.mapwrap .cty{fill:var(--subtle);font-size:13px;font-family:var(--font-body);letter-spacing:.06em;text-transform:uppercase}
+.mapwrap .cty.sea{font-style:italic;text-transform:none;letter-spacing:.02em}
+.mapwrap .city{cursor:pointer;outline:none}
+.mapwrap .city circle.m{stroke:var(--surface);stroke-width:2.5}
+.mapwrap .city circle.h0{fill:var(--heat-0)} .mapwrap .city circle.h1{fill:var(--heat-1)} .mapwrap .city circle.h2{fill:var(--heat-2)}
+.mapwrap .city circle.h3{fill:var(--heat-3)} .mapwrap .city circle.h4{fill:var(--heat-4)} .mapwrap .city circle.h5{fill:var(--heat-5)}
+.mapwrap .city text.v{font-family:var(--font-head);font-weight:700;font-size:10.5px;pointer-events:none}
+.mapwrap .city text.v.h0,.mapwrap .city text.v.h1{fill:var(--brand)} .mapwrap .city text.v.h2{fill:var(--deep)} .mapwrap .city text.v.h3,.mapwrap .city text.v.h4,.mapwrap .city text.v.h5{fill:#FFFFFF}
+.mapwrap .city text.nm{fill:var(--fg);font-size:12.5px;font-weight:600;font-family:var(--font-head);paint-order:stroke;stroke:var(--surface);stroke-width:3.5px;stroke-linejoin:round}
+.mapwrap .city:hover circle.m,.mapwrap .city:focus-visible circle.m{stroke:var(--accent);stroke-width:3}
+.mapwrap .lead{stroke:var(--accent-soft);stroke-width:1.2} .mapwrap .pin{fill:var(--brand)}
+.mapwrap .ring{fill:none;stroke:var(--accent);stroke-width:2.5}
+.maplist{display:flex;flex-direction:column;gap:14px;min-width:0}
+ol.rk{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+ol.rk button{display:grid;grid-template-columns:24px minmax(0,110px) minmax(0,1fr) 48px;gap:10px;align-items:center;width:100%;border:0;background:none;padding:6px 8px;border-radius:10px;cursor:pointer;text-align:left}
+ol.rk button:hover,ol.rk button.on{background:var(--tint)}
+ol.rk .i{color:var(--subtle);font-size:12px;font-variant-numeric:tabular-nums}
+ol.rk .c{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ol.rk .t{height:8px;border-radius:8px;background:var(--heat-0);overflow:hidden;display:block}
+ol.rk .t i{display:block;height:100%;border-radius:8px}
+ol.rk b{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--font-head);font-size:13px}
+@media (max-width:980px){.mapgrid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1180px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:980px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{position:static;height:auto;padding:16px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));border-right:0;border-bottom:1px solid var(--line);gap:12px}
+  .side .client,.side .foot,.navlabel{display:none}
+  nav.tabs{flex-direction:row;overflow-x:auto;gap:6px}
+  nav.tabs a{white-space:nowrap;padding:9px 12px}
+  .g3,.g2{grid-template-columns:minmax(0,1fr)}
+  .band{grid-template-columns:minmax(0,1fr)} .band>div+div{border-left:0;border-top:1px solid rgba(255,255,255,.12)}
+  .topbar,.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+}
+@media (max-width:560px){.g4{grid-template-columns:minmax(0,1fr)} .cols{grid-template-columns:minmax(0,1fr)} select,input[type=search]{min-width:0;width:100%} .filters,.filters label{width:100%} .selbar .sep{display:none} .band>div{padding:24px}}
+@media (prefers-reduced-motion:no-preference){.view{animation:fade .25s ease}@keyframes fade{from{opacity:.4}to{opacity:1}}}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <div class="logo"><img class="light" alt="Follo" src="__LOGO__"><img class="dark" alt="Follo" src="__LOGO_WHITE__"></div>
+    <div class="client"><div class="mono">G</div><div><b>GaragePark</b><small>Lokale Search &amp; AI monitor</small></div></div>
+    <div class="navlabel">Performance</div>
+    <nav class="tabs" id="tabs"></nav>
+    <div class="foot"><b><span class="dot"></span>Wekelijkse meting</b><span>DataForSEO · mobiel · top 20</span><span id="footrun"></span></div>
+  </aside>
+  <main>
+    <div class="topbar"><div class="crumb">GaragePark &nbsp;/&nbsp; <b id="crumb">Overzicht</b></div><span class="pill"><span class="dot"></span><span id="runpill"></span></span></div>
+    <div class="wrap">
+      <div class="head">
+        <div>
+          <p class="eyebrow" id="eyebrow">Lokale vindbaarheid · 22 vestigingsplaatsen</p>
+          <h1 id="title">Search &amp; AI performance<span class="p">.</span></h1>
+          <p class="lede" id="lede">Van zoekresultaat tot AI-antwoord. Per plaats zien waar GaragePark gevonden, genoemd en geciteerd wordt.</p>
+        </div>
+        <div class="filters">
+          <label for="fCity">Plaats<select id="fCity"></select></label>
+          <label for="fKw">Keyword<select id="fKw"></select></label>
+          <label for="fRun">Meting<select id="fRun"></select></label>
+        </div>
+      </div>
+      <div class="selbar" id="selbar"></div>
+      <div id="view" class="view"></div>
+    </div>
+  </main>
+</div>
+<div class="ov" id="ov" hidden><div class="drawer" id="drawer" role="dialog" aria-modal="true"></div></div>
+
+<script type="application/json" id="data">__DATA__</script>
+<script>
+const D = JSON.parse(document.getElementById('data').textContent);
+const OWN = D.meta.own_domain, OWNB = D.meta.own_brand;
+const CTR = [0, .28, .15, .10, .07, .05, .04, .03, .025, .02, .018, .012, .011, .01, .009, .008, .007, .006, .005, .005, .004];
+const ctr = p => p ? (CTR[p] || .003) : 0;
+const CITIES = [...new Set(D.serps.map(s => s.c))];
+const KWS = [...new Map(D.serps.map(s => [s.k, s.v])).entries()].sort((a, b) => b[1] - a[1]);
+const RUNS = D.meta.runs;
+const ICON = {
+  overzicht: '<path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/>',
+  google: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  aio: '<path d="M12 3l1.8 5.4L19 10l-5.2 1.6L12 17l-1.8-5.4L5 10l5.2-1.6z"/>',
+  chatgpt: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  aimode: '<path d="m6 4 14 8-14 8z"/>'
+};
+const HAS_GPT = (D.meta.engines || []).includes('cgpt');
+const ENG = { aio: 'aio', aimode: 'aim', chatgpt: 'cgpt' };
+const engOf = t => ENG[t] || 'aim';
+const isDetail = r => !D.meta.detail_runs || D.meta.detail_runs.includes(r);
+const TABS = [['overzicht', 'Overzicht'], ['google', 'Google Search'], ['aio', 'AI Overviews'], ['chatgpt', 'ChatGPT'], ['aimode', 'AI Mode']];
+const st = { city: '', kw: '', run: RUNS[RUNS.length - 1] };
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pct = (a, b, d = 1) => b ? (100 * a / b).toFixed(d).replace('.', ',') + '%' : 'n.v.t.';
+const nf = (x, d = 1) => x == null || isNaN(x) ? 'n.v.t.' : Number(x).toFixed(d).replace('.', ',');
+const fmtDate = d => new Date(d + 'T12:00:00').toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' });
+const arrow = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+
+// ==== filters ====
+function fill() {
+  $('#fCity').innerHTML = '<option value="">Alle plaatsen</option>' + CITIES.map(c => `<option>${esc(c)}</option>`).join('');
+  $('#fKw').innerHTML = '<option value="">Alle keywords</option>' + KWS.map(([k, v]) => `<option value="${esc(k)}">${esc(k)} (${v.toLocaleString('nl-NL')})</option>`).join('');
+  $('#fRun').innerHTML = RUNS.map(r => `<option value="${r}">${fmtDate(r)}</option>`).join('');
+  $('#fRun').value = st.run;
+  ['fCity', 'fKw', 'fRun'].forEach(id => $('#' + id).addEventListener('change', e => { st[{ fCity: 'city', fKw: 'kw', fRun: 'run' }[id]] = e.target.value; render(); }));
+  $('#tabs').innerHTML = TABS.map(([id, l]) => `<a href="#${id}" data-t="${id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">${ICON[id]}</svg>${l}${id === 'chatgpt' && !HAS_GPT ? '<span class="soon">Later</span>' : ''}</a>`).join('');
+  $('#runpill').textContent = `DataForSEO · ${RUNS.length} meting${RUNS.length > 1 ? 'en' : ''}`;
+  $('#footrun').textContent = 'Laatste meting ' + fmtDate(RUNS[RUNS.length - 1]);
+}
+const fS = (run = st.run) => D.serps.filter(s => s.r === run && (!st.city || s.c === st.city) && (!st.kw || s.k === st.kw));
+const fA = (e, run = st.run) => D.ai.filter(a => a.e === e && a.r === run && (!st.city || a.c === st.city) && (!st.kw || a.k === st.kw));
+const setCity = c => { st.city = c; $('#fCity').value = c; render(); scrollTo({ top: 0 }); };
+
+// ==== metrics ====
+function gm(S) {
+  const n = S.length, t10 = S.filter(s => s.pos && s.pos <= 10).length, t3 = S.filter(s => s.pos && s.pos <= 3).length;
+  const any = S.filter(s => s.pos), lp = S.filter(s => s.lpo).length;
+  const vis = S.reduce((a, s) => a + s.v * ctr(s.pos), 0) / (S.reduce((a, s) => a + s.v * CTR[1], 0) || 1);
+  const avg = any.length ? any.reduce((a, s) => a + s.pos, 0) / any.length : null;
+  return { n, t10, t3, any: any.length, lp, vis, avg };
+}
+function am(A) {
+  const n = A.length;
+  return { n, m: A.filter(a => a.m).length, c: A.filter(a => a.ci).length, cw: A.filter(a => a.cw).length, cg: A.filter(a => a.cg).length };
+}
+function prevRun() { const i = RUNS.indexOf(st.run); return i > 0 ? RUNS[i - 1] : null; }
+function deltaPP(cur, prev) { if (prev == null) return '<div class="empty">Vergelijking vanaf de 2e meting</div>'; const d = cur - prev; return `<div class="delta">${d >= 0 ? '+' : ''}${nf(d)} pp t.o.v. vorige meting</div>`; }
+function heatCls(v) { return v == null ? 'h0' : v >= .8 ? 'h5' : v >= .6 ? 'h4' : v >= .4 ? 'h3' : v >= .2 ? 'h2' : v > 0 ? 'h1' : 'h0'; }
+
+// ==== streaks over runs ====
+function streak(keyFn, okFn, items) {
+  // longest current consecutive run-streak per key ending at st.run
+  const upto = RUNS.slice(0, RUNS.indexOf(st.run) + 1);
+  const by = new Map();
+  items.forEach(x => { const k = keyFn(x); if (!by.has(k)) by.set(k, new Map()); by.get(k).set(x.r, okFn(x)); });
+  const out = [];
+  by.forEach((m, k) => { let s = 0; for (let i = upto.length - 1; i >= 0; i--) { if (m.get(upto[i])) s++; else break; } out.push([k, s]); });
+  return out.sort((a, b) => b[1] - a[1]);
+}
+
+// ==== selection bar ====
+function selbar() {
+  const S = fS(), A1 = fA('aio'), A2 = fA('aim');
+  $('#selbar').innerHTML = `<div class="k"><b>${st.city ? 1 : CITIES.length}</b><span>${st.city ? esc(st.city) : 'plaatsen'}</span></div><div class="sep"></div>
+  <div class="k"><b>${st.kw ? 1 : KWS.length}</b><span>keywords</span></div><div class="sep"></div>
+  <div class="k"><b>${S.length}</b><span>Google SERPs</span></div><div class="sep"></div>
+  <div class="k"><b>${A1.length}</b><span>AI Overviews</span></div><div class="sep"></div>
+  <div class="k"><b>${A2.length}</b><span>AI Mode-prompts</span></div><div class="sep"></div>
+  <div class="k"><b>${fA('cgpt').length}</b><span>ChatGPT-prompts</span></div>`;
+}
+
+// ==== views ====
+function vOverview() {
+  const S = fS(), g = gm(S), a1 = am(fA('aio')), a2 = am(fA('aim'));
+  const pr = prevRun(), pg = pr && gm(fS(pr)), p1 = pr && am(fA('aio', pr)), p2 = pr && am(fA('aim', pr));
+  const aiCard = (t, id, a, p, unit) => `<div class="card"><h4>${t}<a class="go" href="#${id}" aria-label="Naar ${t}">${arrow}</a></h4>
+    <div class="stats"><div><span class="stat-l">Mentions</span><span class="num">${pct(a.m, a.n)}</span><span class="of">${a.m} van ${a.n} ${unit}</span>${deltaPP(100 * a.m / (a.n || 1), p && 100 * p.m / (p.n || 1))}</div>
+    <div><span class="stat-l">Citaties</span><span class="num">${pct(a.c, a.n)}</span><span class="of">${a.c} van ${a.n} ${unit}</span>${deltaPP(100 * a.c / (a.n || 1), p && 100 * p.c / (p.n || 1))}</div></div></div>`;
+  // city heatmap
+  const rows = CITIES.map(c => {
+    const s = D.serps.filter(x => x.r === st.run && x.c === c && (!st.kw || x.k === st.kw)), gg = gm(s);
+    const x1 = am(D.ai.filter(x => x.e === 'aio' && x.r === st.run && x.c === c && (!st.kw || x.k === st.kw)));
+    const x2 = am(D.ai.filter(x => x.e === 'aim' && x.r === st.run && x.c === c && (!st.kw || x.k === st.kw)));
+    return { c, cells: [gg.t3 / gg.n, gg.t10 / gg.n, gg.vis, gg.lp / gg.n, x1.n ? x1.m / x1.n : null, x1.n ? x1.c / x1.n : null, x2.n ? x2.m / x2.n : null, x2.n ? x2.c / x2.n : null], avg: gg.avg };
+  });
+  const hdr = ['Top 3', 'Top 10', 'Zicht&shy;baarheid', 'Local pack', 'AIO mention', 'AIO citatie', 'AI Mode mention', 'AI Mode citatie'];
+  const tabs = ['google', 'google', 'google', 'google', 'aio', 'aio', 'aimode', 'aimode'];
+  const best = [...rows].sort((a, b) => b.cells[2] - a.cells[2]);
+  return `
+  <div class="band"><div><p class="eyebrow">Nederland · ${CITIES.length} plaatsen · ${KWS.length} keywords</p><h2>Elke plaats <span class="hl">in beeld.</span></h2><p>Volg per vestigingsplaats hoe GaragePark wordt gevonden, genoemd en geciteerd.</p></div>
+  <div><p class="eyebrow">Meting</p><div class="big">${fmtDate(st.run)}</div><p>${RUNS.length} meetmoment${RUNS.length > 1 ? 'en' : ''} beschikbaar · ${D.serps.filter(s => s.r === st.run).length + D.ai.filter(a => a.r === st.run && a.e === 'aim').length} metingen · kosten $${nf((D.meta.costs || {})[st.run] ?? D.meta.cost, 2)}</p></div></div>
+
+  <section><h3>Gevonden in Google</h3><p class="sub">Organische posities van garagepark.nl in de mobiele top 20, per plaats en keyword</p>
+  <div class="grid g4">
+    <div class="card kpi"><span class="stat-l">Top 3</span><span class="num">${pct(g.t3, g.n)}</span><span class="of">${g.t3} van ${g.n} zoekresultaten</span>${deltaPP(100 * g.t3 / (g.n || 1), pg && 100 * pg.t3 / (pg.n || 1))}</div>
+    <div class="card kpi"><span class="stat-l">Top 10</span><span class="num">${pct(g.t10, g.n)}</span><span class="of">${g.t10} van ${g.n} zoekresultaten</span>${deltaPP(100 * g.t10 / (g.n || 1), pg && 100 * pg.t10 / (pg.n || 1))}</div>
+    <div class="card kpi"><span class="stat-l">Zichtbaarheid gewogen op zoekvolume</span><span class="num">${nf(100 * g.vis)}</span><span class="of">index 0 tot 100 (100 = overal #1)</span>${deltaPP(100 * g.vis, pg && 100 * pg.vis)}</div>
+    <div class="card kpi"><span class="stat-l">In het local pack</span><span class="num">${pct(g.lp, g.n)}</span><span class="of">${g.lp} van ${g.n} zoekresultaten</span>${deltaPP(100 * g.lp / (g.n || 1), pg && 100 * pg.lp / (pg.n || 1))}</div>
+  </div></section>
+
+  <section><h3>Genoemd én geciteerd</h3><p class="sub">Aandeel AI-antwoorden waarin GaragePark bij naam genoemd wordt (mention) of als bron gelinkt is (citatie, website of Google Bedrijfsprofiel)</p>
+  <div class="grid g3">${aiCard('AI Overviews', 'aio', a1, p1, 'antwoorden')}
+    ${HAS_GPT ? aiCard('ChatGPT', 'chatgpt', am(fA('cgpt')), pr && am(fA('cgpt', pr)), 'antwoorden') : `<div class="card muted-card"><h4>ChatGPT<a class="go" href="#chatgpt" aria-label="Naar ChatGPT">${arrow}</a></h4><div class="stats"><div><span class="stat-l">Mentions</span><span class="num" style="color:var(--subtle)">n.v.t.</span><span class="of">Nog niet gemeten</span></div><div><span class="stat-l">Citaties</span><span class="num" style="color:var(--subtle)">n.v.t.</span><span class="of">Volgt in de cloud-versie</span></div></div></div>`}
+    ${aiCard('AI Mode', 'aimode', a2, p2, 'antwoorden')}</div></section>
+
+  ${mapCard()}
+  <section><div class="tcard"><div class="thead"><div><h4>Dekking per plaats</h4><p>Aandeel van de ${st.kw ? 'geselecteerde zoekopdracht' : KWS.length + ' keywords'} per plaats. Zichtbaarheid is de CTR-gewogen index. Klik op een plaats om het hele dashboard te filteren, of op een cel voor het bijbehorende tabblad.</p></div>
+  <div class="legend"><span><i class="h0"></i>0%</span><span><i class="h1"></i>&lt;20%</span><span><i class="h2"></i>20 tot 40%</span><span><i class="h3"></i>40 tot 60%</span><span><i class="h4"></i>60 tot 80%</span><span><i class="h5"></i>80%+</span></div></div>
+  <div class="scroll"><table class="heat"><thead><tr><th>Plaats</th>${hdr.map(h => `<th>${h}</th>`).join('')}<th class="r">Gem. positie</th></tr></thead><tbody>
+  ${rows.map(r => `<tr><td class="lab"><a href="#overzicht" data-city="${esc(r.c)}">${esc(r.c)}</a></td>${r.cells.map((v, i) => `<td class="c"><button class="${heatCls(v)}" data-city="${esc(r.c)}" data-tab="${tabs[i]}">${v == null ? 'n.v.t.' : Math.round(100 * v) + '%'}</button></td>`).join('')}<td class="r">${nf(r.avg)}</td></tr>`).join('')}
+  </tbody></table></div><div class="tfoot"><span>Sterkste plaats: <b>${esc(best[0].c)}</b> · zwakste: <b>${esc(best[best.length - 1].c)}</b> (op zichtbaarheid)</span></div></div></section>
+
+  <section><div class="grid g2">${streakCard()}${changeCard()}</div></section>`;
+}
+
+// ==== kaart ====
+const NLMAP = __NLMAP__;
+const GEO = { Almelo: [52.357, 6.662, 1], Almere: [52.371, 5.222, 1], Breda: [51.589, 4.776, 1], 'Den Bosch': [51.690, 5.304, 1], Diemen: [52.339, 4.963, 1], Amsterdam: [52.370, 4.895, -1],
+  Haarlem: [52.387, 4.646, -1], Hengelo: [52.266, 6.793, 1], Heinenoord: [51.826, 4.493, -1], Hulst: [51.281, 4.052, 1], Nieuwegein: [52.029, 5.081, 1], Utrecht: [52.091, 5.122, 1],
+  Nijmegen: [51.842, 5.853, 1], Noordwijk: [52.240, 4.447, -1], Roosendaal: [51.531, 4.465, -1], Rosmalen: [51.716, 5.365, 1], Sittard: [51.000, 5.869, 1], Sneek: [53.031, 5.660, 1],
+  Terneuzen: [51.335, 3.828, -1], Venlo: [51.370, 6.172, 1], Wateringen: [52.024, 4.274, -1], 'Den Haag': [52.070, 4.300, -1] };
+// label nudges (dx side handled by sign above; dy here) for clustered places
+const LDY = { Almelo: -4, Hengelo: 5 };
+// bubbles displaced from their true location (with a leader line) where places sit too close together
+const OFF = { Amsterdam: [4, -30], Diemen: [30, 12], Haarlem: [-16, -4], 'Den Haag': [-12, -20], Wateringen: [-20, 18], Utrecht: [8, -18], Nieuwegein: [-2, 20], 'Den Bosch': [-2, 22], Rosmalen: [18, -12], Almere: [10, -6] };
+const MAPM = [['t10', 'Top 10'], ['vis', 'Zichtbaarheid'], ['lp', 'Local pack'], ['aiom', 'AIO mention'], ['aimm', 'AI Mode mention'], ['aimc', 'AI Mode citatie']];
+let mapMetric = 't10';
+const prj = (lat, lon) => [(lon - NLMAP.LON0) * NLMAP.K * NLMAP.sx, (NLMAP.LAT1 - lat) * NLMAP.sx];
+function cityMetrics(c) {
+  const s = D.serps.filter(x => x.r === st.run && x.c === c && (!st.kw || x.k === st.kw)), g = gm(s);
+  const a1 = am(D.ai.filter(x => x.e === 'aio' && x.r === st.run && x.c === c && (!st.kw || x.k === st.kw)));
+  const a2 = am(D.ai.filter(x => x.e === 'aim' && x.r === st.run && x.c === c && (!st.kw || x.k === st.kw)));
+  return { t10: g.n ? g.t10 / g.n : null, vis: g.n ? g.vis : null, lp: g.n ? g.lp / g.n : null, aiom: a1.n ? a1.m / a1.n : null, aimm: a2.n ? a2.m / a2.n : null, aimc: a2.n ? a2.c / a2.n : null, avg: g.avg, n: g.n };
+}
+function mapCard() {
+  const M = Object.fromEntries(CITIES.map(c => [c, cityMetrics(c)]));
+  const lab = MAPM.find(x => x[0] === mapMetric)[1];
+  const ranked = [...CITIES].sort((a, b) => (M[b][mapMetric] ?? -1) - (M[a][mapMetric] ?? -1));
+  const vals = CITIES.map(c => M[c][mapMetric]).filter(v => v != null), avg = vals.reduce((a, b) => a + b, 0) / (vals.length || 1);
+  const dots = CITIES.map(c => { const [lat, lon, side] = GEO[c] || [52, 5, 1]; const [x0, y0] = prj(lat, lon); const [ox, oy] = OFF[c] || [0, 0]; const x = x0 + ox, y = y0 + oy; const v = M[c][mapMetric]; const sel = st.city === c;
+    return `<g class="city ${sel ? 'sel' : ''}" data-city="${esc(c)}" tabindex="0" role="button" aria-label="${esc(c)}: ${v == null ? 'geen data' : Math.round(100 * v) + '%'}">
+      <title>${esc(c)} · ${lab}: ${v == null ? 'n.v.t.' : Math.round(100 * v) + '%'}</title>
+      ${ox || oy ? `<line x1="${x0}" y1="${y0}" x2="${x}" y2="${y}" class="lead"/><circle cx="${x0}" cy="${y0}" r="2.5" class="pin"/>` : ''}${sel ? `<circle cx="${x}" cy="${y}" r="19" class="ring"/>` : ''}<circle cx="${x}" cy="${y}" r="13" class="m ${heatCls(v)}"/>
+      <text x="${x}" y="${y + 3.8}" text-anchor="middle" class="v ${heatCls(v)}">${v == null ? '·' : Math.round(100 * v)}</text>
+      <text x="${x + side * 18}" y="${y + 4 + (LDY[c] || 0)}" text-anchor="${side > 0 ? 'start' : 'end'}" class="nm">${esc(c)}</text></g>`; }).join('');
+  return `<section><div class="card mapcard"><div class="maphead"><div><h4 style="display:block">Dekking op de kaart</h4><p class="cap">${lab} per vestigingsplaats${st.kw ? ' voor "' + esc(st.kw) + '"' : ''}. Klik op een plaats om het dashboard te filteren.</p></div>${seg('mapm', MAPM, mapMetric)}</div>
+  <div class="mapgrid"><div class="mapwrap"><svg viewBox="0 0 ${NLMAP.W} ${NLMAP.H}" role="img" aria-label="Kaart van Nederland met ${lab} per plaats">
+    <path d="${NLMAP.de}" class="nb"/><path d="${NLMAP.be}" class="nb"/><path d="${NLMAP.nl}" class="land"/>
+    <text x="${prj(50.86, 4.25)[0]}" y="${prj(50.86, 4.25)[1]}" class="cty">België</text><text x="${prj(51.75, 7.2)[0]}" y="${prj(51.75, 7.2)[1]}" class="cty" text-anchor="end">Duitsland</text><text x="${prj(53.1, 3.6)[0]}" y="${prj(53.1, 3.6)[1]}" class="cty sea">Noordzee</text>
+    ${dots}</svg></div>
+  <div class="maplist"><div class="kpi"><span class="stat-l">Gemiddeld over ${vals.length} plaatsen</span><span class="num">${pct(avg, 1)}</span></div>
+  <div class="legend"><span><i class="h0"></i>0%</span><span><i class="h1"></i>&lt;20</span><span><i class="h2"></i>20 tot 40</span><span><i class="h3"></i>40 tot 60</span><span><i class="h4"></i>60 tot 80</span><span><i class="h5"></i>80+</span></div>
+  <ol class="rk">${ranked.map((c, i) => { const v = M[c][mapMetric]; return `<li><button data-city="${esc(c)}" class="${st.city === c ? 'on' : ''}"><span class="i">${i + 1}</span><span class="c">${esc(c)}</span><span class="t"><i class="${heatCls(v)}" style="width:${v == null ? 0 : 100 * v}%"></i></span><b>${v == null ? 'n.v.t.' : Math.round(100 * v) + '%'}</b></button></li>`; }).join('')}</ol></div></div></div></section>`;
+}
+
+function streakCard() {
+  const items = D.serps.filter(s => (!st.city || s.c === st.city) && (!st.kw || s.k === st.kw));
+  const g = streak(s => s.c + ' · ' + s.k, s => s.pos && s.pos <= 10, items);
+  const a1 = streak(a => a.c + ' · ' + a.k, a => a.m, D.ai.filter(a => a.e === 'aio' && (!st.city || a.c === st.city) && (!st.kw || a.k === st.kw)));
+  const a2 = streak(a => a.c + ' · ' + a.k, a => a.m, D.ai.filter(a => a.e === 'aim' && (!st.city || a.c === st.city) && (!st.kw || a.k === st.kw)));
+  const line = (l, arr) => { const top = arr[0] ? arr[0][1] : 0, cnt = arr.filter(x => x[1] === top && top > 0).length; return `<div style="display:grid;grid-template-columns:120px 1fr 1fr;gap:12px;align-items:baseline;padding:10px 0;border-top:1px solid var(--line)"><b style="font-family:var(--font-head);font-size:13px">${l}</b><span><span class="num sm" style="color:var(--accent)">${top}</span> week${top === 1 ? '' : 'en'} op rij</span><span class="of">${cnt} combinatie${cnt === 1 ? '' : 's'} plaats × keyword</span></div>`; };
+  return `<div class="card"><h4>Blijvend zichtbaar</h4><p class="cap">Langste reeks opeenvolgende weken waarin GaragePark op dezelfde plaats × keyword zichtbaar is</p><div style="margin-top:12px">${line('Google top 10', g)}${line('AI Overviews', a1)}${line('AI Mode', a2)}</div>${RUNS.length < 2 ? '<div class="note" style="margin-top:12px">Na deze eerste meting staat elke reeks op 1. Vanaf de wekelijkse cloud-run groeit dit door.</div>' : ''}</div>`;
+}
+function changeCard() {
+  const pr = prevRun();
+  if (!pr) return `<div class="card"><h4>Veranderingen sinds vorige meting</h4><p class="cap">Gestegen en gedaalde posities, nieuwe en verloren AI-vermeldingen</p><div class="note" style="margin-top:16px"><b>Eerste meting.</b> Zodra de tweede wekelijkse run binnen is zie je hier welke plaats × keyword combinaties gestegen, gedaald, nieuw genoemd of verloren zijn.</div></div>`;
+  const cur = new Map(fS().map(s => [s.c + '|' + s.k, s.pos])), prv = new Map(fS(pr).map(s => [s.c + '|' + s.k, s.pos]));
+  const ch = [...cur].map(([k, p]) => [k, prv.get(k), p]).filter(([, a, b]) => a !== b).map(([k, a, b]) => [k, a, b, (a || 25) - (b || 25)]).sort((x, y) => y[3] - x[3]);
+  const li = x => `<tr><td>${esc(x[0].replace('|', ' · '))}</td><td class="r">${x[1] || 'n.v.t.'} → ${x[2] || 'n.v.t.'}</td></tr>`;
+  return `<div class="card"><h4>Veranderingen sinds ${fmtDate(pr)}</h4><div class="scroll" style="margin-top:12px"><table><tbody>${ch.slice(0, 6).map(li).join('')}${ch.slice(-6).map(li).join('')}</tbody></table></div></div>`;
+}
+
+// ==== sub tabs ====
+const SUB = {
+  google: [['overzicht', 'Overzicht'], ['posities', 'Posities per keyword'], ['serp', 'SERP features'], ['localpack', 'Local pack'], ['streaks', 'Streaks']],
+  aio: [['overzicht', 'Overzicht'], ['prompts', 'Zoekopdrachten'], ['urls', "Geciteerde URL's"], ['profielen', 'Bedrijfsprofielen'], ['streaks', 'Streaks']],
+  cgpt: [['overzicht', 'Overzicht'], ['prompts', 'Prompts'], ['urls', "Geciteerde URL's"], ['streaks', 'Streaks']],
+  aim: [['overzicht', 'Overzicht'], ['prompts', 'Prompts'], ['urls', "Geciteerde URL's"], ['profielen', 'Bedrijfsprofielen'], ['streaks', 'Streaks']]
+};
+const subSt = { google: 'overzicht', aio: 'overzicht', aim: 'overzicht', cgpt: 'overzicht' };
+function subtabs(key) {
+  return `<div class="subtabs" role="tablist">${SUB[key].map(([id, l]) => `<button role="tab" aria-selected="${subSt[key] === id}" class="${subSt[key] === id ? 'on' : ''}" data-sub="${key}|${id}">${l}</button>`).join('')}</div>`;
+}
+const extIcon = '<svg class="ext" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M8 7h9v9"/></svg>';
+
+// ==== streak helpers ====
+function runsUpTo() { return RUNS.slice(0, RUNS.indexOf(st.run) + 1); }
+function runWindow() { const r = runsUpTo(); return r.slice(Math.max(0, r.length - 8)); }
+function streakOf(bools) { let cur = 0, best = 0, run = 0; bools.forEach(b => { run = b ? run + 1 : 0; best = Math.max(best, run); }); for (let i = bools.length - 1; i >= 0 && bools[i]; i--) cur++; return { cur, best }; }
+const dayLab = r => new Date(r + 'T12:00:00').toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' });
+let stkQ = '', stkAll = false;
+const GTOP = { n: 10 }, AIMET = { aio: 'm', aim: 'm', cgpt: 'm' };
+function seg(id, opts, val) { return `<div class="seg" role="group">${opts.map(([v, l]) => `<button class="${String(val) === String(v) ? 'on' : ''}" data-seg="${id}|${v}">${l}</button>`).join('')}</div>`; }
+
+// brand / domain visibility streak table: rows = entity, cells = count per run
+function entityStreakTable(title, sub, rows, ownTest, detailAttr) {
+  const W = runWindow();
+  const head = `<tr><th>#</th><th>${title.col}</th>${W.map(r => `<th class="sqh">${dayLab(r)}</th>`).join('')}<th class="r">Huidige reeks</th><th class="r">Langste reeks</th></tr>`;
+  const body = rows.map((x, i) => `<tr class="${ownTest(x) ? 'own' : ''}"><td><span class="rank">${i + 1}</span></td><td><button class="ent ${ownTest(x) ? 'me' : ''}" ${detailAttr(x)}>${esc(x.name)}<span>Details →</span></button></td>${W.map(r => { const n = x.by.get(r); return `<td class="sqc">${n == null ? '<span class="sq none">·</span>' : n > 0 ? `<span class="sq on">${n}</span>` : '<span class="sq off">0</span>'}</td>`; }).join('')}<td class="r">${x.s.cur}</td><td class="r">${x.s.best}</td></tr>`).join('');
+  return `<div class="tcard"><div class="thead"><div><h4>${title.h}</h4><p>${sub}</p></div></div><div class="scroll"><table class="stk">${head}<tbody>${body}</tbody></table></div></div>`;
+}
+// item streak table: rows = city · keyword, cells = dot on / dash off / dot none
+function itemStreakTable(h, sub, keys, stateFn, openAttr, ctrl) {
+  const W = runWindow(), all = runsUpTo();
+  let rows = keys.map(k => { const states = all.map(r => stateFn(k, r)); const s = streakOf(states.map(x => x === 1)); return { k, states, s }; });
+  rows.sort((a, b) => b.s.cur - a.s.cur || b.s.best - a.s.best || CITIES.indexOf(a.k.c) - CITIES.indexOf(b.k.c));
+  const q = stkQ.toLowerCase(); rows = rows.filter(r => !q || (r.k.c + ' ' + r.k.k).toLowerCase().includes(q));
+  const lim = stkAll ? rows : rows.slice(0, 40), off = all.length - W.length;
+  const body = lim.map(r => `<tr><td><span class="kw">${esc(r.k.k)}</span> <span class="of">· ${esc(r.k.c)}</span> <button class="lnk" ${openAttr(r.k)}>Details</button></td>${W.map((_, i) => { const v = r.states[off + i]; return `<td class="sqc">${v == null ? '<span class="sq none">·</span>' : v === 1 ? '<span class="sq on"><i></i></span>' : '<span class="sq off">–</span>'}</td>`; }).join('')}<td class="r">${r.s.cur}</td><td class="r">${r.s.best}</td></tr>`).join('');
+  return `<div class="tcard"><div class="thead"><div><h4>${h}</h4><p>${sub}</p></div><div class="filters">${ctrl}<input type="search" id="stkq" placeholder="Zoek keyword of plaats…" value="${esc(stkQ)}" aria-label="Zoek in streaks"></div></div>
+  <div class="scroll"><table class="stk"><thead><tr><th>Keyword · plaats</th>${W.map(r => `<th class="sqh">${dayLab(r)}</th>`).join('')}<th class="r">Huidige reeks</th><th class="r">Langste reeks</th></tr></thead><tbody>${body}</tbody></table></div>
+  <div class="tfoot"><span>${lim.length} getoond · ${rows.length} combinaties</span>${rows.length > 40 ? `<button id="stkall">${stkAll ? 'Toon minder' : 'Toon alle ' + rows.length}</button>` : ''}</div></div>`;
+}
+const filtC = x => (!st.city || x.c === st.city) && (!st.kw || x.k === st.kw);
+const runNote = () => RUNS.length < 2 ? '<div class="note">Na deze eerste meting staat elke reeks op 1 of 0. Elke wekelijkse run voegt een kolom toe; de tabel toont de laatste 8 metingen.</div>' : '';
+
+// ==== Google ====
+let domQuery = '', domAll = false, domSort = ['n', -1];
+function domainBoard(S) {
+  const m = new Map();
+  S.forEach(s => { const best = new Map(); s.org.forEach(o => { if (!best.has(o.d) || o.p < best.get(o.d)) best.set(o.d, o.p); }); best.forEach((p, d) => { const x = m.get(d) || { d, n: 0, t3: 0, t10: 0, sum: 0 }; x.n++; x.t3 += p <= 3; x.t10 += p <= 10; x.sum += p; m.set(d, x); }); });
+  return [...m.values()].map(x => ({ ...x, cov: x.n / S.length, avg: x.sum / x.n }));
+}
+const FN = { organic: 'Organisch', people_also_ask: 'People Also Ask', people_also_search: 'Mensen zoeken ook', local_pack: 'Local pack', compare_sites: 'Vergelijkingssites', ai_overview: 'AI Overview', images: 'Afbeeldingen', related_searches: 'Gerelateerde zoekopdrachten', paid: 'Advertenties', popular_products: 'Populaire producten', video: 'Video', knowledge_graph: 'Knowledge graph', google_reviews: 'Google reviews', top_stories: 'Top stories', answer_box: 'Answer box', featured_snippet: 'Featured snippet', map: 'Kaart' };
+function vGoogle() {
+  const S = fS(), g = gm(S), sub = subSt.google;
+  let html = '';
+  if (sub === 'overzicht') {
+    let rows = domainBoard(S);
+    const [k, dir] = domSort; rows.sort((a, b) => dir * ((a[k] > b[k]) - (a[k] < b[k])) || b.n - a.n);
+    rows.forEach((r, i) => r.rank = i + 1);
+    const shown = rows.filter(r => !domQuery || r.d.includes(domQuery.toLowerCase()));
+    const lim = domAll ? shown : shown.slice(0, 15);
+    if (!domAll && !lim.find(r => r.d === OWN)) { const o = shown.find(r => r.d === OWN); if (o) lim.push(o); }
+    const th = (key, l, r) => `<th class="${r ? 'r' : ''}" data-sort="${key}">${l} ${domSort[0] === key ? (domSort[1] < 0 ? '↓' : '↑') : '↕'}</th>`;
+    const own = rows.find(r => r.d === OWN);
+    html = `<section><div class="grid g4">
+    <div class="card kpi"><span class="stat-l">Dekking (top 10)</span><span class="num">${pct(g.t10, g.n)}</span><span class="of">${g.t10} van ${g.n} zoekresultaten</span><div class="bar"><i style="width:${100 * g.t10 / (g.n || 1)}%"></i></div></div>
+    <div class="card kpi"><span class="stat-l">Top 3</span><span class="num">${pct(g.t3, g.n)}</span><span class="of">${g.t3} van ${g.n} zoekresultaten</span><div class="bar"><i style="width:${100 * g.t3 / (g.n || 1)}%"></i></div></div>
+    <div class="card kpi"><span class="stat-l">Gem. beste positie</span><span class="num">${nf(g.avg)}</span><span class="of">over ${g.any} zoekresultaten waarin garagepark.nl in de top 20 staat</span></div>
+    <div class="card kpi"><span class="stat-l">Zichtbaarheid gewogen op zoekvolume</span><span class="num">${nf(100 * g.vis)}</span><span class="of">CTR-curve × zoekvolume, 100 = overal positie 1</span><div class="bar"><i style="width:${100 * g.vis}%"></i></div></div>
+    </div></section>
+    <section><div class="tcard"><div class="thead"><div><h4>Organische domeinen</h4><p>Unieke zoekresultaten (plaats × keyword) per domein, beste organische positie per zoekresultaat in de mobiele top 20. www is samengevoegd. ${own ? `garagepark.nl staat op <b>#${own.rank}</b>.` : ''}</p></div>
+    <input type="search" id="domq" placeholder="Zoek domein…" value="${esc(domQuery)}" aria-label="Zoek domein"></div>
+    <div class="scroll"><table id="domt"><thead><tr><th>#</th>${th('d', 'Domein')}${th('n', 'Zoekresultaten', 1)}${th('cov', 'Dekking', 1)}${th('t3', 'Top 3', 1)}${th('t10', 'Top 10', 1)}${th('avg', 'Gem. beste positie', 1)}</tr></thead><tbody>
+    ${lim.map(r => `<tr class="${r.d === OWN ? 'own' : ''}"><td><span class="rank">${r.rank}</span></td><td>${esc(r.d)}${r.d === OWN ? '<span class="wij">Wij</span>' : ''}</td><td class="r">${r.n}</td><td class="r"><div class="meter"><span class="t"><i style="width:${100 * r.cov}%"></i></span><b>${pct(r.n, S.length)}</b></div></td><td class="r">${r.t3}</td><td class="r">${r.t10}</td><td class="r">${nf(r.avg)}</td></tr>`).join('')}
+    </tbody></table></div><div class="tfoot"><span>${shown.length} domeinen</span>${shown.length > 15 ? `<button id="domall">${domAll ? 'Toon top 15' : 'Toon alle domeinen'}</button>` : ''}</div></div></section>`;
+  } else if (sub === 'posities') {
+    const cities = st.city ? [st.city] : CITIES, kws = st.kw ? KWS.filter(x => x[0] === st.kw) : KWS;
+    const pc = p => !p ? 'h0' : p <= 1 ? 'h5' : p <= 3 ? 'h4' : p <= 5 ? 'h3' : p <= 10 ? 'h2' : 'h1';
+    html = `<section><div class="tcard"><div class="thead"><div><h4>Positie per keyword en plaats</h4><p>Beste positie van garagepark.nl. Klik op een cel om het volledige zoekresultaat te openen.</p></div>
+    <div class="legend"><span><i class="h5"></i>#1</span><span><i class="h4"></i>2 tot 3</span><span><i class="h3"></i>4 tot 5</span><span><i class="h2"></i>6 tot 10</span><span><i class="h1"></i>11 tot 20</span><span><i class="h0"></i>niet in top 20</span></div></div>
+    <div class="scroll"><table class="heat"><thead><tr><th>Keyword</th><th class="r">Volume</th>${cities.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>
+    ${kws.map(([k, v]) => `<tr><td class="lab">${esc(k)}</td><td class="lab r">${v.toLocaleString('nl-NL')}</td>${cities.map(c => { const s = D.serps.find(x => x.r === st.run && x.c === c && x.k === k); return `<td class="c"><button class="${pc(s && s.pos)}" data-serp="${esc(c)}|${esc(k)}" title="${esc(c)} · ${esc(k)}">${s && s.pos ? s.pos : '·'}</button></td>`; }).join('')}</tr>`).join('')}
+    </tbody></table></div></div></section>`;
+  } else if (sub === 'serp') {
+    const fc = new Map(); S.forEach(s => s.f.forEach(f => fc.set(f, (fc.get(f) || 0) + 1)));
+    const feats = [...fc].sort((a, b) => b[1] - a[1]);
+    html = `<section><h3>Het volledige zoekresultaat</h3><p class="sub">Aandeel zoekresultaten waarop de feature voorkomt. Klik om de bijbehorende zoekresultaten te zien.</p>
+    <div class="grid g4">${feats.map(([f, n]) => `<button class="card feat" data-feat="${f}"><h4 style="font-size:14px">${FN[f] || f}<span style="color:var(--accent)">↗</span></h4><div class="num">${pct(n, S.length)}</div><span class="of">${n} van ${S.length} zoekresultaten</span><div class="bar"><i style="width:${100 * n / S.length}%"></i></div></button>`).join('')}</div></section>`;
+  } else if (sub === 'localpack') {
+    const lpm = new Map(); S.forEach(s => s.lp.forEach((l, i) => { const x = lpm.get(l.t) || { t: l.t, n: 0, pos: 0, rt: l.rt, v: l.n, o: l.o, c: new Set() }; x.n++; x.pos += i + 1; x.c.add(s.c); lpm.set(l.t, x); }));
+    const lps = [...lpm.values()].sort((a, b) => b.n - a.n);
+    const withLp = S.filter(s => s.lp.length).length;
+    html = `<section><div class="grid g4">
+    <div class="card kpi"><span class="stat-l">Zoekresultaten met local pack</span><span class="num">${pct(withLp, S.length)}</span><span class="of">${withLp} van ${S.length}</span></div>
+    <div class="card kpi"><span class="stat-l">GaragePark in local pack</span><span class="num">${pct(g.lp, g.n)}</span><span class="of">${g.lp} van ${g.n} zoekresultaten</span></div>
+    <div class="card kpi"><span class="stat-l">Unieke bedrijven</span><span class="num">${lps.length}</span><span class="of">in alle local packs samen</span></div>
+    <div class="card kpi"><span class="stat-l">Plaatsen met GaragePark</span><span class="num">${new Set(S.filter(s => s.lpo).map(s => s.c)).size}</span><span class="of">van ${new Set(S.map(s => s.c)).size} plaatsen</span></div></div></section>
+    <section><div class="tcard"><div class="thead"><div><h4>Bedrijven in het local pack</h4><p>Hoe vaak een bedrijf in het kaartblok verschijnt, op welke gemiddelde plek en in hoeveel plaatsen.</p></div></div>
+    <div class="scroll"><table><thead><tr><th>#</th><th>Bedrijf</th><th class="r">Keer</th><th class="r">Gem. plek</th><th class="r">Plaatsen</th><th class="r">Rating</th></tr></thead><tbody>${lps.slice(0, 30).map((l, i) => `<tr class="${l.o ? 'own' : ''}"><td><span class="rank">${i + 1}</span></td><td><span class="trunc">${esc(l.t)}</span></td><td class="r">${l.n}</td><td class="r">${nf(l.pos / l.n)}</td><td class="r">${l.c.size}</td><td class="r">${l.rt ? nf(l.rt) + ' (' + l.v + ')' : 'n.v.t.'}</td></tr>`).join('')}</tbody></table></div><div class="tfoot"><span>Top 30 van ${lps.length} bedrijven</span></div></div></section>`;
+  } else {
+    const N = GTOP.n, all = runsUpTo();
+    const m = new Map();
+    all.forEach(r => fS(r).forEach(s => { const best = new Map(); s.org.forEach(o => { if (o.p <= N && (!best.has(o.d) || o.p < best.get(o.d))) best.set(o.d, o.p); }); best.forEach((p, d) => { const x = m.get(d) || { name: d, by: new Map() }; x.by.set(r, (x.by.get(r) || 0) + 1); m.set(d, x); }); }));
+    m.forEach(x => { all.forEach(r => { if (!x.by.has(r)) x.by.set(r, 0); }); x.s = streakOf(all.map(r => x.by.get(r) > 0)); });
+    let rows = [...m.values()].sort((a, b) => (b.by.get(st.run) || 0) - (a.by.get(st.run) || 0)).slice(0, 15);
+    if (!rows.find(x => x.name === OWN) && m.get(OWN)) rows.push(m.get(OWN));
+    const keys = fS().map(s => ({ c: s.c, k: s.k }));
+    const stFn = (k, r) => { const s = D.serps.find(x => x.r === r && x.c === k.c && x.k === k.k); return s ? (s.pos && s.pos <= N ? 1 : 0) : null; };
+    const ctl = seg('gtop', [[1, 'Top 1'], [3, 'Top 3'], [10, 'Top 10']], N);
+    html = `<section style="display:flex;justify-content:space-between;gap:16px;align-items:flex-end;flex-wrap:wrap"><div><h3>Streaks</h3><p class="sub" style="margin-bottom:0">Hoeveel metingen op rij een domein of keyword in de top ${N} staat</p></div>${ctl}</section>
+    ${runNote()}
+    <section>${entityStreakTable({ h: 'Domeinzichtbaarheid', col: 'Domein' }, `Cellen: aantal zoekresultaten (plaats × keyword) waarin het domein in de top ${N} staat. Details opent de zoekresultaten.`, rows, x => x.name === OWN, x => `data-dom="${esc(x.name)}"`)}</section>
+    <section>${itemStreakTable('GaragePark per keyword en plaats', `Alle combinaties, ook zonder top ${N}-positie. Paars = in de top ${N} · streep = buiten de top ${N} · punt = geen meting.`, keys, stFn, k => `data-serp="${esc(k.c)}|${esc(k.k)}"`, '')}</section>`;
+  }
+  return subtabs('google') + html;
+}
+
+// ==== AI engines ====
+const AIQ = { aio: '', aim: '', cgpt: '' }, AIF = { aio: 'all', aim: 'all', cgpt: 'all' }, AIALL = { aio: false, aim: false, cgpt: false };
+function brandBoard(A) {
+  const m = new Map(); A.forEach(a => a.mb.forEach(b => m.set(b, (m.get(b) || 0) + 1)));
+  return [...m].map(([b, n]) => ({ b, n, s: n / A.length })).sort((a, b) => b.n - a.n);
+}
+function citeBoard(A) {
+  const m = new Map(); A.forEach(a => { new Set(a.refs.filter(r => !r.g).map(r => r.d)).forEach(d => m.set(d, (m.get(d) || 0) + 1)); });
+  return [...m].map(([d, n]) => ({ d, n, s: n / A.length })).sort((a, b) => b.n - a.n);
+}
+function urlBoard(A) {
+  const m = new Map(); A.forEach(a => { new Set(a.refs.filter(r => !r.g).map(r => r.u)).forEach(u => { const r = a.refs.find(x => x.u === u); const x = m.get(u) || { u, d: r.d, t: r.t, n: 0, c: new Set() }; x.n++; x.c.add(a.c); m.set(u, x); }); });
+  return [...m.values()].sort((a, b) => b.n - a.n);
+}
+function gbpBoard(A) {
+  const m = new Map(); A.forEach(a => { new Set(a.refs.filter(r => r.g).map(r => r.t)).forEach(t => { const x = m.get(t) || { t, n: 0, o: /GaragePark/.test(t), c: new Set() }; x.n++; x.c.add(a.c); m.set(t, x); }); });
+  return [...m.values()].sort((a, b) => b.n - a.n);
+}
+function trendChart(e) {
+  const pts = RUNS.map(r => { const a = am(D.ai.filter(x => x.e === e && x.r === r && (!st.city || x.c === st.city) && (!st.kw || x.k === st.kw))); return { r, m: a.n ? a.m / a.n : 0, c: a.n ? a.c / a.n : 0 }; });
+  const W = 560, H = 200, L = 40, R = 16, T = 14, B = 30, iw = W - L - R, ih = H - T - B;
+  const x = i => L + (pts.length === 1 ? iw / 2 : i * iw / (pts.length - 1)), y = v => T + ih * (1 - v);
+  const path = k => pts.map((p, i) => `${i ? 'L' : 'M'}${x(i)},${y(p[k])}`).join('');
+  const grid = [0, .25, .5, .75, 1].map(v => `<line class="gl" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${v * 100}%</text>`).join('');
+  const dots = k => pts.map((p, i) => `<circle cx="${x(i)}" cy="${y(p[k])}" r="${i === pts.length - 1 ? 5 : 3.5}" fill="${k === 'm' ? 'var(--accent)' : 'var(--brand)'}"/>`).join('');
+  const lab = pts.map((p, i) => (i === 0 || i === pts.length - 1) ? `<text x="${x(i)}" y="${H - 8}" text-anchor="${pts.length === 1 ? 'middle' : i ? 'end' : 'start'}">${fmtDate(p.r)}</text>` : '').join('');
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Trend mentions en citaties">${grid}<path d="${path('m')}" fill="none" stroke="var(--accent)" stroke-width="2"/><path d="${path('c')}" fill="none" stroke="var(--brand)" stroke-width="2" stroke-dasharray="5 4"/>${dots('m')}${dots('c')}${lab}</svg></div>
+  <div class="legend" style="margin-top:6px"><span><i style="background:var(--accent);border-radius:50%"></i>Mentions</span><span><i style="background:var(--brand);border-radius:50%"></i>Citaties</span></div>`;
+}
+const slimNote = () => `<div class="note"><b>Compacte meting.</b> Volledige antwoorden, bronnen en SERP-details worden in het dashboard alleen voor de laatste ${(D.meta.detail_runs || []).length} metingen meegeladen. Alles staat in BigQuery.</div>`;
+function vAI(e) {
+  const A = fA(e), a = am(A), sub = subSt[e];
+  const S = fS(); const pr = prevRun(), p = pr && am(fA(e, pr));
+  let html = '';
+  if (sub === 'overzicht') {
+    const presence = e === 'aio' ? `<div class="card kpi"><span class="stat-l">Zoekresultaten met AI Overview</span><span class="num">${pct(A.length, S.length)}</span><span class="of">${A.length} van ${S.length} zoekresultaten</span><div class="bar"><i style="width:${100 * A.length / (S.length || 1)}%"></i></div></div>`
+      : `<div class="card kpi"><span class="stat-l">Prompts met antwoord</span><span class="num">${A.length}</span><span class="of">van ${S.length} prompts${(n => n ? ` (${n} fout${n > 1 ? 'en' : ''} bij DataForSEO)` : '')(D.meta.errors.filter(x => x.r === st.run && x.e === 'google_ai_mode').length)}</span></div>`;
+    const bb = brandBoard(A), cb = citeBoard(A);
+    const ownB = bb.findIndex(x => x.b === OWNB), ownC = cb.findIndex(x => x.d === OWN);
+    html = `<section><div class="grid g4">${presence}
+    <div class="card kpi"><span class="stat-l">Mentions</span><span class="num">${pct(a.m, a.n)}</span><span class="of">${a.m} van ${a.n} antwoorden noemen GaragePark</span>${deltaPP(100 * a.m / (a.n || 1), p && 100 * p.m / (p.n || 1))}</div>
+    <div class="card kpi"><span class="stat-l">Citaties</span><span class="num">${pct(a.c, a.n)}</span><span class="of">${a.c} van ${a.n} antwoorden linken naar GaragePark</span>${deltaPP(100 * a.c / (a.n || 1), p && 100 * p.c / (p.n || 1))}</div>
+    <div class="card kpi"><span class="stat-l">Citatie via</span><div class="cols" style="margin-top:6px"><div><span class="num sm">${pct(a.cw, a.n, 0)}</span><span class="of" style="display:block">garagepark.nl</span></div><div><span class="num sm">${pct(a.cg, a.n, 0)}</span><span class="of" style="display:block">Bedrijfsprofiel</span></div></div></div>
+    </div></section>
+    <section><div class="card"><h4>Ontwikkeling</h4><p class="cap">Aandeel antwoorden met GaragePark per meting</p><div style="max-width:760px">${trendChart(e)}</div>${RUNS.length < 2 ? '<div class="empty">Eén meetpunt. De lijn ontstaat vanaf de tweede wekelijkse run.</div>' : ''}</div></section>
+    <section><div class="grid g2">
+    <div class="tcard"><div class="thead"><div><h4>Mention share</h4><p>Aandeel antwoorden waarin het merk bij naam genoemd wordt. ${ownB >= 0 ? `GaragePark staat op <b>#${ownB + 1}</b>.` : 'GaragePark wordt niet genoemd.'}</p></div></div>
+    <div class="scroll"><table><thead><tr><th>#</th><th>Merk</th><th class="r">Antwoorden</th><th class="r">Share</th></tr></thead><tbody>${bb.slice(0, 12).map((r, i) => `<tr class="${r.b === OWNB ? 'own' : ''}"><td><span class="rank">${i + 1}</span></td><td>${esc(r.b)}${r.b === OWNB ? '<span class="wij">Wij</span>' : ''}</td><td class="r">${r.n}</td><td class="r"><div class="meter"><span class="t"><i style="width:${100 * r.s}%"></i></span><b>${pct(r.n, A.length)}</b></div></td></tr>`).join('')}</tbody></table></div></div>
+    <div class="tcard"><div class="thead"><div><h4>Citation share</h4><p>Aandeel antwoorden dat naar het domein linkt (websites, zonder Bedrijfsprofielen). ${ownC >= 0 ? `garagepark.nl staat op <b>#${ownC + 1}</b>.` : ''}</p></div></div>
+    <div class="scroll"><table><thead><tr><th>#</th><th>Domein</th><th class="r">Antwoorden</th><th class="r">Share</th></tr></thead><tbody>${cb.slice(0, 12).map((r, i) => `<tr class="${r.d === OWN ? 'own' : ''}"><td><span class="rank">${i + 1}</span></td><td>${esc(r.d)}${r.d === OWN ? '<span class="wij">Wij</span>' : ''}</td><td class="r">${r.n}</td><td class="r"><div class="meter"><span class="t"><i style="width:${100 * r.s}%"></i></span><b>${pct(r.n, A.length)}</b></div></td></tr>`).join('')}</tbody></table></div></div>
+    </div></section>`;
+  } else if (sub === 'prompts') {
+    const q = AIQ[e].toLowerCase(), flt = AIF[e];
+    const list = A.filter(x => (!q || (x.p + ' ' + x.c).toLowerCase().includes(q)) && (flt === 'all' || (flt === 'm' ? x.m : flt === 'c' ? x.ci : flt === 'none' ? !x.m && !x.ci : 1)))
+      .sort((x, y) => CITIES.indexOf(x.c) - CITIES.indexOf(y.c) || y.v - x.v);
+    html = `<section><div class="tcard"><div class="thead"><div><h4>${e === 'aio' ? 'Zoekopdrachten met AI Overview' : 'Prompts'}</h4><p>${e === 'aio' ? 'Alle zoekresultaten waarin een AI Overview verscheen.' : 'Prompt: "' + esc(D.meta.prompt_template || 'Waar kan ik een {keyword} in de omgeving van {city}').replace('{city}', '{plaats}') + '".'} Klik op een rij voor het volledige antwoord en de bronnen.</p></div>
+    <div class="filters"><input type="search" id="aiq" placeholder="Zoek prompt of plaats…" value="${esc(AIQ[e])}" aria-label="Zoek prompt"><select id="aif" aria-label="Filter"><option value="all">Alle antwoorden</option><option value="m">Met mention</option><option value="c">Met citatie</option><option value="none">Zonder GaragePark</option></select></div></div>
+    <div class="scroll"><table><thead><tr><th>Plaats</th><th>${e === 'aio' ? 'Zoekopdracht' : 'Prompt'}</th><th>Genoemd</th><th>Geciteerd</th><th class="r">Merken</th><th class="r">Bronnen</th></tr></thead><tbody>
+    ${(AIALL[e] ? list : list.slice(0, 40)).map(x => `<tr class="click" data-ai="${D.ai.indexOf(x)}" tabindex="0"><td>${esc(x.c)}</td><td><span class="trunc">${esc(x.p)}</span></td><td><span class="chip ${x.m ? 'yes' : 'no'}">${x.m ? 'Ja' : 'Nee'}</span></td><td><span class="chip ${x.ci ? 'yes' : 'no'}">${x.cw && x.cg ? 'Site + profiel' : x.cw ? 'Site' : x.cg ? 'Profiel' : 'Nee'}</span></td><td class="r">${x.mb.length}</td><td class="r">${x.refs.length}</td></tr>`).join('')}
+    </tbody></table></div><div class="tfoot"><span>${Math.min(list.length, AIALL[e] ? 1e9 : 40)} getoond · ${list.length} van ${A.length} antwoorden</span>${list.length > 40 ? `<button id="aiall">${AIALL[e] ? 'Toon minder' : 'Toon alle ' + list.length}</button>` : ''}</div></div></section>`;
+  } else if (sub === 'urls') {
+    const ub = urlBoard(A);
+    html = (isDetail(st.run) ? '' : slimNote()) + `<section><div class="tcard"><div class="thead"><div><h4>Geciteerde URL's</h4><p>Hoe vaak een pagina als bron in een antwoord staat, en in hoeveel plaatsen. De pagina opent in een nieuw tabblad.</p></div></div>
+    <div class="scroll"><table class="urls"><thead><tr><th>#</th><th>URL</th><th>Domein</th><th class="r">Antwoorden</th><th class="r">Plaatsen</th></tr></thead><tbody>${ub.slice(0, 50).map((r, i) => `<tr class="${r.d === OWN ? 'own' : ''}"><td><span class="rank">${i + 1}</span></td><td><a class="plain" href="${esc(r.u)}" target="_blank" rel="noopener" title="${esc(r.t)}"><span class="trunc">${esc(r.u.replace(/^https?:\/\/(www\.)?/, ''))}</span>${extIcon}</a></td><td class="of">${esc(r.d)}</td><td class="r">${r.n}</td><td class="r">${r.c.size}</td></tr>`).join('')}</tbody></table></div><div class="tfoot"><span>Top ${Math.min(50, ub.length)} van ${ub.length} URL's</span></div></div></section>`;
+  } else if (sub === 'profielen') {
+    const gb = gbpBoard(A), withG = A.filter(x => x.refs.some(r => r.g)).length;
+    html = (isDetail(st.run) ? '' : slimNote()) + `<section><div class="grid g3">
+    <div class="card kpi"><span class="stat-l">Antwoorden met Bedrijfsprofielen</span><span class="num">${pct(withG, A.length)}</span><span class="of">${withG} van ${A.length} antwoorden</span></div>
+    <div class="card kpi"><span class="stat-l">Eigen profiel geciteerd</span><span class="num">${pct(a.cg, a.n)}</span><span class="of">${a.cg} van ${a.n} antwoorden</span></div>
+    <div class="card kpi"><span class="stat-l">Unieke profielen</span><span class="num">${gb.length}</span><span class="of">als bron gebruikt</span></div></div></section>
+    <section><div class="tcard"><div class="thead"><div><h4>Geciteerde Bedrijfsprofielen</h4><p>Google Bedrijfsprofielen die als bron in het antwoord staan. Elke vestiging telt apart.</p></div></div>
+    <div class="scroll"><table class="urls"><thead><tr><th>#</th><th>Bedrijfsprofiel</th><th class="r">Antwoorden</th><th class="r">Plaatsen</th></tr></thead><tbody>${gb.slice(0, 40).map((r, i) => `<tr class="${r.o ? 'own' : ''}"><td><span class="rank">${i + 1}</span></td><td><span class="trunc">${esc(r.t)}</span></td><td class="r">${r.n}</td><td class="r">${r.c.size}</td></tr>`).join('')}</tbody></table></div><div class="tfoot"><span>Top ${Math.min(40, gb.length)} van ${gb.length} profielen</span></div></div></section>`;
+  } else {
+    const met = AIMET[e], all = runsUpTo(), m = new Map();
+    const okAns = x => met === 'm' ? x.m : x.ci;
+    all.forEach(r => fA(e, r).forEach(x => { (met === 'm' ? x.mb : x.cb).forEach(b => { const y = m.get(b) || { name: b, by: new Map() }; y.by.set(r, (y.by.get(r) || 0) + 1); m.set(b, y); }); }));
+    m.forEach(y => { all.forEach(r => { if (!y.by.has(r)) y.by.set(r, 0); }); y.s = streakOf(all.map(r => y.by.get(r) > 0)); });
+    const rows = [...m.values()].sort((a, b) => (b.by.get(st.run) || 0) - (a.by.get(st.run) || 0)).slice(0, 15);
+    const keys = A.map(x => ({ c: x.c, k: x.k }));
+    const stFn = (k, r) => { const x = D.ai.find(z => z.e === e && z.r === r && z.c === k.c && z.k === k.k); return x ? (okAns(x) ? 1 : 0) : null; };
+    const lbl = met === 'm' ? 'genoemd' : 'geciteerd';
+    html = `<section style="display:flex;justify-content:space-between;gap:16px;align-items:flex-end;flex-wrap:wrap"><div><h3>Streaks</h3><p class="sub" style="margin-bottom:0">Hoeveel metingen op rij een merk of prompt ${lbl} wordt</p></div>${seg('aimet', [['m', 'Mentions'], ['c', 'Citaties']], met)}</section>
+    ${runNote()}
+    <section>${entityStreakTable({ h: 'Merkzichtbaarheid', col: 'Merk' }, `Cellen: aantal ${e === 'aio' ? 'AI Overviews' : 'antwoorden'} waarin het merk ${lbl} wordt. Details opent die antwoorden.`, rows, x => x.name === OWNB, x => `data-brand="${esc(x.name)}"`)}</section>
+    <section>${itemStreakTable('GaragePark per ' + (e === 'aio' ? 'zoekopdracht' : 'prompt'), `Paars = GaragePark ${lbl} · streep = niet ${lbl} · punt = geen antwoord gemeten.`, keys, stFn, k => { const x = A.find(z => z.c === k.c && z.k === k.k); return `data-ai="${D.ai.indexOf(x)}"`; }, '')}</section>`;
+  }
+  return subtabs(e) + html;
+}
+
+function vChatGPT() {
+  return `<section><div class="band"><div><p class="eyebrow">ChatGPT</p><h2>Nog niet <span class="hl">gemeten.</span></h2><p>In deze proof of concept meten we Google: zoekresultaten, AI Overviews en AI Mode.</p></div>
+  <div><p class="eyebrow">Wat er nodig is</p><p>DataForSEO heeft een ChatGPT-scraper met antwoord, bronnen, genoemde merken en fan-out queries. Locatie werkt daar alleen op landniveau, dus lokale dekking meten we met de plaatsnaam in de prompt.</p></div></div></section>
+  <section><div class="grid g3">
+  <div class="card"><h4>Zelfde prompts</h4><p class="cap" style="margin-top:8px">De ${KWS.length * CITIES.length} prompts uit AI Mode gaan één op één naar ChatGPT, zodat beide engines naast elkaar te vergelijken zijn.</p></div>
+  <div class="card"><h4>Zelfde inzichten</h4><p class="cap" style="margin-top:8px">Mention share, citation share, geciteerde URL's, streaks en per prompt het volledige antwoord, net als bij AI Mode.</p></div>
+  <div class="card"><h4>Kosten en doorlooptijd</h4><p class="cap" style="margin-top:8px">ChatGPT-calls zijn duurder en trager (tot 2 minuten per prompt). Daarom pas in de wekelijkse cloud-run.</p></div></div></section>`;
+}
+
+// ==== drawers ====
+function md(s) {
+  const lines = esc(s).split('\n'); let out = '', inList = false;
+  const inline = t => t.replace(/\[\[(\d+)\]\]\((https?:[^)\s]+)\)/g, '<sup><a href="$2" target="_blank" rel="noopener">$1</a></sup>')
+    .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>').replace(/`([^`]+)`/g, '$1')
+    .replace(/(GaragePark|Garage Park|garagepark\.nl)(?![^<]*>)/g, '<mark>$1</mark>');
+  lines.forEach(l => {
+    const t = l.trim();
+    if (/^[-*] /.test(t)) { if (!inList) { out += '<ul>'; inList = true; } out += '<li>' + inline(t.slice(2)) + '</li>'; return; }
+    if (inList && t && !/^#/.test(t) && out.endsWith('</li>')) { out = out.slice(0, -5) + '<br>' + inline(t) + '</li>'; return; }
+    if (inList) { out += '</ul>'; inList = false; }
+    if (/^#{1,6} /.test(t)) out += '<h5>' + inline(t.replace(/^#+ /, '')) + '</h5>';
+    else if (/^\|/.test(t)) out += '<p style="font-family:var(--font-head);font-size:12.5px;white-space:pre-wrap">' + inline(t) + '</p>';
+    else if (t) out += '<p>' + inline(t) + '</p>';
+  });
+  if (inList) out += '</ul>';
+  return out;
+}
+function openDrawer(html) { $('#drawer').innerHTML = '<button class="x" id="close">Sluiten</button>' + html; $('#ov').hidden = false; $('#close').focus(); }
+function closeDrawer() { $('#ov').hidden = true; }
+function aiDrawer(i) {
+  const x = D.ai[i];
+  const s = D.serps.find(z => z.r === x.r && z.c === x.c && z.k === x.k);
+  openDrawer(`<div><p class="eyebrow">${({ aio: 'AI Overview', aim: 'AI Mode', cgpt: 'ChatGPT' })[x.e]} · ${esc(x.c)} · ${fmtDate(x.r)}</p><h2>${esc(x.p)}</h2></div>
+  <div class="chips"><span class="chip ${x.m ? 'yes' : 'no'}">${x.m ? 'GaragePark genoemd' : 'GaragePark niet genoemd'}</span><span class="chip ${x.cw ? 'yes' : 'no'}">${x.cw ? 'garagepark.nl geciteerd' : 'garagepark.nl niet geciteerd'}</span><span class="chip ${x.cg ? 'yes' : 'no'}">${x.cg ? 'Bedrijfsprofiel geciteerd' : 'Geen eigen Bedrijfsprofiel'}</span><span class="chip soft">Zoekvolume keyword ${x.v.toLocaleString('nl-NL')}</span></div>
+  ${x.mb.length ? `<div><p class="eyebrow">Genoemde merken</p><div class="chips">${x.mb.map(b => `<span class="chip ${b === OWNB ? 'yes' : 'soft'}">${esc(b)}</span>`).join('')}</div></div>` : ''}
+  ${x.md ? `<div class="answer">${md(x.md)}</div>` : slimNote()}
+  <div><p class="eyebrow">Bronnen (${x.refs.length})</p><div class="src">${x.refs.map(r => `<a class="s ${r.d === OWN || (r.g && r.b === OWNB) ? 'own' : ''}" href="${esc(r.u)}" target="_blank" rel="noopener"><span class="d">${esc(r.d)}${r.k === 'link' ? ' · inline link' : ''}</span><span>${esc(r.t)}</span>${r.x ? `<small>${esc(r.x)}</small>` : ''}</a>`).join('')}</div></div>
+  ${x.e === 'aio' && s ? `<button class="x" style="align-self:flex-start" data-serp="${esc(x.c)}|${esc(x.k)}">Bekijk het hele zoekresultaat</button>` : ''}`);
+}
+function serpDrawer(c, k) {
+  const s = D.serps.find(z => z.r === st.run && z.c === c && z.k === k); if (!s) return;
+  const ai = D.ai.find(z => z.e === 'aio' && z.r === s.r && z.c === c && z.k === k);
+  openDrawer(`<div><p class="eyebrow">Google · mobiel · ${esc(c)} · ${fmtDate(s.r)}</p><h2>${esc(k)}</h2></div>
+  <div class="chips"><span class="chip ${s.pos ? 'yes' : 'no'}">${s.pos ? 'garagepark.nl op #' + s.pos : 'Niet in top 20'}</span><span class="chip ${s.lpo ? 'yes' : 'no'}">${s.lpo ? 'In local pack' : 'Niet in local pack'}</span>${ai ? `<span class="chip ${ai.m ? 'yes' : 'no'}">AIO ${ai.m ? 'noemt' : 'noemt niet'} GaragePark</span>` : '<span class="chip no">Geen AI Overview</span>'}<span class="chip soft">Volume ${s.v.toLocaleString('nl-NL')}</span></div>
+  <div><p class="eyebrow">SERP features</p><div class="chips">${s.f.map(f => `<span class="chip soft">${esc(f.replace(/_/g, ' '))}</span>`).join('')}</div></div>
+  ${s.lp.length ? `<div><p class="eyebrow">Local pack</p><div class="serp">${s.lp.map((l, i) => `<div class="r ${l.o ? 'own' : ''}"><b>${i + 1}</b><div>${esc(l.t)}<small>${l.rt ? '★ ' + nf(l.rt) + ' (' + l.n + ' reviews)' : ''}</small></div></div>`).join('')}</div></div>` : ''}
+  ${ai ? `<button class="x" style="align-self:flex-start" data-ai="${D.ai.indexOf(ai)}">Open de AI Overview</button>` : ''}
+  <div><p class="eyebrow">Organische resultaten</p><div class="serp">${s.org.map(o => `<div class="r ${o.d === OWN ? 'own' : ''}"><b>${o.p}</b><div>${esc(o.t)}<small>${esc(o.d)}${o.u ? ' · ' + esc(o.u.replace(/^https?:\/\/(www\.)?/, '').slice(0, 90)) : ''}</small></div></div>`).join('')}</div></div>
+  ${s.chk ? `<p class="of">Controleer zelf: <a href="${esc(s.chk)}" target="_blank" rel="noopener">open deze zoekopdracht in Google</a> (resultaat kan afwijken door locatie en moment).</p>` : ''}`);
+}
+function domDrawer(d) {
+  const N = GTOP.n, S = fS().filter(s => s.org.some(o => o.d === d && o.p <= N));
+  openDrawer(`<div><p class="eyebrow">Domein · top ${N} · ${fmtDate(st.run)}</p><h2>${esc(d)}</h2><p class="of">${S.length} zoekresultaten waarin ${esc(d)} in de top ${N} staat. Klik voor het volledige resultaat.</p></div>
+  <div class="tcard"><div class="scroll"><table><thead><tr><th>Plaats</th><th>Keyword</th><th class="r">Positie</th></tr></thead><tbody>${S.map(s => `<tr class="click" data-serp="${esc(s.c)}|${esc(s.k)}"><td>${esc(s.c)}</td><td>${esc(s.k)}</td><td class="r">${Math.min(...s.org.filter(o => o.d === d).map(o => o.p))}</td></tr>`).join('')}</tbody></table></div></div>`);
+}
+function brandDrawer(b) {
+  const e = engOf(tab()), met = AIMET[e];
+  const A = fA(e).filter(x => (met === 'm' ? x.mb : x.cb).includes(b));
+  openDrawer(`<div><p class="eyebrow">${({ aio: 'AI Overviews', aim: 'AI Mode', cgpt: 'ChatGPT' })[e]} · ${met === 'm' ? 'genoemd' : 'geciteerd'} · ${fmtDate(st.run)}</p><h2>${esc(b)}</h2><p class="of">${A.length} antwoorden. Klik voor het volledige antwoord.</p></div>
+  <div class="tcard"><div class="scroll"><table><thead><tr><th>Plaats</th><th>${e === 'aio' ? 'Zoekopdracht' : 'Prompt'}</th><th>GaragePark</th></tr></thead><tbody>${A.map(x => `<tr class="click" data-ai="${D.ai.indexOf(x)}"><td>${esc(x.c)}</td><td><span class="trunc">${esc(x.p)}</span></td><td><span class="chip ${x.m ? 'yes' : 'no'}">${x.m ? 'Genoemd' : 'Niet genoemd'}</span></td></tr>`).join('')}</tbody></table></div></div>`);
+}
+function featDrawer(f) {
+  const S = fS().filter(s => s.f.includes(f));
+  openDrawer(`<div><p class="eyebrow">SERP feature</p><h2>${esc(f.replace(/_/g, ' '))}</h2><p class="of">${S.length} zoekresultaten. Klik voor het volledige resultaat.</p></div>
+  <div class="tcard"><div class="scroll"><table><thead><tr><th>Plaats</th><th>Keyword</th><th class="r">Positie GaragePark</th></tr></thead><tbody>${S.map(s => `<tr class="click" data-serp="${esc(s.c)}|${esc(s.k)}"><td>${esc(s.c)}</td><td>${esc(s.k)}</td><td class="r">${s.pos || 'n.v.t.'}</td></tr>`).join('')}</tbody></table></div></div>`);
+}
+
+// ==== router ====
+function tab() { const h = location.hash.slice(1); return TABS.some(t => t[0] === h) ? h : 'overzicht'; }
+const META = {
+  overzicht: ['Lokale vindbaarheid · ' + CITIES.length + ' vestigingsplaatsen', 'Search &amp; AI performance', 'Van zoekresultaat tot AI-antwoord. Per plaats zien waar GaragePark gevonden, genoemd en geciteerd wordt.'],
+  google: ['Google Search · mobiel · top 20', 'Google Search', 'Organische posities, concurrerende domeinen, local pack en SERP features per plaats.'],
+  aio: ['Google · AI Overviews', 'AI Overviews', 'Wordt GaragePark genoemd en als bron gebruikt in de AI Overview boven de zoekresultaten?'],
+  chatgpt: ['OpenAI · ChatGPT · Nederland', 'ChatGPT', HAS_GPT ? 'Wat antwoordt ChatGPT met webzoeken op dezelfde lokale prompts als AI Mode?' : 'Komt in de volgende fase.'],
+  aimode: ['Google · AI Mode', 'AI Mode', 'Wat antwoordt Google AI Mode als iemand een garagebox of opslagruimte zoekt in de buurt?']
+};
+function render() {
+  const t = tab();
+  document.querySelectorAll('#tabs a').forEach(a => a.classList.toggle('on', a.dataset.t === t));
+  const [e, h, l] = META[t];
+  $('#eyebrow').textContent = e + (st.city ? ' · ' + st.city : ''); $('#title').innerHTML = h + '<span class="p">.</span>'; $('#lede').innerHTML = l;
+  $('#crumb').textContent = TABS.find(x => x[0] === t)[1];
+  selbar();
+  $('#view').innerHTML = t === 'overzicht' ? vOverview() : t === 'google' ? vGoogle() : t === 'aio' ? vAI('aio') : t === 'aimode' ? vAI('aim') : HAS_GPT ? vAI('cgpt') : vChatGPT();
+  const aif = $('#aif'); if (aif) aif.value = AIF[engOf(t)];
+}
+document.addEventListener('click', ev => {
+  const el = ev.target.closest('[data-city],[data-serp],[data-ai],[data-feat],[data-sort],[data-sub],[data-seg],[data-dom],[data-brand],#domall,#aiall,#stkall,#ov');
+  if (!el) return;
+  if (el.id === 'ov') { if (ev.target === el) closeDrawer(); return; }
+  if (el.dataset.sub) { const [k, v] = el.dataset.sub.split('|'); subSt[k] = v; stkQ = ''; stkAll = false; render(); return; }
+  if (el.dataset.seg) { const [k, v] = el.dataset.seg.split('|'); if (k === 'gtop') GTOP.n = +v; else if (k === 'mapm') mapMetric = v; else AIMET[engOf(tab())] = v; render(); return; }
+  if (el.dataset.dom) { domDrawer(el.dataset.dom); return; }
+  if (el.dataset.brand) { brandDrawer(el.dataset.brand); return; }
+  if (el.id === 'stkall') { stkAll = !stkAll; render(); return; }
+  if (el.dataset.ai) { ev.preventDefault(); aiDrawer(+el.dataset.ai); return; }
+  if (el.dataset.serp) { const [c, k] = el.dataset.serp.split('|'); serpDrawer(c, k); return; }
+  if (el.dataset.feat) { featDrawer(el.dataset.feat); return; }
+  if (el.dataset.sort) { const k = el.dataset.sort; domSort = domSort[0] === k ? [k, -domSort[1]] : [k, k === 'avg' || k === 'd' ? 1 : -1]; render(); return; }
+  if (el.id === 'domall') { domAll = !domAll; render(); return; }
+  if (el.id === 'aiall') { const k = engOf(tab()); AIALL[k] = !AIALL[k]; render(); return; }
+  if (el.dataset.city) { ev.preventDefault(); if (el.dataset.tab) location.hash = el.dataset.tab; setCity(el.dataset.city); }
+});
+document.addEventListener('click', ev => { if (ev.target.id === 'close') closeDrawer(); });
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape') closeDrawer(); if (ev.key === 'Enter' && ev.target.matches('tr.click')) ev.target.click(); if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches('g.city')) { ev.preventDefault(); setCity(ev.target.dataset.city); } });
+document.addEventListener('input', ev => {
+  const t = engOf(tab());
+  if (ev.target.id === 'domq') { domQuery = ev.target.value; render(); const i = $('#domq'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+  if (ev.target.id === 'stkq') { stkQ = ev.target.value; render(); const i = $('#stkq'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+  if (ev.target.id === 'aiq') { AIQ[t] = ev.target.value; render(); const i = $('#aiq'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+});
+document.addEventListener('change', ev => { if (ev.target.id === 'aif') { AIF[engOf(tab())] = ev.target.value; render(); } });
+window.addEventListener('hashchange', () => { render(); scrollTo({ top: 0 }); });
+fill(); render();
+</script>
