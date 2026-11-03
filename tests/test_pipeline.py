@@ -112,6 +112,7 @@ def test_bq_load_with_fake_client(records):
     class Fake:
         def load_table_from_json(self, rows, dest, job_config):
             json.dumps(rows)
+            assert job_config.time_partitioning is None and job_config.clustering_fields is None  # must match the table, so leave out
             calls.append((dest, len(rows), job_config.write_disposition))
             return Job()
         def query(self, sql):

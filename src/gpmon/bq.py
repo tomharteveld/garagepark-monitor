@@ -79,9 +79,9 @@ def load_tables(T, c=None):
             part = [r for r in rows if r['run_date'] == d]
             if name == 'raw_tasks':
                 part = [dict(r, task=json.loads(r['task'])) for r in part]  # JSON column takes the object itself
+            # no partitioning/clustering here: the table already defines them and BigQuery rejects a mismatch
             job_cfg = bq.LoadJobConfig(schema=SCHEMAS[name], write_disposition='WRITE_TRUNCATE',
-                                       source_format=bq.SourceFormat.NEWLINE_DELIMITED_JSON,
-                                       time_partitioning=bq.TimePartitioning(field='run_date'))
+                                       source_format=bq.SourceFormat.NEWLINE_DELIMITED_JSON)
             dest = f"{tid(name)}${d.replace('-', '')}"
             if not part:  # still clear the partition so a re-run without data does not leave stale rows
                 c.query(f"DELETE FROM `{tid(name)}` WHERE run_date = '{d}'").result()
