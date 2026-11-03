@@ -96,7 +96,7 @@ def test_scrape_against_fake_api(records, tmp_path, monkeypatch):
     monkeypatch.setenv('DATAFORSEO_PASSWORD', 'y')
     monkeypatch.setattr(scrape.Client, 'session', lambda self: Sess())
     out = tmp_path / 'run.jsonl.gz'
-    scrape.main(['--limit', '4', '--date', '2026-11-09', '--out', str(out)])
+    scrape.main(['--limit', '4', '--date', '2026-11-09', '--out', str(out), '--queue', 'live'])
     got = list(transform.read_raw(out))
     assert len(got) == 4 and all(g['task'] and g['run_date'] == '2026-11-09' for g in got)
 
@@ -125,3 +125,38 @@ def test_bq_load_with_fake_client(records):
     assert any(d.endswith('serp_summary$20261102') for d in dests)
     assert any(d.endswith('raw_tasks$20261102') for d in dests)
     assert all(c[2] in ('WRITE_TRUNCATE', 'DML') for c in calls)
+
+
+def test_standard_queue_with_fake_api(records):
+    """task_post in batches, one task still queued on the first poll, one failing task falls back to Live."""
+    from gpmon import config, scrape
+    tasks = {e: next(r['task'] for r in records if r['task'] and r['engine'] == e) for e in ('google_organic', 'google_ai_mode')}
+    polls = {}
+
+    class Resp:
+        def __init__(self, data): self.data = data
+        def json(self): return self.data
+
+    class Sess:
+        def post(self, url, json, timeout):
+            eng = 'google_ai_mode' if 'ai_mode' in url else 'google_organic'
+            out = []
+            for t in json:
+                n = int(t['tag'])
+                code = 40501 if (eng == 'google_ai_mode' and n == 0) else 20100  # one rejected task
+                out.append({'id': f"{eng}-{n}", 'status_code': code, 'status_message': 'x', 'data': {'tag': t['tag']}})
+            return Resp({'status_code': 20000, 'tasks': out})
+        def get(self, url, timeout):
+            tid = url.rsplit('/', 1)[-1]
+            polls[tid] = polls.get(tid, 0) + 1
+            if tid.endswith('-1') and polls[tid] == 1:
+                return Resp({'tasks': [{'status_code': 40602, 'status_message': 'Task In Queue'}]})
+            eng = tid.rsplit('-', 1)[0]
+            return Resp({'tasks': [dict(tasks[eng], status_code=20000)]})
+
+    cli = scrape.Client('x', 'y')
+    cli.session = lambda: Sess()
+    jobs = scrape.build_jobs(config.load())[:6]  # 3 organic + 3 AI Mode
+    done, fallback = scrape.run_standard(cli, jobs, '2026-11-09', workers=4, max_wait_min=1, poll_s=0)
+    assert len(done) == 5 and all(r['queue'] == 'standard' and r['task'] for r in done)
+    assert len(fallback) == 1 and fallback[0]['engine'] == 'google_ai_mode'

@@ -9,6 +9,8 @@ scrape:
   os: ios
   depth: 20
   max_workers: 12
+  queue: standard          # standard = Standard Queue (about $0.65 per run, 5 to 20 min); live = Live endpoints (about $2.15, faster)
+  max_queue_minutes: 45    # tasks not ready by then are fetched Live
   engines:
     google_organic: true
     google_ai_mode: true

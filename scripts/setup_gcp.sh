@@ -25,17 +25,21 @@ OWNER="${GITHUB_REPO%%/*}"
 echo "Enabling APIs"
 gcloud services enable bigquery.googleapis.com iamcredentials.googleapis.com sts.googleapis.com iam.googleapis.com
 
+# A new service account takes a few seconds to become visible to IAM; retry instead of failing.
+retry() { local n=0; until "$@"; do n=$((n+1)); [ $n -ge 12 ] && return 1; echo "  wachten op Google IAM ($n/12)..."; sleep 10; done; }
+
 echo "Service account $SA"
 gcloud iam service-accounts describe "$SA" >/dev/null 2>&1 || \
   gcloud iam service-accounts create "$SA_NAME" --display-name "GaragePark monitor (GitHub Actions)"
+retry gcloud iam service-accounts describe "$SA" >/dev/null 2>&1
 
 echo "BigQuery dataset $DATASET ($LOCATION)"
 bq --location="$LOCATION" show "$PROJECT_ID:$DATASET" >/dev/null 2>&1 || \
   bq --location="$LOCATION" mk --dataset --description "GaragePark lokale Search & AI monitor" "$PROJECT_ID:$DATASET"
 
 echo "IAM: run jobs in the project, edit only this dataset"
-gcloud projects add-iam-policy-binding "$PROJECT_ID" --member "serviceAccount:$SA" --role roles/bigquery.jobUser --condition=None >/dev/null
-bq add-iam-policy-binding --member="serviceAccount:$SA" --role="roles/bigquery.dataEditor" "$PROJECT_ID:$DATASET" >/dev/null
+retry gcloud projects add-iam-policy-binding "$PROJECT_ID" --member "serviceAccount:$SA" --role roles/bigquery.jobUser --condition=None >/dev/null
+retry bq add-iam-policy-binding --member="serviceAccount:$SA" --role="roles/bigquery.dataEditor" "$PROJECT_ID:$DATASET" >/dev/null
 
 echo "Workload Identity pool + provider (trusts only $GITHUB_REPO)"
 gcloud iam workload-identity-pools describe "$POOL" --location=global >/dev/null 2>&1 || \
@@ -46,7 +50,7 @@ gcloud iam workload-identity-pools providers describe "$PROVIDER" --location=glo
     --attribute-mapping "google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.repository_owner=assertion.repository_owner" \
     --attribute-condition "assertion.repository == '${GITHUB_REPO}' && assertion.repository_owner == '${OWNER}'"
 
-gcloud iam service-accounts add-iam-policy-binding "$SA" --role roles/iam.workloadIdentityUser \
+retry gcloud iam service-accounts add-iam-policy-binding "$SA" --role roles/iam.workloadIdentityUser \
   --member "principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL}/attribute.repository/${GITHUB_REPO}" >/dev/null
 
 echo

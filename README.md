@@ -16,7 +16,7 @@ flowchart LR
 
 Elke maandag gebeurt automatisch:
 
-1. **Scrapen**: per plaats × keyword een Google-zoekresultaat (met AI Overview) en een AI Mode-antwoord via DataForSEO. 12 tegelijk, met retries. Faalt meer dan 10%, dan stopt de run en blijft de vorige week staan.
+1. **Scrapen**: per plaats × keyword een Google-zoekresultaat (met AI Overview) en een AI Mode-antwoord via de goedkopere Standard Queue van DataForSEO. Taken die na 45 minuten nog niet klaar zijn, worden alsnog Live opgehaald. Faalt meer dan 10%, dan stopt de run en blijft de vorige week staan.
 2. **Naar BigQuery**: de ruwe JSON wordt omgezet naar zeven tabellen. Elke week vervangt alleen zijn eigen datum-partitie, dus een week opnieuw draaien is veilig.
 3. **Dashboard bouwen**: een nieuwe `index.html` uit BigQuery, met de data erin gebakken. De laatste 2 metingen gaan volledig mee (antwoorden, bronnen, SERP-details), oudere compact (posities, mentions, citaties) zodat streaks en trends groeien en de pagina licht blijft.
 4. **Publiceren**: GitHub Pages vervangt de vorige versie op **dezelfde URL**. De iframe in Follo Tools wijst naar die URL en laat dus automatisch de nieuwste week zien.
@@ -172,6 +172,10 @@ Vanaf de volgende maandag draait alles automatisch. In de Actions-tab zie je elk
 
 Na een wijziging: commit, push en draai `rebuild` (alleen weergave) of wacht op maandag.
 
+## Live of Standard Queue
+
+`scrape.queue` in `config/monitor.yaml` staat op `standard`: ongeveer 70% goedkoper, de resultaten komen meestal binnen 5 tot 20 minuten. Zet hem op `live` als een run snel klaar moet zijn. Voor één handmatige run kan het ook met `python -m gpmon.scrape --queue live`.
+
 ## ChatGPT aanzetten
 
 Zet in `config/monitor.yaml` onder `engines` `chatgpt: true`. De scraper stuurt dan dezelfde prompts naar ChatGPT (Nederland, webzoeken aan), de antwoorden komen in dezelfde tabellen met `engine = 'cgpt'` en het ChatGPT-tabblad in het dashboard vult zich vanzelf. ChatGPT-calls zijn duurder en duren tot 2 minuten per stuk; reken op 15 tot 25 minuten extra looptijd.
@@ -209,10 +213,10 @@ De tabellen zijn ook direct te koppelen aan Looker Studio of FolloEngine.
 
 | Onderdeel | Ongeveer |
 |---|---|
-| DataForSEO (286 SERPs + 286 AI Mode) | $2,15 |
+| DataForSEO, Standard Queue (286 SERPs + 286 AI Mode) | ca. $0,65 (Live: $2,15) |
 | ChatGPT (als aan) | zie de DataForSEO-prijslijst voor LLM Scraper |
 | BigQuery | ca. 45 MB opslag per week, ruim binnen de gratis laag |
-| GitHub Actions | ca. 15 minuten per week |
+| GitHub Actions | ca. 20 tot 30 minuten per week (wachten op de queue) |
 | GitHub Pages | gratis |
 
 # Als iets misgaat
