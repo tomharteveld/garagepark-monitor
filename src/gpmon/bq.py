@@ -44,14 +44,24 @@ def tid(name):
 
 def setup(c=None):
     c = c or client()
-    ds = bq.Dataset(f'{config.BQ_PROJECT()}.{config.BQ_DATASET()}')
-    ds.location = config.BQ_LOCATION()
-    c.create_dataset(ds, exists_ok=True)
+    from google.api_core.exceptions import NotFound
+    ds_id = f'{config.BQ_PROJECT()}.{config.BQ_DATASET()}'
+    try:  # check first: the service account may edit the dataset but not create datasets in the project
+        c.get_dataset(ds_id)
+    except NotFound:
+        ds = bq.Dataset(ds_id)
+        ds.location = config.BQ_LOCATION()
+        c.create_dataset(ds)
     for name, schema in SCHEMAS.items():
+        try:
+            c.get_table(tid(name))
+            continue
+        except NotFound:
+            pass
         t = bq.Table(tid(name), schema=schema)
         t.time_partitioning = bq.TimePartitioning(type_=bq.TimePartitioningType.DAY, field='run_date')
         t.clustering_fields = CLUSTER[name]
-        c.create_table(t, exists_ok=True)
+        c.create_table(t)
     print(f'Dataset {config.BQ_DATASET()} ready ({len(SCHEMAS)} tables)')
 
 
