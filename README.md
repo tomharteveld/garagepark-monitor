@@ -150,6 +150,8 @@ Deel daarna alleen de Follo-link en het wachtwoord met de klant. Dit hoef je maa
 
 Vanaf de volgende maandag draait alles automatisch. In de Actions-tab zie je elke week een run; bij een fout stuurt GitHub je een mail.
 
+GitHub zet geplande workflows op publieke repositories normaal uit na 60 dagen zonder commits. De job `keepalive` zet de workflow aan het eind van elke run opnieuw aan, waardoor die teller steeds reset. Je hoeft daar niets voor te doen.
+
 # Dagelijks gebruik
 
 ## Modi van de workflow
