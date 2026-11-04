@@ -181,7 +181,35 @@ Naast de zoekresultaten haalt de job `gbp` elke week alle Google Bedrijfsprofiel
 
 Het tabblad Bedrijfsprofielen berekent daaruit (in `src/gpmon/gbp_view.py`) de profielscore, de onderwerpen in reviews en een actielijst per park met impact en moeite. Afvinken in die lijst wordt per browser onthouden.
 
-Alleen de bedrijfsprofielen opnieuw ophalen: Run workflow met mode `gbp`. Instellingen staan onder `gbp:` in `config/monitor.yaml`. Prestaties uit Bedrijfsprofielmanager (weergaven, zoektermen, gesprekken, routes) vragen beheerderstoegang tot de profielen en volgen later.
+Alleen de bedrijfsprofielen opnieuw ophalen: Run workflow met mode `gbp`. Instellingen staan onder `gbp:` in `config/monitor.yaml`.
+
+### Prestaties en nieuwe parken (Business Profile API)
+
+Met de koppeling aan Bedrijfsprofielmanager (account seodata@folloagency.com) komt er elke week bij:
+
+- weergaven per park (Zoeken en Maps, mobiel en desktop), websiteklikken, routes, gesprekken, berichten en afspraken, dagelijks tot 18 maanden terug, in `gbp_perf_daily`;
+- de zoektermen waarop elk profiel gevonden werd, per maand, in `gbp_keywords`;
+- de lijst met alle GaragePark-locaties in de beheerde accounts, in `gbp_locations`.
+
+Die laatste lijst is de bron voor **nieuwe parken**. Een park dat in Bedrijfsprofielmanager bijkomt, wordt de eerstvolgende run vanzelf gemeten, krijgt concurrenten uit de buurt en verschijnt in het dashboard met het label Nieuw. Locaties die nog niet zichtbaar zijn in Google Maps staan apart op het overzicht. Ligt een nieuw park in een plaats zonder zoekmeting, dan meldt het dashboard dat; voeg de plaats dan toe onder `cities` als je ook Google Search en AI daar wilt meten. Het account beheert ook andere klanten: alleen locaties met het domein garagepark.nl of het GaragePark-telefoonnummer tellen mee.
+
+Eenmalig instellen (ongeveer 15 minuten):
+
+1. **Project.** Gebruik het Google Cloud project waarvoor de Business Profile API-toegang is goedgekeurd (Google keurt dit per project goed, via het aanvraagformulier voor de Business Profile APIs). Zet daarin aan: *My Business Account Management API*, *My Business Business Information API* en *Business Profile Performance API*.
+2. **OAuth-toestemmingsscherm.** APIs en services, OAuth-toestemmingsscherm, gebruikerstype **Intern**. Bij Intern verloopt de refresh token niet na 7 dagen.
+3. **OAuth client.** Credentials, Create credentials, OAuth client ID, type **Desktop app**. Download de JSON als `client.json`.
+4. **Inloggen als seodata@folloagency.com.** Open Cloud Shell, upload `client.json` en voer uit:
+   ```
+   gcloud auth application-default login --client-id-file=client.json --no-launch-browser \
+     --scopes=https://www.googleapis.com/auth/business.manage,https://www.googleapis.com/auth/cloud-platform
+   ```
+   Open de link, log in met **seodata@folloagency.com**, geef toestemming en plak de code terug.
+5. **Secret.** `cat ~/.config/gcloud/application_default_credentials.json` en plak de volledige inhoud in GitHub, Settings, Secrets and variables, Actions, New repository secret, naam **GBP_OAUTH_JSON**. Verwijder daarna het bestand en `client.json` uit Cloud Shell.
+6. **Testen.** Run workflow met mode `smoke`. De stap *Fetch performance* toont dan het aantal accounts en GaragePark-locaties. Daarna mode `gbp` (alleen profielen) of `full` (alles).
+
+Zonder secret draait alles zoals voorheen en laat het tabblad Prestaties zien wat er nog nodig is. Lokaal controleren: `GBP_OAUTH_JSON=pad/naar/credentials.json PYTHONPATH=src python -m gpmon.gbp_perf --check`.
+
+Fouten: *SERVICE_DISABLED* betekent dat een van de drie API's in stap 1 uit staat; *quota 0* betekent dat de API-toegang voor dat project nog niet is goedgekeurd; *invalid_grant* betekent een verlopen token (toestemmingsscherm niet op Intern, of wachtwoord gewijzigd): herhaal stap 4 en 5.
 
 ## Live of Standard Queue
 

@@ -215,6 +215,9 @@ table.urls tr.own td{font-weight:400}
 .mapcard{display:flex;flex-direction:column;gap:16px}
 .maphead{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start}
 .maphead .seg{flex-wrap:wrap}
+.thead .seg{flex-wrap:wrap;max-width:100%}
+.g21{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+@media (max-width:980px){.g21{grid-template-columns:minmax(0,1fr)}}
 .mapgrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:28px;align-items:start}
 .mapwrap svg{width:100%;height:auto;display:block;max-height:720px}
 .mapwrap .land{fill:var(--tint);stroke:var(--accent-soft);stroke-width:1.2;stroke-linejoin:round}

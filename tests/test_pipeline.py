@@ -194,3 +194,41 @@ def test_gbp_competitor_pick_skips_own_and_caps():
            {'cid': '2', 'people_also_search': []}]
     links, comps = gbp.pick_competitors(own, g, 2)
     assert [l['comp_cid'] for l in links] == ['3', '5'] and set(comps) == {'3', '5'}
+
+
+def test_gbp_perf_transform_aggregate_and_view():
+    bq = pytest.importorskip('gpmon.bq')
+    import datetime as dt
+    from gpmon import gbp, gbp_perf, gbp_view
+    T = gbp.transform_files(GBP_FIX)
+    own = [p for p in T['gbp_profiles'] if p['is_own']]
+    end = dt.date(2026, 11, 3)
+    recs = [dict(kind='location', run_date='2026-11-04', location_id=f'L{i}', account='accounts/1', account_name='Follo',
+                 title=p['title'], cid=p['cid'], place_id=None, website='https://garagepark.nl/x', city=p.get('city'),
+                 address='', latitude=None, longitude=None, status='OPEN', has_voice_of_merchant=True) for i, p in enumerate(own)]
+    recs.append(dict(kind='location', run_date='2026-11-04', location_id='Lnew', account='accounts/1', account_name='Follo',
+                     title='GaragePark Nieuw', cid=None, place_id=None, website='https://garagepark.nl/n', city='Ergens',
+                     address='', latitude=None, longitude=None, status='OPEN', has_voice_of_merchant=False))
+    for i in range(len(own)):
+        for d in range(400):
+            day = (end - dt.timedelta(days=d)).isoformat()
+            recs.append(dict(kind='daily', run_date='2026-11-04', location_id=f'L{i}', date=day, metric='BUSINESS_IMPRESSIONS_MOBILE_SEARCH', value=10))
+            recs.append(dict(kind='daily', run_date='2026-11-04', location_id=f'L{i}', date=day, metric='WEBSITE_CLICKS', value=1 if d < 28 else 0))
+        recs.append(dict(kind='keyword', run_date='2026-11-04', location_id=f'L{i}', month='2026-10-01', keyword='garagebox huren', value=100, threshold=None))
+        recs.append(dict(kind='keyword', run_date='2026-11-04', location_id=f'L{i}', month='2026-10-01', keyword='zeldzaam', value=None, threshold=15))
+    P = gbp_perf.transform([dict(r) for r in recs])
+    for name, rows in P.items():
+        fields = {f.name for f in bq.SCHEMAS[name]}
+        assert rows and all(not set(r) - fields for r in rows), name
+    assert all(r['value'] for r in P['gbp_perf_daily'])  # zero days dropped
+    T.update(gbp_perf.aggregate(P))
+    w = {(r['location_id'], r['metric']): r for r in T['gbp_perf_window']}
+    assert w[('L0', 'BUSINESS_IMPRESSIONS_MOBILE_SEARCH')]['cur'] == 280 and w[('L0', 'BUSINESS_IMPRESSIONS_MOBILE_SEARCH')]['prev'] == 280
+    assert w[('L0', 'BUSINESS_IMPRESSIONS_MOBILE_SEARCH')]['yoy'] == 280
+    V = gbp_view.build(T)
+    pf = V['own'][0]['pf']
+    assert pf['views'] == 280 and pf['act'] == 28 and pf['conv'] == 0.1
+    assert V['perf']['keywords'][0] == dict(k='garagebox huren', v=100 * len(own), cat=V['perf']['keywords'][0]['cat'], n=len(own))
+    hidden = [l for l in V['perf']['locations'] if not l['visible']]
+    assert [l['id'] for l in hidden] == ['Lnew']
+    json.dumps(V)

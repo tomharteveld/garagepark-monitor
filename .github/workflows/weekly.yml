@@ -88,6 +88,10 @@ jobs:
     if: ${{ contains(fromJSON('["full","gbp","smoke"]'), inputs.mode || 'full') }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    env:
+      # OAuth of the account that manages the profiles (Bedrijfsprofielmanager). Optional: without it the
+      # public profile data still runs, but performance and the account list of parks are skipped.
+      GBP_OAUTH_JSON: ${{ secrets.GBP_OAUTH_JSON }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -101,6 +105,10 @@ jobs:
           DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
           DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
         run: python -m gpmon.gbp ${{ env.MODE == 'smoke' && '--limit 2 --max-error-rate 1' || '' }}
+
+      - name: Fetch performance (Business Profile API)
+        if: ${{ env.GBP_OAUTH_JSON != '' }}
+        run: python -m gpmon.gbp_perf ${{ env.MODE == 'smoke' && '--limit 2' || '' }}
 
       - name: Google auth (Workload Identity Federation)
         if: ${{ env.MODE != 'smoke' && vars.GCP_WIF_PROVIDER != '' }}
@@ -116,7 +124,7 @@ jobs:
 
       - name: Load into BigQuery
         if: ${{ env.MODE != 'smoke' }}
-        run: python -m gpmon.bq load-gbp data/raw/gbp_*.jsonl.gz
+        run: python -m gpmon.bq load-gbp data/raw/gbp*.jsonl.gz
 
   build:
     needs: [scrape, gbp]

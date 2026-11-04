@@ -36,7 +36,7 @@ SCHEMAS = {
                      F('rating', FL), F('votes', I), F('stars', I, 'REPEATED'), F('total_photos', I), F('has_logo', B),
                      F('has_hours', B), F('open_247', B), F('attributes', S, 'REPEATED'), F('services', S, 'REPEATED'),
                      F('place_topics', S, 'REPEATED'), F('book_online_url', S), F('contact_url', S), F('from_listing_only', B),
-                     F('check_url', S), F('listing_updated', TS)],
+                     F('check_url', S), F('listing_updated', TS), F('source', S)],
     'gbp_competitors': [F('run_date', D, 'REQUIRED'), F('own_cid', S), F('comp_cid', S), F('rank', I)],
     'gbp_reviews': [F('run_date', D, 'REQUIRED'), F('cid', S), F('is_own', B), F('review_id', S), F('rating', FL), F('posted_at', TS),
                     F('time_ago', S), F('text', S), F('language', S), F('has_text', B), F('photos', B), F('local_guide', B),
@@ -44,11 +44,18 @@ SCHEMAS = {
     'gbp_posts': [F('run_date', D, 'REQUIRED'), F('cid', S), F('is_own', B), F('posted_at', TS), F('text', S), F('url', S),
                   F('has_image', B), F('links', S, 'REPEATED')],
     'gbp_run_log': [F('run_date', D, 'REQUIRED'), F('kind', S), F('cid', S), F('is_own', B), F('status', S), F('error', S), F('cost', FL)],
+    # Business Profile Performance API (own profiles, manager access), see gbp_perf.py
+    'gbp_locations': [F('run_date', D, 'REQUIRED'), F('location_id', S), F('account', S), F('account_name', S), F('title', S), F('cid', S),
+                      F('place_id', S), F('website', S), F('city', S), F('address', S), F('latitude', FL), F('longitude', FL),
+                      F('status', S), F('has_voice_of_merchant', B)],
+    'gbp_perf_daily': [F('run_date', D, 'REQUIRED'), F('location_id', S), F('date', D), F('metric', S), F('value', I)],
+    'gbp_keywords': [F('run_date', D, 'REQUIRED'), F('location_id', S), F('month', D), F('keyword', S), F('value', I), F('threshold', I)],
 }
 CLUSTER = {'serp_summary': ['city', 'keyword'], 'serp_results': ['domain', 'city'], 'local_pack': ['city'],
            'ai_answers': ['engine', 'city'], 'ai_citations': ['engine', 'domain'], 'run_log': ['engine'], 'raw_tasks': ['engine', 'city'],
            'gbp_profiles': ['is_own', 'cid'], 'gbp_competitors': ['own_cid'], 'gbp_reviews': ['is_own', 'cid'],
-           'gbp_posts': ['cid'], 'gbp_run_log': ['kind']}
+           'gbp_posts': ['cid'], 'gbp_run_log': ['kind'],
+           'gbp_locations': ['location_id'], 'gbp_perf_daily': ['location_id', 'metric'], 'gbp_keywords': ['location_id']}
 
 
 def client():
@@ -143,13 +150,37 @@ def fetch_gbp(c, q, history_runs=26):
         return {}
     last = f"DATE '{runs[0]}'"
     inn = '(' + ','.join(f"DATE '{d}'" for d in runs) + ')'
-    return {
+    out = {
         'gbp_profiles': q(f"SELECT * FROM `{tid('gbp_profiles')}` WHERE run_date = {last}")
         + q(f"SELECT run_date, cid, is_own, rating, votes, total_photos FROM `{tid('gbp_profiles')}` WHERE run_date IN {inn} AND run_date < {last}"),
         'gbp_competitors': q(f"SELECT * FROM `{tid('gbp_competitors')}` WHERE run_date = {last}"),
         'gbp_reviews': q(f"SELECT * EXCEPT(text, owner_answer), IF(is_own, text, NULL) AS text, IF(is_own, owner_answer, NULL) AS owner_answer, "
                          f"owner_answer IS NOT NULL AS answered FROM `{tid('gbp_reviews')}` WHERE run_date = {last}"),
         'gbp_posts': q(f"SELECT run_date, cid, is_own, posted_at, IF(is_own, text, NULL) AS text, url FROM `{tid('gbp_posts')}` WHERE run_date = {last}"),
+    }
+    out.update(fetch_gbp_perf(q))
+    return out
+
+
+def fetch_gbp_perf(q):
+    """Performance data, aggregated in BigQuery to months and 28-day windows so the page stays small."""
+    try:
+        pr = q(f"SELECT MAX(run_date) AS d FROM `{tid('gbp_locations')}`")[0]['d']
+    except Exception as e:
+        print(f'No performance data yet ({e.__class__.__name__})')
+        return {}
+    if not pr:
+        return {}
+    d = f"DATE '{pr.isoformat()}'"
+    return {
+        'gbp_locations': q(f"SELECT * FROM `{tid('gbp_locations')}` WHERE run_date = {d}"),
+        'gbp_perf_monthly': q(f"SELECT location_id, FORMAT_DATE('%Y-%m', date) AS month, metric, SUM(value) AS value FROM `{tid('gbp_perf_daily')}` "
+                              f"WHERE run_date = {d} GROUP BY 1, 2, 3"),
+        'gbp_perf_window': q(f"WITH m AS (SELECT MAX(date) AS e FROM `{tid('gbp_perf_daily')}` WHERE run_date = {d}) "
+                             f"SELECT location_id, metric, SUM(IF(date > e - 28, value, 0)) AS cur, SUM(IF(date <= e - 28 AND date > e - 56, value, 0)) AS prev, "
+                             f"SUM(IF(date > e - 393 AND date <= e - 365, value, 0)) AS yoy, ANY_VALUE(e) AS end_date "
+                             f"FROM `{tid('gbp_perf_daily')}`, m WHERE run_date = {d} GROUP BY 1, 2"),
+        'gbp_keywords': q(f"SELECT location_id, keyword, month, value, threshold FROM `{tid('gbp_keywords')}` WHERE run_date = {d}"),
     }
 
 
@@ -168,9 +199,10 @@ def main(argv=None):
     elif a.cmd == 'load-gbp':
         from . import gbp
         setup(c)
+        from . import gbp_perf
         for p in a.raw:
             print(f'Loading {p}')
-            load_tables(gbp.transform_files([p]), c)
+            load_tables((gbp_perf if 'gbpperf_' in p else gbp).transform_files([p]), c)
     else:
         setup(c)
         for p in a.raw:

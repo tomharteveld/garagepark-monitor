@@ -252,6 +252,9 @@ def build(T, run_date=None):
                         n=len(items), impact=a0['impact'], effort=a0['effort'], cids=[a['cid'] for a in items]))
     top.sort(key=lambda t: (IMPACT_ORDER[t['impact']], EFFORT_ORDER[t['effort']], -t['n']))
 
+    perf = build_perf(T, prof, cfg)
+    prev_cids = {p['cid'] for p in profiles_all if prev and str(p['run_date'])[:10] == prev}
+
     def slim(cid):
         p = prof[cid]
         h = hist.get(cid, {})
@@ -264,11 +267,105 @@ def build(T, run_date=None):
                     sv=list(p.get('services') or []), tp=list(p.get('place_topics') or []),
                     bk=p.get('book_online_url') or p.get('contact_url'), mu=p.get('check_url'),
                     comps=links.get(cid, []), pv=pv, hist=[dict(run=k, **v) for k, v in sorted(h.items())],
+                    new=bool(prev and p.get('is_own') and cid not in prev_cids), src=p.get('source'),
+                    pf=(perf or {}).get('by_cid', {}).get(cid),
                     **{k: v for k, v in stats[cid].items() if k != 'checks'}, chk=stats[cid]['checks'])
+
+    tracked = {c.lower() for c in cfg.get('cities', {})} | {"'s-hertogenbosch", 's-hertogenbosch', "'s-gravenhage", 'the hague'}
+    untracked = sorted({prof[c].get('city') for c in own if prof[c].get('city') and prof[c]['city'].lower() not in tracked})
 
     return dict(run=last, prev=prev, runs=runs, own=[slim(c) for c in sorted(own, key=lambda c: prof[c].get('city') or '')],
                 comp=[slim(c) for c in comps], reviews=sorted(own_reviews, key=lambda r: r['d'] or '', reverse=True),
                 themes=list(theme_rows.values()), months=[dict(m=m, n=months[m], neg=month_neg[m]) for m in sorted(months)],
                 actions=actions, top=top[:8], score_fields=SCORE_FIELDS,
-                note='Bron: Google Bedrijfsprofielen via DataForSEO (openbare profieldata en reviews). Prestaties als weergaven, '
-                     'zoektermen, gesprekken en routes vragen toegang tot Bedrijfsprofielmanager en volgen later.')
+                perf={k: v for k, v in perf.items() if k != 'by_cid'} if perf else None, untracked_cities=untracked,
+                note='Bron: Google Bedrijfsprofielen via DataForSEO (openbare profieldata en reviews) en, voor weergaven, '
+                     'zoektermen en acties, de Business Profile API van de beheerde profielen.')
+
+
+# ==== performance (Business Profile Performance API) ====
+
+VIEW_METRICS = {'BUSINESS_IMPRESSIONS_MOBILE_SEARCH': ('Zoeken', 'Mobiel'), 'BUSINESS_IMPRESSIONS_DESKTOP_SEARCH': ('Zoeken', 'Desktop'),
+                'BUSINESS_IMPRESSIONS_MOBILE_MAPS': ('Maps', 'Mobiel'), 'BUSINESS_IMPRESSIONS_DESKTOP_MAPS': ('Maps', 'Desktop')}
+ACTION_METRICS = {'CALL_CLICKS': 'Gesprekken', 'BUSINESS_DIRECTION_REQUESTS': 'Routes', 'WEBSITE_CLICKS': 'Websiteklikken',
+                  'BUSINESS_CONVERSATIONS': 'Berichten', 'BUSINESS_BOOKINGS': 'Afspraken'}
+KW_CATS = [('merk', 'Merk', r'garage ?park'), ('garagebox', 'Garagebox', r'garage|box'), ('opslag', 'Opslag', r'opslag|storage|stalling|loods|magazijn'),
+           ('werkruimte', 'Werk- en bedrijfsruimte', r'werkruimte|bedrijfsruimte|werkplaats|hobby|kantoor|unit')]
+
+
+def kw_cat(kw, city):
+    k = (kw or '').lower()
+    for key, _, rx in KW_CATS:
+        if re.search(rx, k):
+            return key
+    if city and city.lower() in k:
+        return 'plaats'
+    return 'overig'
+
+
+def build_perf(T, prof, cfg):
+    locs = T.get('gbp_locations') or []
+    if not locs or not T.get('gbp_perf_window'):
+        return {'locations': [dict(id=l['location_id'], t=l.get('title'), c=l.get('city'), cid=l.get('cid'), visible=bool(l.get('cid') and l['cid'] in prof))
+                              for l in locs]} if locs else None
+    lid2cid = {l['location_id']: l.get('cid') for l in locs}
+    by = defaultdict(lambda: dict(views=0, views_prev=0, views_yoy=0, actions={}, actions_prev={}, split={}))
+    end = None
+    for w in T['gbp_perf_window']:
+        cid = lid2cid.get(w['location_id']) or 'loc:' + w['location_id']
+        b = by[cid]
+        end = str(w.get('end_date'))[:10]
+        if w['metric'] in VIEW_METRICS:
+            b['views'] += w['cur'] or 0
+            b['views_prev'] += w['prev'] or 0
+            b['views_yoy'] += w['yoy'] or 0
+            pl, dev = VIEW_METRICS[w['metric']]
+            b['split'][f'{pl} {dev.lower()}'] = w['cur'] or 0
+        elif w['metric'] in ACTION_METRICS:
+            b['actions'][ACTION_METRICS[w['metric']]] = w['cur'] or 0
+            b['actions_prev'][ACTION_METRICS[w['metric']]] = w['prev'] or 0
+    for b in by.values():
+        b['act'] = sum(b['actions'].values())
+        b['act_prev'] = sum(b['actions_prev'].values())
+        b['conv'] = round(b['act'] / b['views'], 4) if b['views'] else None
+
+    months = defaultdict(lambda: defaultdict(int))
+    mon_by = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+    for m in T.get('gbp_perf_monthly') or []:
+        lab = (' '.join(VIEW_METRICS[m['metric']]) if m['metric'] in VIEW_METRICS else ACTION_METRICS.get(m['metric']))
+        if not lab:
+            continue
+        months[m['month']][lab] += m['value'] or 0
+        cid = lid2cid.get(m['location_id']) or 'loc:' + m['location_id']
+        mon_by[cid][m['month']]['views' if m['metric'] in VIEW_METRICS else 'act'] += m['value'] or 0
+    for cid, b in by.items():
+        b['months'] = [dict(m=k, **v) for k, v in sorted(mon_by[cid].items())]
+
+    city_of = {l['location_id']: l.get('city') for l in locs}
+    kw_tot, kw_loc, kw_month = defaultdict(int), defaultdict(lambda: defaultdict(int)), defaultdict(lambda: defaultdict(int))
+    kw_thr = defaultdict(int)
+    for k in T.get('gbp_keywords') or []:
+        v = k.get('value')
+        cid = lid2cid.get(k['location_id']) or 'loc:' + k['location_id']
+        if v is None:
+            kw_thr[k['keyword']] += 1
+            continue
+        kw_tot[k['keyword']] += v
+        kw_loc[cid][k['keyword']] += v
+        cat = kw_cat(k['keyword'], city_of.get(k['location_id']))
+        kw_month[str(k['month'])[:7]][cat] += v
+    for cid, kws in kw_loc.items():
+        city = (prof.get(cid) or {}).get('city')
+        by[cid]['kw'] = [dict(k=k, v=v, cat=kw_cat(k, city)) for k, v in sorted(kws.items(), key=lambda x: -x[1])[:25]]
+    cats = defaultdict(int)
+    for kw, v in kw_tot.items():
+        cats[kw_cat(kw, None)] += v
+    return dict(
+        end=end, by_cid=dict(by),
+        months=[dict(m=k, **v) for k, v in sorted(months.items())],
+        keywords=[dict(k=k, v=v, cat=kw_cat(k, None), n=sum(1 for c in kw_loc if k in kw_loc[c])) for k, v in sorted(kw_tot.items(), key=lambda x: -x[1])[:150]],
+        kw_cats=[dict(key=k, label=next((l for kk, l, _ in KW_CATS if kk == k), {'plaats': 'Plaats zonder product', 'overig': 'Overig'}.get(k, k)), v=v)
+                 for k, v in sorted(cats.items(), key=lambda x: -x[1])],
+        kw_months=[dict(m=m, **v) for m, v in sorted(kw_month.items())],
+        locations=[dict(id=l['location_id'], t=l.get('title'), c=l.get('city'), cid=l.get('cid'), visible=bool(l.get('cid') and l['cid'] in prof),
+                        status=l.get('status')) for l in locs])

@@ -53,6 +53,33 @@ def search_own(cli, g):
     return own
 
 
+def nearby_competitors(cli, lat, lon, exclude, n, radius_km=10):
+    """Competitors around a park that has no 'people also search' list yet (for example a new park)."""
+    body = [{'categories': ['self_storage_facility', 'storage_facility'], 'location_coordinate': f'{lat:.6f},{lon:.6f},{radius_km}',
+             'order_by': ['rating.votes_count,desc'], 'limit': 20}]
+    try:
+        r = cli.session().post(API + '/v3/business_data/business_listings/search/live', json=body, timeout=120).json()
+        items = (((r.get('tasks') or [{}])[0].get('result') or [{}])[0] or {}).get('items') or []
+    except Exception as e:
+        print(f'  nearby search failed: {e!r}', flush=True)
+        return []
+    return [dict(cid=i['cid'], title=i.get('title')) for i in items if i.get('cid') and i['cid'] not in exclude][:n]
+
+
+def api_own_locations(g):
+    """Locations in the Google Business Profile accounts Follo manages (source of truth for new parks)."""
+    from . import gbp_perf
+    if not config.env('GBP_OAUTH_JSON'):
+        return []
+    try:
+        _, locs = gbp_perf.own_locations(gbp_perf.Api(gbp_perf.load_oauth()), g)
+        print(f'Business Profile accounts: {len(locs)} GaragePark locations', flush=True)
+        return locs
+    except (SystemExit, Exception) as e:  # never let the API block the public profile data
+        print(f'WARNING: Business Profile API not used ({e})', flush=True)
+        return []
+
+
 def is_own(item, g):
     dom = (item.get('domain') or '').lower()
     return g['own_domain'] in dom or (item.get('phone') or '') == g['own_phone']
@@ -139,9 +166,35 @@ def collect(cli, pending, workers, max_wait_min, poll_s=45):
 def fetch(cli, cfg, run_date, limit=0):
     g = cfg['gbp']
     own = search_own(cli, g)
+    for o in own:
+        o['_source'] = 'listings'
+    api_locs = api_own_locations(g)
+    known = {o['cid']: o for o in own}
+    for l in api_locs:
+        if not l.get('cid'):
+            continue  # not (yet) published on Maps; shown in the dashboard from gbp_locations
+        if l['cid'] in known:
+            known[l['cid']]['_source'] = 'both'
+        else:  # a park that is new, or missing from the listings database: still measured
+            item = dict(cid=l['cid'], title=l['title'], latitude=l.get('latitude'), longitude=l.get('longitude'), url=l.get('website'),
+                        address=l.get('address'), address_info={'city': l.get('city'), 'country_code': 'NL'}, people_also_search=None, _source='api')
+            own.append(item)
+            known[l['cid']] = item
+    if api_locs:
+        print(f"Own profiles: {sum(o['_source'] == 'both' for o in own)} in both sources, "
+              f"{sum(o['_source'] == 'api' for o in own)} only in the accounts, {sum(o['_source'] == 'listings' for o in own)} only in listings", flush=True)
     if limit:
         own = own[:limit]
-    links, comps = pick_competitors(own, g, 3 if limit else g['competitors_per_location'])
+    per = 3 if limit else g['competitors_per_location']
+    links, comps = pick_competitors(own, g, per)
+    linked = {l['own_cid'] for l in links}
+    own_cids_all = {o['cid'] for o in own}
+    for o in own:
+        if o['cid'] not in linked and o.get('latitude'):
+            near = nearby_competitors(cli, o['latitude'], o['longitude'], own_cids_all, per)
+            for rank, c in enumerate(near, 1):
+                links.append(dict(own_cid=o['cid'], comp_cid=c['cid'], rank=rank))
+                comps[c['cid']] = c['title']
     own_cids = [o['cid'] for o in own]
     all_cids = own_cids + [c for c in comps if c not in set(own_cids)]
     print(f'{len(own_cids)} own profiles, {len(comps)} competitors', flush=True)
@@ -287,7 +340,7 @@ def transform(records):
             place_topics=[f'{k}:{v}' for k, v in (it.get('place_topics') or {}).items()],
             book_online_url=it.get('book_online_url'), contact_url=it.get('contact_url'),
             from_listing_only=cid not in infos, check_url=f'https://www.google.com/maps?cid={cid}',
-            listing_updated=_ts(lst.get('last_updated_time'))))
+            listing_updated=_ts(lst.get('last_updated_time')), source=lst.get('_source') if cid in own_cids else None))
     return T
 
 

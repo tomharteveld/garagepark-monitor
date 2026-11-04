@@ -128,6 +128,10 @@ def main(argv=None):
             from . import gbp
             G = gbp.transform_files(gfiles[-1:])
             T.update({k: v for k, v in G.items() if k != 'gbp_run_log'})
+        pfiles = sorted((config.ROOT / 'data' / 'raw').glob('gbpperf_*.jsonl.gz'))
+        if pfiles:
+            from . import gbp_perf
+            T.update(gbp_perf.aggregate(gbp_perf.transform_files(pfiles[-1:])))
     if not a.path:
         print('WARNING: DASHBOARD_PATH not set, dashboard is published at the site root')
     render(build_data(T, dcfg['detail_runs']), a.out, a.path or None)
