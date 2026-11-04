@@ -241,6 +241,78 @@ ol.rk .t{height:8px;border-radius:8px;background:var(--heat-0);overflow:hidden;d
 ol.rk .t i{display:block;height:100%;border-radius:8px}
 ol.rk b{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--font-head);font-size:13px}
 @media (max-width:980px){.mapgrid{grid-template-columns:minmax(0,1fr)}}
+
+/* Bedrijfsprofielen */
+.subtabs .cnt{background:var(--tint-2);color:var(--brand);border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px}
+.subtabs button.on .cnt{background:rgba(255,255,255,.18);color:var(--on-deep)}
+.vs{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.pill2{font-family:var(--font-head);font-weight:700;font-size:11px;border-radius:999px;padding:2px 9px}
+.pill2.ok{background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good)}
+.pill2.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.lvl{display:inline-block;font-family:var(--font-head);font-weight:700;font-size:11px;border-radius:6px;padding:2px 8px;white-space:nowrap}
+.lvl.l-hoog{background:var(--brand);color:var(--surface)} .lvl.l-middel{background:var(--tint-2);color:var(--brand)} .lvl.l-laag{background:var(--heat-0);color:var(--muted)}
+.vsrows{display:grid;gap:12px;margin-top:16px}
+.vsrow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 92px;gap:12px;align-items:center}
+.vsrow .vl{font-size:13px}
+.vb{display:grid;gap:3px}.vb i{display:block;height:7px;border-radius:7px}.vb i.o{background:var(--brand)}.vb i.c{background:var(--accent-soft)}
+.vn{display:flex;justify-content:flex-end;gap:8px;font-variant-numeric:tabular-nums}.vn b{font-family:var(--font-head)}.vn span{color:var(--muted)}
+.gtop{align-items:start}
+.mapwrap .gdot{cursor:pointer;outline:none}
+.mapwrap .gdot circle.m{stroke:var(--surface);stroke-width:2}
+.mapwrap .gdot circle.h0{fill:var(--heat-0);stroke:var(--subtle)} .mapwrap .gdot circle.h1{fill:var(--heat-1)} .mapwrap .gdot circle.h2{fill:var(--heat-2)}
+.mapwrap .gdot circle.h3{fill:var(--heat-3)} .mapwrap .gdot circle.h4{fill:var(--heat-4)} .mapwrap .gdot circle.h5{fill:var(--heat-5)}
+.mapwrap .gdot:hover circle.m,.mapwrap .gdot:focus-visible circle.m{stroke:var(--accent);stroke-width:3}
+table.gtab td .sub{display:block;font-size:12px}
+.warn{color:var(--bad)}
+.dist{display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;align-items:center}.dist .dl{font-size:13px;font-weight:600}
+.db{display:flex;height:16px;border-radius:6px;overflow:hidden;background:var(--heat-0)}.db i{display:block;height:100%}
+i.s5,.db i.s5{background:var(--brand)} i.s4,.db i.s4{background:var(--accent)} i.s3,.db i.s3{background:var(--accent-soft)} i.s2,.db i.s2{background:color-mix(in srgb,var(--bad) 55%,var(--surface))} i.s1,.db i.s1{background:var(--bad)}
+.tb{display:flex;align-items:center;gap:8px;min-width:140px}.tb i{display:block;height:7px;border-radius:7px;max-width:110px}.tb i.neg{background:var(--bad)}.tb i.pos{background:var(--accent)}.tb b{font-variant-numeric:tabular-nums}
+.rvlist{display:flex;flex-direction:column}
+.rv{border-top:1px solid var(--line)}
+.rv summary{display:grid;grid-template-columns:78px minmax(0,1fr) auto auto;gap:14px;align-items:center;padding:11px 24px;cursor:pointer;list-style:none}
+.rv summary::-webkit-details-marker{display:none}
+.rv summary:hover{background:var(--surface-2)}
+.rv.neg .stars{color:var(--bad)}
+.stars{color:var(--accent);letter-spacing:1px;font-size:13px;white-space:nowrap}
+.rvt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rvbody{padding:4px 24px 16px 116px;display:grid;gap:10px}
+.rvbody p{margin:0;line-height:1.55}
+.ans{background:var(--tint);border-radius:12px;padding:10px 14px}.ans b{font-family:var(--font-head);font-size:12px;color:var(--brand)}
+.chip.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.aprog{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;flex-wrap:wrap}
+.pg{display:grid;gap:6px;min-width:220px}.pg .bar{margin-top:0;height:8px}
+.x2{border:1px solid var(--line);background:var(--surface);color:var(--brand);border-radius:999px;padding:8px 14px;font-weight:600;cursor:pointer;font-family:var(--font-head);font-size:12.5px}
+.alist{display:grid;gap:16px}
+.agrp{background:var(--surface);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+.aghead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 20px;background:var(--tint);width:100%;border:0;text-align:left;cursor:default;color:var(--fg)}
+button.aghead{cursor:pointer}button.aghead:hover{background:var(--tint-2)}
+.aghead b{font-family:var(--font-head);font-size:15px}
+ul.acts{list-style:none;margin:0;padding:0}
+.act{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 20px;border-top:1px solid var(--line)}
+.agrp .act:first-child{border-top:0}
+.drawer ul.acts{background:var(--surface);border-radius:16px}
+.act p{margin:3px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+.act b{font-family:var(--font-head)}
+.act .lv{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.act label{position:relative;width:22px;height:22px;margin-top:1px;cursor:pointer}
+.act input{position:absolute;opacity:0;width:22px;height:22px;margin:0;cursor:pointer}
+.act .box{display:block;width:22px;height:22px;border-radius:7px;border:2px solid var(--accent-soft);background:var(--surface)}
+.act input:checked + .box{background:var(--accent);border-color:var(--accent)}
+.act input:checked + .box::after{content:"";display:block;width:6px;height:11px;border:solid #FFFFFF;border-width:0 2.5px 2.5px 0;transform:translate(6px,2px) rotate(45deg)}
+.act input:focus-visible + .box{outline:2px solid var(--accent);outline-offset:2px}
+.act.done b,.act.done .lnk2{text-decoration:line-through;color:var(--subtle)}
+.lnk2{border:0;background:none;padding:0;font:inherit;font-family:var(--font-head);font-weight:700;color:var(--fg);cursor:pointer;text-align:left}
+.lnk2:hover{color:var(--accent)}
+.mini{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.mini div{background:var(--surface);border-radius:12px;padding:10px 12px;display:grid;gap:2px}
+.mini span{font-size:11.5px;color:var(--muted)}.mini b{font-family:var(--font-head);font-size:15px}
+.quote{border-left:3px solid var(--accent);padding:4px 0 4px 16px;font-size:15.5px;line-height:1.55}
+.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px;padding:4px 24px 18px}
+.ck{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.ck .mk{font-weight:700;color:var(--subtle)}.ck.on .mk{color:var(--good)}.ck.off{color:var(--muted)}
+.meter.l{justify-content:flex-start}
+@media (max-width:760px){.mini{grid-template-columns:repeat(3,minmax(0,1fr))}.checks{grid-template-columns:minmax(0,1fr)}.rv summary{grid-template-columns:minmax(0,1fr) auto}.rv summary .stars{grid-column:1/-1}.rv summary>.of{display:none}.rvbody{padding:4px 16px 14px}.vsrow{grid-template-columns:minmax(0,1fr) 88px}.vsrow .vb{grid-column:1/-1;grid-row:2}}
 @media (max-width:1180px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:980px){
   .app{grid-template-columns:minmax(0,1fr)}
@@ -300,13 +372,14 @@ const ICON = {
   google: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
   aio: '<path d="M12 3l1.8 5.4L19 10l-5.2 1.6L12 17l-1.8-5.4L5 10l5.2-1.6z"/>',
   chatgpt: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
-  aimode: '<path d="m6 4 14 8-14 8z"/>'
+  aimode: '<path d="m6 4 14 8-14 8z"/>',
+  gbp: '<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>'
 };
 const HAS_GPT = (D.meta.engines || []).includes('cgpt');
 const ENG = { aio: 'aio', aimode: 'aim', chatgpt: 'cgpt' };
 const engOf = t => ENG[t] || 'aim';
 const isDetail = r => !D.meta.detail_runs || D.meta.detail_runs.includes(r);
-const TABS = [['overzicht', 'Overzicht'], ['google', 'Google Search'], ['aio', 'AI Overviews'], ['chatgpt', 'ChatGPT'], ['aimode', 'AI Mode']];
+const TABS = [['overzicht', 'Overzicht'], ['google', 'Google Search'], ['gbp', 'Bedrijfsprofielen'], ['aio', 'AI Overviews'], ['chatgpt', 'ChatGPT'], ['aimode', 'AI Mode']];
 const st = { city: '', kw: '', run: RUNS[RUNS.length - 1] };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -359,6 +432,15 @@ function streak(keyFn, okFn, items) {
 
 // ==== selection bar ====
 function selbar() {
+  if (tab() === 'gbp' && D.gbp) {
+    const ps = gProfiles();
+    $('#selbar').innerHTML = `<div class="k"><b>${ps.length}</b><span>eigen profielen${st.city ? ' · ' + esc(st.city) : ''}</span></div><div class="sep"></div>
+    <div class="k"><b>${new Set(ps.flatMap(p => p.comps || [])).size}</b><span>concurrenten in de buurt</span></div><div class="sep"></div>
+    <div class="k"><b>${ps.reduce((n, p) => n + (p.n_fetched || 0), 0)}</b><span>eigen reviews</span></div><div class="sep"></div>
+    <div class="k"><b>${D.gbp.actions.filter(a => !gDone[a.id] && ps.some(p => p.cid === a.cid)).length}</b><span>open acties</span></div><div class="sep"></div>
+    <div class="k"><b>${fmtDate(D.gbp.run)}</b><span>profielmeting</span></div>`;
+    return;
+  }
   const S = fS(), A1 = fA('aio'), A2 = fA('aim');
   $('#selbar').innerHTML = `<div class="k"><b>${st.city ? 1 : CITIES.length}</b><span>${st.city ? esc(st.city) : 'plaatsen'}</span></div><div class="sep"></div>
   <div class="k"><b>${st.kw ? 1 : KWS.length}</b><span>keywords</span></div><div class="sep"></div>
@@ -403,6 +485,7 @@ function vOverview() {
     ${aiCard('AI Mode', 'aimode', a2, p2, 'antwoorden')}</div></section>
 
   ${mapCard()}
+  ${gbpOverviewCard()}
   <section><div class="tcard"><div class="thead"><div><h4>Dekking per plaats</h4><p>Aandeel van de ${st.kw ? 'geselecteerde zoekopdracht' : KWS.length + ' keywords'} per plaats. Zichtbaarheid is de CTR-gewogen index. Klik op een plaats om het hele dashboard te filteren, of op een cel voor het bijbehorende tabblad.</p></div>
   <div class="legend"><span><i class="h0"></i>0%</span><span><i class="h1"></i>&lt;20%</span><span><i class="h2"></i>20 tot 40%</span><span><i class="h3"></i>40 tot 60%</span><span><i class="h4"></i>60 tot 80%</span><span><i class="h5"></i>80%+</span></div></div>
   <div class="scroll"><table class="heat"><thead><tr><th>Plaats</th>${hdr.map(h => `<th>${h}</th>`).join('')}<th class="r">Gem. positie</th></tr></thead><tbody>
@@ -743,6 +826,8 @@ function featDrawer(f) {
   <div class="tcard"><div class="scroll"><table><thead><tr><th>Plaats</th><th>Keyword</th><th class="r">Positie GaragePark</th></tr></thead><tbody>${S.map(s => `<tr class="click" data-serp="${esc(s.c)}|${esc(s.k)}"><td>${esc(s.c)}</td><td>${esc(s.k)}</td><td class="r">${s.pos || 'n.v.t.'}</td></tr>`).join('')}</tbody></table></div></div>`);
 }
 
+/*__GBP_JS__*/
+
 // ==== router ====
 function tab() { const h = location.hash.slice(1); return TABS.some(t => t[0] === h) ? h : 'overzicht'; }
 const META = {
@@ -750,6 +835,7 @@ const META = {
   google: ['Google Search · mobiel · top 20', 'Google Search', 'Organische posities, concurrerende domeinen, local pack en SERP features per plaats.'],
   aio: ['Google · AI Overviews', 'AI Overviews', 'Wordt GaragePark genoemd en als bron gebruikt in de AI Overview boven de zoekresultaten?'],
   chatgpt: ['OpenAI · ChatGPT · Nederland', 'ChatGPT', HAS_GPT ? 'Wat antwoordt ChatGPT met webzoeken op dezelfde lokale prompts als AI Mode?' : 'Komt in de volgende fase.'],
+  gbp: ['Google Bedrijfsprofielen · eigen parken en concurrenten', 'Bedrijfsprofielen', 'Profiel, reviews en concurrentie per park, met wat er per park beter moet.'],
   aimode: ['Google · AI Mode', 'AI Mode', 'Wat antwoordt Google AI Mode als iemand een garagebox of opslagruimte zoekt in de buurt?']
 };
 function render() {
@@ -759,7 +845,8 @@ function render() {
   $('#eyebrow').textContent = e + (st.city ? ' · ' + st.city : ''); $('#title').innerHTML = h + '<span class="p">.</span>'; $('#lede').innerHTML = l;
   $('#crumb').textContent = TABS.find(x => x[0] === t)[1];
   selbar();
-  $('#view').innerHTML = t === 'overzicht' ? vOverview() : t === 'google' ? vGoogle() : t === 'aio' ? vAI('aio') : t === 'aimode' ? vAI('aim') : HAS_GPT ? vAI('cgpt') : vChatGPT();
+  ['fKw', 'fRun'].forEach(id => { const l = $('#' + id).closest('label'); if (l) l.hidden = t === 'gbp'; });
+  $('#view').innerHTML = t === 'gbp' ? vGBP() : t === 'overzicht' ? vOverview() : t === 'google' ? vGoogle() : t === 'aio' ? vAI('aio') : t === 'aimode' ? vAI('aim') : HAS_GPT ? vAI('cgpt') : vChatGPT();
   const aif = $('#aif'); if (aif) aif.value = AIF[engOf(t)];
 }
 document.addEventListener('click', ev => {
@@ -767,7 +854,7 @@ document.addEventListener('click', ev => {
   if (!el) return;
   if (el.id === 'ov') { if (ev.target === el) closeDrawer(); return; }
   if (el.dataset.sub) { const [k, v] = el.dataset.sub.split('|'); subSt[k] = v; stkQ = ''; stkAll = false; render(); return; }
-  if (el.dataset.seg) { const [k, v] = el.dataset.seg.split('|'); if (k === 'gtop') GTOP.n = +v; else if (k === 'mapm') mapMetric = v; else AIMET[engOf(tab())] = v; render(); return; }
+  if (el.dataset.seg) { const [k, v] = el.dataset.seg.split('|'); if (gSeg(k, v)) return; if (k === 'gtop') GTOP.n = +v; else if (k === 'mapm') mapMetric = v; else AIMET[engOf(tab())] = v; render(); return; }
   if (el.dataset.dom) { domDrawer(el.dataset.dom); return; }
   if (el.dataset.brand) { brandDrawer(el.dataset.brand); return; }
   if (el.id === 'stkall') { stkAll = !stkAll; render(); return; }
@@ -789,5 +876,6 @@ document.addEventListener('input', ev => {
 });
 document.addEventListener('change', ev => { if (ev.target.id === 'aif') { AIF[engOf(tab())] = ev.target.value; render(); } });
 window.addEventListener('hashchange', () => { render(); scrollTo({ top: 0 }); });
+gbpEvents();
 fill(); render();
 </script>

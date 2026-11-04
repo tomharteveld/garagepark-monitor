@@ -62,7 +62,10 @@ def build_data(T, detail_runs=2):
                 cost=round(costs.get(runs[-1], 0), 2), errors=errors, own_domain=cfg['client']['own_domain'],
                 own_brand=cfg['client']['own_brand'], engines=sorted({a['e'] for a in ai}),
                 prompt_template=cfg['scrape']['prompt_template'])
-    return dict(meta=meta, serps=serps, ai=ai)
+    from . import gbp_view
+    gbp = gbp_view.build(T) if T.get('gbp_profiles') else None
+    meta['gbp_run'] = gbp['run'] if gbp else None
+    return dict(meta=meta, serps=serps, ai=ai, gbp=gbp)
 
 
 HEAD = """<!doctype html>
@@ -92,6 +95,7 @@ def render(data, out_dir, secret_path=None):
     tpl = tpl.replace('__NLMAP__', (DASH / 'nlmap.json').read_text(encoding='utf-8').strip())
     payload = json.dumps(data, ensure_ascii=False, separators=(',', ':'), default=str).replace('</', '<\\/')
     tpl = tpl.replace('__DATA__', payload)
+    tpl = tpl.replace('/*__GBP_JS__*/', (DASH / 'gbp_tab.js').read_text(encoding='utf-8'))
     split = tpl.index('<div class="app">')  # title, fonts and styles go in <head>, the rest in <body>
     html = HEAD + tpl[:split] + '</head>\n<body>\n' + tpl[split:] + '\n</body>\n</html>\n'
     (page_dir / 'index.html').write_text(html, encoding='utf-8')
@@ -119,6 +123,11 @@ def main(argv=None):
     else:
         files = sorted((config.ROOT / 'data' / 'raw').glob('run_*.jsonl.gz'))[-dcfg['history_runs']:]
         T = transform.transform_files(files)
+        gfiles = sorted((config.ROOT / 'data' / 'raw').glob('gbp_*.jsonl.gz'))
+        if gfiles:
+            from . import gbp
+            G = gbp.transform_files(gfiles[-1:])
+            T.update({k: v for k, v in G.items() if k != 'gbp_run_log'})
     if not a.path:
         print('WARNING: DASHBOARD_PATH not set, dashboard is published at the site root')
     render(build_data(T, dcfg['detail_runs']), a.out, a.path or None)

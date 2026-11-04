@@ -160,6 +160,7 @@ GitHub zet geplande workflows op publieke repositories normaal uit na 60 dagen z
 |---|---|---|
 | automatisch, maandag | scrape → BigQuery → dashboard → Pages | elke week |
 | `full` | idem, handmatig | extra meting, of herstel na een storing |
+| `gbp` | alleen bedrijfsprofielen ophalen, dan dashboard | profieldata verversen zonder zoekresultaten |
 | `rebuild` | alleen dashboard uit BigQuery | na een wijziging in template of config |
 | `backfill` | versleutelde runs uit `data/backfill/` inladen, dan dashboard | eenmalig, of om een oude meting terug te zetten |
 | `smoke` | 6 calls, niets wegschrijven | na een wijziging in de scraper |
@@ -173,6 +174,14 @@ GitHub zet geplande workflows op publieke repositories normaal uit na 60 dagen z
 * **Geheim pad vervangen** (bijvoorbeeld als de link is uitgelekt): nieuw pad in secret `DASHBOARD_PATH`, workflow draaien met `rebuild`, iframe in Follo Tools aanpassen. Het oude pad verdwijnt bij die deploy.
 
 Na een wijziging: commit, push en draai `rebuild` (alleen weergave) of wacht op maandag.
+
+## Bedrijfsprofielen
+
+Naast de zoekresultaten haalt de job `gbp` elke week alle Google Bedrijfsprofielen van GaragePark op (gevonden op domein en telefoonnummer, nu 59), plus per park de vijf concurrenten die Google toont onder "Mensen zoeken ook". Per profiel: profielgegevens, reviews (eigen parken tot 200, concurrenten de laatste 40) en posts. Dat komt in de tabellen `gbp_profiles`, `gbp_competitors`, `gbp_reviews`, `gbp_posts` en `gbp_run_log`.
+
+Het tabblad Bedrijfsprofielen berekent daaruit (in `src/gpmon/gbp_view.py`) de profielscore, de onderwerpen in reviews en een actielijst per park met impact en moeite. Afvinken in die lijst wordt per browser onthouden.
+
+Alleen de bedrijfsprofielen opnieuw ophalen: Run workflow met mode `gbp`. Instellingen staan onder `gbp:` in `config/monitor.yaml`. Prestaties uit Bedrijfsprofielmanager (weergaven, zoektermen, gesprekken, routes) vragen beheerderstoegang tot de profielen en volgen later.
 
 ## Live of Standard Queue
 

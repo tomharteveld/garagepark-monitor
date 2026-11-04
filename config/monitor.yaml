@@ -147,3 +147,14 @@ brands:
   Pakhuis Opslag:
     domain: null
     pattern: pakhuis opslag
+gbp:
+  enabled: true
+  own_domain: garagepark.nl
+  own_phone: '+31852083162'
+  own_name_pattern: garage ?park
+  location_code: 2528        # Netherlands
+  language_code: nl
+  competitors_per_location: 5
+  reviews_depth: {own_max: 200, competitor: 40}
+  posts_depth: 10
+  max_queue_minutes: 50

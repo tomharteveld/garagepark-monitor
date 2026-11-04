@@ -29,9 +29,26 @@ SCHEMAS = {
                            F('is_gbp', B), F('brand', S), F('kind', S)],
     'run_log': KEY + [F('engine', S), F('prompt', S), F('status', S), F('error', S), F('cost', FL), F('fetched_at', TS)],
     'raw_tasks': KEY + [F('engine', S), F('prompt', S), F('fetched_at', TS), F('task', 'JSON')],
+    # Google Bedrijfsprofielen (own + competitors), see gbp.py
+    'gbp_profiles': [F('run_date', D, 'REQUIRED'), F('cid', S), F('is_own', B), F('parent_cid', S), F('title', S), F('city', S),
+                     F('address', S), F('latitude', FL), F('longitude', FL), F('domain', S), F('url', S), F('phone', S),
+                     F('category', S), F('additional_categories', S, 'REPEATED'), F('description', S), F('is_claimed', B),
+                     F('rating', FL), F('votes', I), F('stars', I, 'REPEATED'), F('total_photos', I), F('has_logo', B),
+                     F('has_hours', B), F('open_247', B), F('attributes', S, 'REPEATED'), F('services', S, 'REPEATED'),
+                     F('place_topics', S, 'REPEATED'), F('book_online_url', S), F('contact_url', S), F('from_listing_only', B),
+                     F('check_url', S), F('listing_updated', TS)],
+    'gbp_competitors': [F('run_date', D, 'REQUIRED'), F('own_cid', S), F('comp_cid', S), F('rank', I)],
+    'gbp_reviews': [F('run_date', D, 'REQUIRED'), F('cid', S), F('is_own', B), F('review_id', S), F('rating', FL), F('posted_at', TS),
+                    F('time_ago', S), F('text', S), F('language', S), F('has_text', B), F('photos', B), F('local_guide', B),
+                    F('owner_answer', S), F('answered_at', TS), F('review_url', S)],
+    'gbp_posts': [F('run_date', D, 'REQUIRED'), F('cid', S), F('is_own', B), F('posted_at', TS), F('text', S), F('url', S),
+                  F('has_image', B), F('links', S, 'REPEATED')],
+    'gbp_run_log': [F('run_date', D, 'REQUIRED'), F('kind', S), F('cid', S), F('is_own', B), F('status', S), F('error', S), F('cost', FL)],
 }
 CLUSTER = {'serp_summary': ['city', 'keyword'], 'serp_results': ['domain', 'city'], 'local_pack': ['city'],
-           'ai_answers': ['engine', 'city'], 'ai_citations': ['engine', 'domain'], 'run_log': ['engine'], 'raw_tasks': ['engine', 'city']}
+           'ai_answers': ['engine', 'city'], 'ai_citations': ['engine', 'domain'], 'run_log': ['engine'], 'raw_tasks': ['engine', 'city'],
+           'gbp_profiles': ['is_own', 'cid'], 'gbp_competitors': ['own_cid'], 'gbp_reviews': ['is_own', 'cid'],
+           'gbp_posts': ['cid'], 'gbp_run_log': ['kind']}
 
 
 def client():
@@ -73,7 +90,7 @@ def _jsonable(rows):
 def load_tables(T, c=None):
     """Replace the run_date partition(s) of every table with the given rows (re-running a week is safe)."""
     c = c or client()
-    dates = sorted({r['run_date'] for r in T['run_log']})
+    dates = sorted({r['run_date'] for rows in T.values() for r in rows if r.get('run_date')})
     for name, rows in T.items():
         for d in dates:
             part = [r for r in rows if r['run_date'] == d]
@@ -87,7 +104,7 @@ def load_tables(T, c=None):
                 c.query(f"DELETE FROM `{tid(name)}` WHERE run_date = '{d}'").result()
                 continue
             c.load_table_from_json(list(_jsonable(part)), dest, job_config=job_cfg).result()
-            print(f'  {name:13s} {d}  {len(part):6d} rows')
+            print(f'  {name:15s} {d}  {len(part):6d} rows')
 
 
 def fetch_tables(history_runs=26, detail_runs=2, c=None):
@@ -108,10 +125,32 @@ def fetch_tables(history_runs=26, detail_runs=2, c=None):
         q(f"SELECT * EXCEPT(fetched_at, markdown) FROM `{tid('ai_answers')}` WHERE run_date IN {inn(slim)}")
     T['ai_citations'] = q(f"SELECT * FROM `{tid('ai_citations')}` WHERE run_date IN {inn(detail)}")
     T['run_log'] = q(f"SELECT run_date, engine, city, keyword, status, error, cost FROM `{tid('run_log')}` WHERE run_date IN {inn(runs)}")
+    T.update(fetch_gbp(c, q))
     for rows in T.values():
         for r in rows:
             r['run_date'] = r['run_date'].isoformat() if hasattr(r['run_date'], 'isoformat') else r['run_date']
     return T
+
+
+def fetch_gbp(c, q, history_runs=26):
+    """Business profile tables: everything for the newest run, profile history (slim) for older runs."""
+    try:
+        runs = [r['run_date'].isoformat() for r in q(f"SELECT DISTINCT run_date FROM `{tid('gbp_profiles')}` ORDER BY run_date DESC LIMIT {int(history_runs)}")]
+    except Exception as e:  # table missing before the first business profile run
+        print(f'No business profile data yet ({e.__class__.__name__})')
+        return {}
+    if not runs:
+        return {}
+    last = f"DATE '{runs[0]}'"
+    inn = '(' + ','.join(f"DATE '{d}'" for d in runs) + ')'
+    return {
+        'gbp_profiles': q(f"SELECT * FROM `{tid('gbp_profiles')}` WHERE run_date = {last}")
+        + q(f"SELECT run_date, cid, is_own, rating, votes, total_photos FROM `{tid('gbp_profiles')}` WHERE run_date IN {inn} AND run_date < {last}"),
+        'gbp_competitors': q(f"SELECT * FROM `{tid('gbp_competitors')}` WHERE run_date = {last}"),
+        'gbp_reviews': q(f"SELECT * EXCEPT(text, owner_answer), IF(is_own, text, NULL) AS text, IF(is_own, owner_answer, NULL) AS owner_answer, "
+                         f"owner_answer IS NOT NULL AS answered FROM `{tid('gbp_reviews')}` WHERE run_date = {last}"),
+        'gbp_posts': q(f"SELECT run_date, cid, is_own, posted_at, IF(is_own, text, NULL) AS text, url FROM `{tid('gbp_posts')}` WHERE run_date = {last}"),
+    }
 
 
 def main(argv=None):
@@ -120,10 +159,18 @@ def main(argv=None):
     sub.add_parser('setup')
     l = sub.add_parser('load')
     l.add_argument('raw', nargs='+')
+    lg = sub.add_parser('load-gbp')
+    lg.add_argument('raw', nargs='+')
     a = ap.parse_args(argv)
     c = client()
     if a.cmd == 'setup':
         setup(c)
+    elif a.cmd == 'load-gbp':
+        from . import gbp
+        setup(c)
+        for p in a.raw:
+            print(f'Loading {p}')
+            load_tables(gbp.transform_files([p]), c)
     else:
         setup(c)
         for p in a.raw:

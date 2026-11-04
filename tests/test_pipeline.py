@@ -161,3 +161,36 @@ def test_standard_queue_with_fake_api(records):
     done, fallback = scrape.run_standard(cli, jobs, '2026-11-09', workers=4, max_wait_min=1, poll_s=0)
     assert len(done) == 5 and all(r['queue'] == 'standard' and r['task'] for r in done)
     assert len(fallback) == 1 and fallback[0]['engine'] == 'google_ai_mode'
+
+
+GBP_FIX = sorted((ROOT / 'tests' / 'fixtures').glob('gbp_*.jsonl.gz'))
+
+
+@pytest.mark.skipif(not GBP_FIX, reason='no business profile fixture')
+def test_gbp_transform_view_and_schema():
+    bq = pytest.importorskip('gpmon.bq')
+    from gpmon import gbp, gbp_view
+    T = gbp.transform_files(GBP_FIX)
+    for name, rows in T.items():
+        fields = {f.name: f for f in bq.SCHEMAS[name]}
+        assert rows, name
+        for r in rows:
+            assert not set(r) - set(fields), (name, set(r) - set(fields))
+            json.dumps(r)
+    own = [p for p in T['gbp_profiles'] if p['is_own']]
+    assert len(own) == 3 and all(p['parent_cid'] is None for p in own)
+    assert all(p['parent_cid'] for p in T['gbp_profiles'] if not p['is_own'])
+    V = gbp_view.build(T)
+    assert len(V['own']) == 3 and V['actions'] and all(a['impact'] in ('Hoog', 'Middel', 'Laag') for a in V['actions'])
+    assert all(0 <= p['score'] <= 1 for p in V['own'] + V['comp'])
+    assert {t['key'] for t in V['themes']} == {k for k, _, _ in gbp_view.THEMES}
+
+
+def test_gbp_competitor_pick_skips_own_and_caps():
+    from gpmon import gbp
+    g = {'own_name_pattern': 'garage ?park'}
+    own = [{'cid': '1', 'people_also_search': [{'cid': '2', 'title': 'GaragePark X'}, {'cid': '3', 'title': 'Shurgard'},
+                                               {'cid': '1', 'title': 'self'}, {'cid': '4', 'title': 'Garage Park Y'}, {'cid': '5', 'title': '1BOX'}, {'cid': '6', 'title': 'Allsafe'}]},
+           {'cid': '2', 'people_also_search': []}]
+    links, comps = gbp.pick_competitors(own, g, 2)
+    assert [l['comp_cid'] for l in links] == ['3', '5'] and set(comps) == {'3', '5'}
