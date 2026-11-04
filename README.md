@@ -198,13 +198,8 @@ Eenmalig instellen (ongeveer 15 minuten):
 1. **Project.** Gebruik het Google Cloud project waarvoor de Business Profile API-toegang is goedgekeurd (Google keurt dit per project goed, via het aanvraagformulier voor de Business Profile APIs). Zet daarin aan: *My Business Account Management API*, *My Business Business Information API* en *Business Profile Performance API*.
 2. **OAuth-toestemmingsscherm.** APIs en services, OAuth-toestemmingsscherm, gebruikerstype **Intern**. Bij Intern verloopt de refresh token niet na 7 dagen.
 3. **OAuth client.** Credentials, Create credentials, OAuth client ID, type **Desktop app**. Download de JSON als `client.json`.
-4. **Inloggen als seodata@folloagency.com.** Open Cloud Shell, upload `client.json` en voer uit:
-   ```
-   gcloud auth application-default login --client-id-file=client.json --no-launch-browser \
-     --scopes=https://www.googleapis.com/auth/business.manage,https://www.googleapis.com/auth/cloud-platform
-   ```
-   Open de link, log in met **seodata@folloagency.com**, geef toestemming en plak de code terug.
-5. **Secret.** `cat ~/.config/gcloud/application_default_credentials.json` en plak de volledige inhoud in GitHub, Settings, Secrets and variables, Actions, New repository secret, naam **GBP_OAUTH_JSON**. Verwijder daarna het bestand en `client.json` uit Cloud Shell.
+4. **Inloggen als seodata@folloagency.com.** Open Cloud Shell, upload `client.json` en `scripts/gbp_oauth.py` en voer uit: `python3 gbp_oauth.py`. Open de link in een incognitovenster, log in met **seodata@folloagency.com**, klik Toestaan en plak de adresbalk van de (niet ladende) localhost-pagina terug.
+5. **Secret.** Plak de JSON die het script toont in GitHub, Settings, Secrets and variables, Actions, New repository secret, naam **GBP_OAUTH_JSON**. Verwijder daarna `client.json` uit Cloud Shell.
 6. **Testen.** Run workflow met mode `smoke`. De stap *Fetch performance* toont dan het aantal accounts en GaragePark-locaties. Daarna mode `gbp` (alleen profielen) of `full` (alles).
 
 Zonder secret draait alles zoals voorheen en laat het tabblad Prestaties zien wat er nog nodig is. Lokaal controleren: `GBP_OAUTH_JSON=pad/naar/credentials.json PYTHONPATH=src python -m gpmon.gbp_perf --check`.
