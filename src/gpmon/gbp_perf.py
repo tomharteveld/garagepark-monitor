@@ -54,20 +54,24 @@ class Api:
         return {'Authorization': f'Bearer {self.token}'}
 
     def get(self, url, params=None, tries=5):
+        r = None
         for i in range(tries):
             r = self.s.get(url, params=params, headers=self.auth(), timeout=60)
             if r.status_code == 200:
                 return r.json()
+            msg = r.text[:600]
+            if r.status_code == 429 and ('limit: 0' in msg or "limit 'Requests per minute' of service" in msg and 'limit: 0' in msg):
+                raise SystemExit('Quota of the Business Profile APIs is 0 for this Google Cloud project: API access is not approved '
+                                 'for it yet (or the OAuth client belongs to another project). ' + msg)
             if r.status_code in (429, 500, 502, 503):
                 time.sleep(5 * (i + 1))
                 continue
-            msg = r.text[:400]
             if r.status_code == 403 and 'SERVICE_DISABLED' in msg:
                 raise SystemExit(f'Enable this API in the OAuth client\'s Google Cloud project: {msg}')
             if r.status_code == 429 or 'quota' in msg.lower():
                 raise SystemExit(f'Quota for the Business Profile APIs is 0 or used up (access not approved yet?): {msg}')
             raise RuntimeError(f'{r.status_code} {url}: {msg}')
-        raise RuntimeError(f'Giving up on {url} after {tries} tries')
+        raise RuntimeError(f'Giving up on {url} after {tries} tries, last answer {r.status_code}: {r.text[:600]}')
 
     def pages(self, url, key, params=None):
         params = dict(params or {})

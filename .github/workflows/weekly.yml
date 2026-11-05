@@ -108,6 +108,8 @@ jobs:
 
       - name: Fetch performance (Business Profile API)
         if: ${{ env.GBP_OAUTH_JSON != '' }}
+        # a missing approval or expired login must not block the public profile data
+        continue-on-error: true
         run: python -m gpmon.gbp_perf ${{ env.MODE == 'smoke' && '--limit 2' || '' }}
 
       - name: Google auth (Workload Identity Federation)
