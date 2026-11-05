@@ -169,6 +169,8 @@ jobs:
 
   deploy:
     needs: build
+    # build may run after a failed gbp job; deploy whenever the build itself succeeded
+    if: ${{ always() && needs.build.result == 'success' }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages

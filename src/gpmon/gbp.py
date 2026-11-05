@@ -144,6 +144,8 @@ def collect(cli, pending, workers, max_wait_min, poll_s=45):
         code = t.get('status_code')
         if code == 20000:
             return tid, 'ok', t
+        if code == 40102:  # "No Search Results": a profile without reviews or posts, a valid empty answer
+            return tid, 'ok', dict(t, result=[{'items': [], 'items_count': 0}])
         if code in QUEUE_WAIT or code is None:
             return tid, 'wait', None
         return tid, 'fail', f"{code} {t.get('status_message')}"
@@ -215,6 +217,12 @@ def fetch(cli, cfg, run_date, limit=0):
     print(f'Posted {len(pending)} tasks ({len(post_failed)} refused)', flush=True)
     done, errors = collect(cli, pending, cfg['scrape']['max_workers'], g.get('max_queue_minutes', 50))
     errors += post_failed
+    if errors:
+        from collections import Counter
+        summary = Counter((k, str(e)[:60]) for k, _, e in errors)
+        print('Failed tasks by kind and reason:', flush=True)
+        for (k, e), n in summary.most_common(10):
+            print(f'  {n:>4}  {k:<8} {e}', flush=True)
 
     recs = [dict(kind='listing', cid=o['cid'], own=True, run_date=run_date, fetched_at=NOW(), item=o) for o in own]
     recs += [dict(kind='link', run_date=run_date, **l) for l in links]
