@@ -51,7 +51,8 @@ def report(s, pid, body):
         if r.status_code in (401, 403):
             raise SystemExit('No access to GA4. Log in again with scripts/gbp_oauth.py (it now also asks for Analytics) '
                              f'and enable the Google Analytics Data API in the OAuth client\'s Cloud project. {r.text[:300]}')
-        r.raise_for_status()
+        if r.status_code >= 400:
+            raise SystemExit(f'GA4 report failed ({r.status_code}): {r.text[:400]}')
         d = r.json()
         dims = [h['name'] for h in d.get('dimensionHeaders', [])]
         mets = [h['name'] for h in d.get('metricHeaders', [])]
@@ -84,6 +85,14 @@ def fetch(cfg, run_date, days=400):
     rng = [{'startDate': (end - dt.timedelta(days=days)).isoformat(), 'endDate': end.isoformat()}]
     mets = [{'name': 'sessions'}, {'name': 'engagedSessions'}, {'name': 'keyEvents'}] + [{'name': f'keyEvents:{e}'} for e in leads]
     s = session()
+    # keyEvents:<name> only exists for events that are key events right now; skip the rest instead of failing
+    meta = s.get(f'https://analyticsdata.googleapis.com/v1beta/properties/{pid}/metadata', timeout=60)
+    valid = {m['apiName'] for m in (meta.json().get('metrics') or [])} if meta.ok else set()
+    dropped = [e for e in leads if valid and f'keyEvents:{e}' not in valid]
+    if dropped:
+        print(f"Not key events in GA4 (skipped): {', '.join(dropped)}", flush=True)
+    leads = [e for e in leads if e not in dropped]
+    mets = [{'name': 'sessions'}, {'name': 'engagedSessions'}, {'name': 'keyEvents'}] + [{'name': f'keyEvents:{e}'} for e in leads]
     rx = '|'.join(f'({v})' for v in sites.values())
     agg = report(s, pid, {'dateRanges': rng, 'dimensions': [{'name': n} for n in ('date', 'sessionSource', 'sessionMedium', 'landingPage')],
                           'metrics': mets, 'dimensionFilter': {'filter': {'fieldName': 'sessionSource',
