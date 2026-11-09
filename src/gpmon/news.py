@@ -255,22 +255,18 @@ def fetch(cfg, run_date, limit=0):
         qs = qs[:limit] if limit else qs
         d_items, cost, e = read_dfs(cli, qs, n.get('period', 'm'), int(n.get('depth', 20)))
         errors += e
+        # Google rate-limits datacenter IPs: resolve one by one with a pause, and retry the misses once more slowly
         import time
-        def slow(i):
-            u = resolve(i['url'], s)
+        urls = []
+        for i in d_items:
+            urls.append(resolve(i['url'], s))
+            time.sleep(1)
+        for n, (i, u) in enumerate(zip(d_items, urls)):
             if 'google.com/goto' in u:
-                time.sleep(2)
-                u = resolve(i['url'], s)
-            return u
-        with ThreadPoolExecutor(3) as ex:
-            urls = list(ex.map(slow, d_items))
-        print(f"Resolved {sum('google.com/goto' not in u for u in urls)} of {len(urls)} Google News links", flush=True)
-        for i, u in [(i, u) for i, u in zip(d_items, urls) if 'google.com/goto' in u][:2]:  # diagnostics for unresolved links
-            try:
-                r = s.get(i['url'], allow_redirects=False, timeout=10, cookies=GOOGLE_COOKIES, headers={'User-Agent': 'Mozilla/5.0'})
-                print(f"  unresolved: {r.status_code} loc={r.headers.get('Location', '')[:120]} body={re.sub(r'\\s+', ' ', r.text[:300])}", flush=True)
-            except requests.RequestException as e:
-                print(f'  unresolved: {e!r}', flush=True)
+                time.sleep(4)
+                urls[n] = resolve(i['url'], s)
+        print(f"Resolved {sum('google.com/goto' not in u for u in urls)} of {len(urls)} Google News links "
+              f"(the rest still open the article via Google)", flush=True)
         for i, u in zip(d_items, urls):
             i['url'] = u
         items += d_items
