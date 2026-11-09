@@ -16,6 +16,11 @@ scrape:
     google_ai_mode: true
     chatgpt: false
   prompt_template: Waar kan ik een {keyword} in de omgeving van {city}
+# ChatGPT: answers from FolloEngine's weekly measurement, read in place from BigQuery (EU). Each run uses the
+# newest FolloEngine date on or before it. The service account needs BigQuery Data Viewer on this table.
+chatgpt_source:
+  table: folloagency.llm_reporting_tables.garagepark_nl_llm_combined_canonical
+  max_age_days: 10
 dashboard:
   detail_runs: 2
   history_runs: 26

@@ -708,6 +708,7 @@ function vAI(e) {
   let html = '';
   if (sub === 'overzicht') {
     const presence = e === 'aio' ? `<div class="card kpi"><span class="stat-l">Zoekresultaten met AI Overview</span><span class="num">${pct(A.length, S.length)}</span><span class="of">${A.length} van ${S.length} zoekresultaten</span><div class="bar"><i style="width:${100 * A.length / (S.length || 1)}%"></i></div></div>`
+      : e === 'cgpt' ? `<div class="card kpi"><span class="stat-l">Prompts gemeten</span><span class="num">${A.length}</span><span class="of">FolloEngine${D.meta.gpt && D.meta.gpt.dates[st.run] ? ', meting ' + fmtDate(D.meta.gpt.dates[st.run]) : ''}; ${A.filter(x => x.c !== 'Algemeen').length} lokaal</span></div>`
       : `<div class="card kpi"><span class="stat-l">Prompts met antwoord</span><span class="num">${A.length}</span><span class="of">van ${S.length} prompts${(n => n ? ` (${n} fout${n > 1 ? 'en' : ''} bij DataForSEO)` : '')(D.meta.errors.filter(x => x.r === st.run && x.e === 'google_ai_mode').length)}</span></div>`;
     const bb = brandBoard(A), cb = citeBoard(A);
     const ownB = bb.findIndex(x => x.b === OWNB), ownC = cb.findIndex(x => x.d === OWN);
@@ -727,7 +728,7 @@ function vAI(e) {
     const q = AIQ[e].toLowerCase(), flt = AIF[e];
     const list = A.filter(x => (!q || (x.p + ' ' + x.c).toLowerCase().includes(q)) && (flt === 'all' || (flt === 'm' ? x.m : flt === 'c' ? x.ci : flt === 'none' ? !x.m && !x.ci : 1)))
       .sort((x, y) => CITIES.indexOf(x.c) - CITIES.indexOf(y.c) || y.v - x.v);
-    html = `<section><div class="tcard"><div class="thead"><div><h4>${e === 'aio' ? 'Zoekopdrachten met AI Overview' : 'Prompts'}</h4><p>${e === 'aio' ? 'Alle zoekresultaten waarin een AI Overview verscheen.' : 'Prompt: "' + esc(D.meta.prompt_template || 'Waar kan ik een {keyword} in de omgeving van {city}').replace('{city}', '{plaats}') + '".'} Klik op een rij voor het volledige antwoord en de bronnen.</p></div>
+    html = `<section><div class="tcard"><div class="thead"><div><h4>${e === 'aio' ? 'Zoekopdrachten met AI Overview' : 'Prompts'}</h4><p>${e === 'aio' ? 'Alle zoekresultaten waarin een AI Overview verscheen.' : e === 'cgpt' ? 'De vaste promptset uit FolloEngine: lokale vragen per plaats en algemene vragen (plaats: Algemeen).' : 'Prompt: "' + esc(D.meta.prompt_template || 'Waar kan ik een {keyword} in de omgeving van {city}').replace('{city}', '{plaats}') + '".'} Klik op een rij voor het volledige antwoord en de bronnen.</p></div>
     <div class="filters"><input type="search" id="aiq" placeholder="Zoek prompt of plaats…" value="${esc(AIQ[e])}" aria-label="Zoek prompt"><select id="aif" aria-label="Filter"><option value="all">Alle antwoorden</option><option value="m">Met mention</option><option value="c">Met citatie</option><option value="none">Zonder GaragePark</option></select></div></div>
     <div class="scroll"><table><thead><tr><th>Plaats</th><th>${e === 'aio' ? 'Zoekopdracht' : 'Prompt'}</th><th>Genoemd</th><th>Geciteerd</th><th class="r">Merken</th><th class="r">Bronnen</th></tr></thead><tbody>
     ${(AIALL[e] ? list : list.slice(0, 40)).map(x => `<tr class="click" data-ai="${D.ai.indexOf(x)}" tabindex="0"><td>${esc(x.c)}</td><td><span class="trunc">${esc(x.p)}</span></td><td><span class="chip ${x.m ? 'yes' : 'no'}">${x.m ? 'Ja' : 'Nee'}</span></td><td><span class="chip ${x.ci ? 'yes' : 'no'}">${x.cw && x.cg ? 'Site + profiel' : x.cw ? 'Site' : x.cg ? 'Profiel' : 'Nee'}</span></td><td class="r">${x.mb.length}</td><td class="r">${x.refs.length}</td></tr>`).join('')}
@@ -837,7 +838,7 @@ const META = {
   overzicht: ['Lokale vindbaarheid · ' + CITIES.length + ' vestigingsplaatsen', 'Search &amp; AI performance', 'Van zoekresultaat tot AI-antwoord. Per plaats zien waar GaragePark gevonden, genoemd en geciteerd wordt.'],
   google: ['Google Search · mobiel · top 20', 'Google Search', 'Organische posities, concurrerende domeinen, local pack en SERP features per plaats.'],
   aio: ['Google · AI Overviews', 'AI Overviews', 'Wordt GaragePark genoemd en als bron gebruikt in de AI Overview boven de zoekresultaten?'],
-  chatgpt: ['OpenAI · ChatGPT · Nederland', 'ChatGPT', HAS_GPT ? 'Wat antwoordt ChatGPT met webzoeken op dezelfde lokale prompts als AI Mode?' : 'Komt in de volgende fase.'],
+  chatgpt: ['OpenAI · ChatGPT · Nederland', 'ChatGPT', HAS_GPT ? `Wat antwoordt ChatGPT op de vaste FolloEngine-promptset? Wekelijkse meting, lokaal en algemeen.` : 'Komt in de volgende fase.'],
   gbp: ['Google Bedrijfsprofielen · eigen parken en concurrenten', 'Bedrijfsprofielen', 'Profiel, reviews en concurrentie per park, met wat er per park beter moet.'],
   aimode: ['Google · AI Mode', 'AI Mode', 'Wat antwoordt Google AI Mode als iemand een garagebox of opslagruimte zoekt in de buurt?']
 };

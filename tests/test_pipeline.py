@@ -232,3 +232,22 @@ def test_gbp_perf_transform_aggregate_and_view():
     hidden = [l for l in V['perf']['locations'] if not l['visible']]
     assert [l['id'] for l in hidden] == ['Lnew']
     json.dumps(V)
+
+
+def test_folloengine_chatgpt_mapping():
+    from gpmon import folloengine as fe
+    m = fe.map_runs(['2026-11-02', '2026-11-09', '2026-12-01'], ['2026-10-30', '2026-11-06'], 10)
+    assert m == {'2026-11-02': '2026-10-30', '2026-11-09': '2026-11-06'}  # 1 Dec: newest is 25 days old
+    rows = [dict(d='2026-11-06', prompt='Waar kan ik een garagebox huren in de omgeving van Den bosch?', model='gpt-6',
+                 md='Probeer **GaragePark** of Shurgard.', m=True, c=True,
+                 cites=[dict(rnk=1, url='https://garagepark.nl/locatie/den-bosch?utm_source=chatgpt.com', title='GP', snippet='', domain='garagepark.nl'),
+                        dict(rnk=2, url='https://www.shurgard.com/nl-nl?utm_source=chatgpt.com', title='S', snippet='', domain='www.shurgard.com')]),
+            dict(d='2026-11-06', prompt='Wat kost meubelopslag per maand?', model='gpt-6', md='Ongeveer 50 euro.', m=False, c=False, cites=[])]
+    a, c = fe.to_tables(rows, {'2026-11-09': '2026-11-06'}, {'2026-11-09'})
+    assert [(x['city'], x['keyword'], x['engine']) for x in a] == [('Den Bosch', 'garagebox huren', 'cgpt'),
+                                                                 ('Algemeen', 'Wat kost meubelopslag per maand?', 'cgpt')]
+    assert a[0]['mentioned'] and a[0]['cited_web'] and a[0]['volume'] == 5400 and 'Shurgard' in a[0]['brands_mentioned']
+    assert a[0]['brands_cited'] == ['GaragePark', 'Shurgard'] and c[0]['url'] == 'https://garagepark.nl/locatie/den-bosch'
+    assert not a[1]['mentioned'] and a[1]['markdown'] == 'Ongeveer 50 euro.'
+    a2, c2 = fe.to_tables(rows, {'2026-11-02': '2026-11-06'}, set())   # slim run: no text, no citation rows
+    assert a2[0]['markdown'] is None and not c2 and a2[0]['brands_cited']

@@ -61,7 +61,9 @@ def build_data(T, detail_runs=2):
     meta = dict(runs=runs, detail_runs=sorted(detail), costs={k: round(v, 2) for k, v in costs.items()},
                 cost=round(costs.get(runs[-1], 0), 2), errors=errors, own_domain=cfg['client']['own_domain'],
                 own_brand=cfg['client']['own_brand'], engines=sorted({a['e'] for a in ai}),
-                prompt_template=cfg['scrape']['prompt_template'])
+                prompt_template=cfg['scrape']['prompt_template'],
+                gpt=dict(source='FolloEngine', last=(T.get('_gpt') or {}).get('last'),
+                         dates=(T.get('_gpt') or {}).get('mapped') or {}) if T.get('_gpt') else None)
     from . import gbp_view
     gbp = gbp_view.build(T) if T.get('gbp_profiles') else None
     meta['gbp_run'] = gbp['run'] if gbp else None

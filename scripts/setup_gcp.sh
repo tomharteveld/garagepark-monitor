@@ -42,6 +42,12 @@ retry gcloud projects add-iam-policy-binding "$PROJECT_ID" --member "serviceAcco
 # GRANT via SQL: works without the interactive first-run prompt of the bq tool
 retry bq --headless --project_id="$PROJECT_ID" query --nouse_legacy_sql --quiet \
   "GRANT \`roles/bigquery.dataEditor\` ON SCHEMA \`${PROJECT_ID}.${DATASET}\` TO 'serviceAccount:${SA}'" >/dev/null
+# ChatGPT comes from FolloEngine: read access to exactly that table (config chatgpt_source.table)
+GPT_TABLE=$(python3 -c "import yaml;print((yaml.safe_load(open('config/monitor.yaml')).get('chatgpt_source') or {}).get('table',''))" 2>/dev/null || true)
+if [ -n "$GPT_TABLE" ]; then
+  retry bq --headless --project_id="$PROJECT_ID" query --nouse_legacy_sql --quiet \
+    "GRANT \`roles/bigquery.dataViewer\` ON TABLE \`${GPT_TABLE}\` TO 'serviceAccount:${SA}'" >/dev/null
+fi
 
 echo "Workload Identity pool + provider (trusts only $GITHUB_REPO)"
 gcloud iam workload-identity-pools describe "$POOL" --location=global >/dev/null 2>&1 || \

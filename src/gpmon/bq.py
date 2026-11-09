@@ -132,8 +132,21 @@ def fetch_tables(history_runs=26, detail_runs=2, c=None):
         q(f"SELECT * EXCEPT(fetched_at, markdown) FROM `{tid('ai_answers')}` WHERE run_date IN {inn(slim)}")
     T['ai_citations'] = q(f"SELECT * FROM `{tid('ai_citations')}` WHERE run_date IN {inn(detail)}")
     T['run_log'] = q(f"SELECT run_date, engine, city, keyword, status, error, cost FROM `{tid('run_log')}` WHERE run_date IN {inn(runs)}")
+    # ChatGPT comes from FolloEngine (read in place), not from our own scrape
+    from . import folloengine
+    try:
+        ga, gc, info = folloengine.fetch(c, runs, detail)
+        T['ai_answers'] = [a for a in T['ai_answers'] if a['engine'] != 'cgpt'] + ga
+        T['ai_citations'] = [a for a in T['ai_citations'] if a['engine'] != 'cgpt'] + gc
+        T['_gpt'] = info
+        print(f"ChatGPT (FolloEngine): {len(ga)} answers for {len((info or {}).get('mapped') or {})} runs", flush=True)
+    except Exception as e:  # never block the dashboard on the FolloEngine source
+        print(f'WARNING: FolloEngine ChatGPT not read: {e!r}', flush=True)
+        T['_gpt'] = dict(error=str(e)[:200])
     T.update(fetch_gbp(c, q))
-    for rows in T.values():
+    for name, rows in T.items():
+        if name.startswith('_'):
+            continue
         for r in rows:
             r['run_date'] = r['run_date'].isoformat() if hasattr(r['run_date'], 'isoformat') else r['run_date']
     return T
