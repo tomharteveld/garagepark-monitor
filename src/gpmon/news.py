@@ -265,6 +265,12 @@ def fetch(cfg, run_date, limit=0):
         with ThreadPoolExecutor(3) as ex:
             urls = list(ex.map(slow, d_items))
         print(f"Resolved {sum('google.com/goto' not in u for u in urls)} of {len(urls)} Google News links", flush=True)
+        for i, u in [(i, u) for i, u in zip(d_items, urls) if 'google.com/goto' in u][:2]:  # diagnostics for unresolved links
+            try:
+                r = s.get(i['url'], allow_redirects=False, timeout=10, cookies=GOOGLE_COOKIES, headers={'User-Agent': 'Mozilla/5.0'})
+                print(f"  unresolved: {r.status_code} loc={r.headers.get('Location', '')[:120]} body={re.sub(r'\\s+', ' ', r.text[:300])}", flush=True)
+            except requests.RequestException as e:
+                print(f'  unresolved: {e!r}', flush=True)
         for i, u in zip(d_items, urls):
             i['url'] = u
         items += d_items
