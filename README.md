@@ -183,6 +183,17 @@ Het tabblad Bedrijfsprofielen berekent daaruit (in `src/gpmon/gbp_view.py`) de p
 
 Alleen de bedrijfsprofielen opnieuw ophalen: Run workflow met mode `gbp`. Instellingen staan onder `gbp:` in `config/monitor.yaml`.
 
+### ChatGPT (FolloEngine)
+
+ChatGPT scrapen we niet zelf: het dashboard leest de wekelijkse FolloEngine-meting rechtstreeks uit BigQuery (`chatgpt_source.table` in de config). Elke run krijgt de nieuwste FolloEngine-meting van op of voor die datum (maximaal 10 dagen oud). Prompts met een plaats ("... in de omgeving van Breda?") vallen onder die plaats; de overige prompts staan onder **Algemeen**. Of GaragePark genoemd of geciteerd wordt, komt uit FolloEngine zelf.
+
+Eenmalig: geef het service-account leesrecht op precies die tabel (in de BigQuery-console, of opnieuw `scripts/setup_gcp.sh`):
+```
+GRANT `roles/bigquery.dataViewer` ON TABLE `folloagency.llm_reporting_tables.garagepark_nl_llm_combined_canonical`
+TO "serviceAccount:garagepark-monitor@folloagency.iam.gserviceaccount.com";
+```
+Zonder dat recht bouwt het dashboard gewoon, alleen zonder ChatGPT (de log meldt dat).
+
 ### Prestaties en nieuwe parken (Business Profile API)
 
 Met de koppeling aan Bedrijfsprofielmanager (account seodata@folloagency.com) komt er elke week bij:
