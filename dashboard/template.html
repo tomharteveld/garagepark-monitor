@@ -341,6 +341,12 @@ ul.acts{list-style:none;margin:0;padding:0}
 .nmeta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--subtle)}
 .nmeta .chip{margin-left:4px}
 .thead .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.delta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--subtle);font-family:var(--font-body);font-weight:500}
+.delta .dpill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-weight:700;font-family:var(--font-head);font-size:12.5px}
+.delta.up .dpill{background:#dcf5e5;color:#11743a}
+.delta.down .dpill{background:#fde2e2;color:#b42318}
+.delta.flat .dpill{background:var(--tint);color:var(--subtle)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .delta.up .dpill{background:#12351f;color:#7ee2a1}:root:not([data-theme="light"]) .delta.down .dpill{background:#3d1414;color:#ff9b93}}
 </style>
 
 <div class="app">
@@ -433,7 +439,11 @@ function am(A) {
   return { n, m: A.filter(a => a.m).length, c: A.filter(a => a.ci).length, cw: A.filter(a => a.cw).length, cg: A.filter(a => a.cg).length };
 }
 function prevRun() { const i = RUNS.indexOf(st.run); return i > 0 ? RUNS[i - 1] : null; }
-function deltaPP(cur, prev) { if (prev == null) return '<div class="empty">Vergelijking vanaf de 2e meting</div>'; const d = cur - prev; return `<div class="delta">${d >= 0 ? '+' : ''}${nf(d)} pp t.o.v. vorige meting</div>`; }
+function deltaPP(cur, prev, unit = 'pp') {
+  if (prev == null) return '<div class="empty">Vergelijking vanaf de 2e meting</div>';
+  const r = Math.round((cur - prev) * 10) / 10, cls = r > 0 ? 'up' : r < 0 ? 'down' : 'flat';
+  return `<div class="delta ${cls}"><span class="dpill">${r > 0 ? '▲ +' : r < 0 ? '▼ ' : ''}${nf(r)} ${unit}</span><span>t.o.v. vorige meting</span></div>`;
+}
 function heatCls(v) { return v == null ? 'h0' : v >= .8 ? 'h5' : v >= .6 ? 'h4' : v >= .4 ? 'h3' : v >= .2 ? 'h2' : v > 0 ? 'h1' : 'h0'; }
 
 // ==== streaks over runs ====
@@ -507,7 +517,7 @@ function vOverview() {
   <div class="grid g4">
     <div class="card kpi"><span class="stat-l">Top 3</span><span class="num">${pct(g.t3, g.n)}</span><span class="of">${g.t3} van ${g.n} zoekresultaten</span>${deltaPP(100 * g.t3 / (g.n || 1), pg && 100 * pg.t3 / (pg.n || 1))}</div>
     <div class="card kpi"><span class="stat-l">Top 10</span><span class="num">${pct(g.t10, g.n)}</span><span class="of">${g.t10} van ${g.n} zoekresultaten</span>${deltaPP(100 * g.t10 / (g.n || 1), pg && 100 * pg.t10 / (pg.n || 1))}</div>
-    <div class="card kpi"><span class="stat-l">Zichtbaarheid gewogen op zoekvolume</span><span class="num">${nf(100 * g.vis)}</span><span class="of">index 0 tot 100 (100 = overal #1)</span>${deltaPP(100 * g.vis, pg && 100 * pg.vis)}</div>
+    <div class="card kpi"><span class="stat-l">Zichtbaarheid gewogen op zoekvolume</span><span class="num">${nf(100 * g.vis)}</span><span class="of">index 0 tot 100 (100 = overal #1)</span>${deltaPP(100 * g.vis, pg && 100 * pg.vis, 'punten')}</div>
     <div class="card kpi"><span class="stat-l">In het local pack</span><span class="num">${pct(g.lp, g.n)}</span><span class="of">${g.lp} van ${g.n} zoekresultaten</span>${deltaPP(100 * g.lp / (g.n || 1), pg && 100 * pg.lp / (pg.n || 1))}</div>
   </div></section>
 
