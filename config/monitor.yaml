@@ -36,6 +36,7 @@ news:
     Storage Share: 'storage\s?share'
     Boxcomplex: 'box\s?complex'
     Big Yellow: 'big yellow'
+    Storebox: 'storebox'
 # Aggregators (tab Aggregators): visits and leads via third party platforms, from GA4 (property garagepark.nl - GA4).
 # Sources are matched on sessionSource (case-insensitive regex); the first match names the platform.
 aggregators:

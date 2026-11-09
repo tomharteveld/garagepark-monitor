@@ -16,7 +16,7 @@ function nItems(ignoreGroup) {
 
 function nCard(x) {
   const isNew = x.fs === NW.last && NW.runs.length > 1;
-  const src = x.p || x.d.replace(/^www\./, '') || 'Google Nieuws';
+  const src = x.p || (x.d && x.d !== 'google.com' ? x.d.replace(/^www\./, '') : 'Google Nieuws');
   return `<article class="nitem${x.g === 'eigen' ? ' own' : ''}">
     <div class="nmeta"><span>${fmtDate(x.dt)}</span><span class="dot">·</span><span>${esc(src)}</span>${isNew ? '<span class="chip yes">Nieuw</span>' : ''}</div>
     <h4><a href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.t)}${extIcon}</a></h4>

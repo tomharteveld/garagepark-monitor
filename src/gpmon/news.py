@@ -34,7 +34,8 @@ TABLE = 'news_items'
 
 MARKET = re.compile(r'self[\s-]?storage|selfstorage|opslag\s?(ruimte|box|boxen|unit|units|centrum|bedrijf|loods|container)|'
                     r'opslag huren|garage\s?box|garageboxen|garage\s?park|bedrijfsunit|bedrijfsverzamel|mini[\s-]?opslag|'
-                    r'opslagplaats|stallingsruimte|caravanstalling|bedrijfsruimte huren|opslag van (spullen|inboedel|meubels)', re.I)
+                    r'opslagplaats|stallingsruimte|caravanstalling|bedrijfsruimte huren|opslag van (spullen|inboedel|meubels)|'
+                    r'spullen opslaan|opslag opent|opslaglocaties?|opslagbedrijf|opslagruimtes|opslagunits|bergingen', re.I)
 CONTEXT = re.compile(r'vestiging|locatie|opent|opening|bouw|vergunning|uitbreid|overname|neemt over|koopt|verkoopt|'
                      r'huur|tarief|prijs|klant|opslag|brand|inbraak|inbrekers|politie|gemeente|bestemmingsplan|ontwikkel', re.I)
 OFF_TOPIC = re.compile(r'energieopslag|batterij|accu|thuisbatterij|stroomopslag|warmteopslag|waterstof|co2|koolstof|'
@@ -227,6 +228,8 @@ def classify(it, cfg, today, B=None):
         reason = 'niet Nederlands'
     elif FOREIGN.search(text) and not cities and own not in brands:
         reason = 'buitenlandse markt'
+    elif any(B[b].search(it['title']) for b in brands if b in B) and is_dutch(text):
+        reason = None  # a tracked brand in a Dutch headline is always relevant
     elif not brands and not MARKET.search(it['title']):
         reason = 'niet over de opslagmarkt'  # the market term must be in the headline, not only in a teaser
     elif not MARKET.search(text) and not (brands and CONTEXT.search(text)):
@@ -252,8 +255,16 @@ def fetch(cfg, run_date, limit=0):
         qs = qs[:limit] if limit else qs
         d_items, cost, e = read_dfs(cli, qs, n.get('period', 'm'), int(n.get('depth', 20)))
         errors += e
-        with ThreadPoolExecutor(8) as ex:
-            urls = list(ex.map(lambda i: resolve(i['url'], s), d_items))
+        import time
+        def slow(i):
+            u = resolve(i['url'], s)
+            if 'google.com/goto' in u:
+                time.sleep(2)
+                u = resolve(i['url'], s)
+            return u
+        with ThreadPoolExecutor(3) as ex:
+            urls = list(ex.map(slow, d_items))
+        print(f"Resolved {sum('google.com/goto' not in u for u in urls)} of {len(urls)} Google News links", flush=True)
         for i, u in zip(d_items, urls):
             i['url'] = u
         items += d_items

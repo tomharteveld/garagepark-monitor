@@ -314,3 +314,13 @@ def test_ga_aggregators_build():
     B = ga.build(rows)
     assert B['aggregators'] == ['Huren.nl'] and B['window']['Huren.nl']['cur']['sessions'] == 100
     assert B['window']['Huren.nl']['prev']['sessions'] == 50 and B['parks'][0]['p'] == 'den-haag'
+
+
+def test_news_keeps_brand_headlines_and_new_openings():
+    import datetime as dt
+    from gpmon import config, news
+    cfg, today = config.load(), dt.date(2026, 11, 9)
+    c = lambda t, s: news.classify(dict(source='dataforseo', query='q', title=t, url='https://www.omroep.nl/x', snippet=s,
+                                        published='2026-11-05', publisher=None), cfg, today)
+    assert c('Groot deel gevel Shurgard in Veldhoven waait los: auto en vrachtwagentje geraakt', 'Door de storm waaide een deel van de gevel los.')['keep']
+    assert c('Spullen opslaan zónder de stad uit te moeten: deze opslag opent midden in Apeldoorn', 'Een nieuw initiatief in het centrum.')['keep']
