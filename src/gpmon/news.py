@@ -39,7 +39,8 @@ CONTEXT = re.compile(r'vestiging|locatie|opent|opening|bouw|vergunning|uitbreid|
                      r'huur|tarief|prijs|klant|opslag|brand|inbraak|inbrekers|politie|gemeente|bestemmingsplan|ontwikkel', re.I)
 OFF_TOPIC = re.compile(r'energieopslag|batterij|accu|thuisbatterij|stroomopslag|warmteopslag|waterstof|co2|koolstof|'
                        r'gasopslag|data[\s-]?opslag|cloudopslag|cloud|opslagcapaciteit (van )?(stroom|energie)|zonnepanel|'
-                       r'netcongestie|kernafval|graanopslag|mestopslag', re.I)
+                       r'netcongestie|kernafval|graanopslag|mestopslag|\d+\s?(gb|tb)\b|smartphone|telefoon|iphone|laptop|ssd|geheugen|'
+                       r'game|playstation|xbox|console|icloud', re.I)
 FINANCE_ONLY = re.compile(r'koersdoel|beurskoers|aandeel|kerncijfers|zakelijk profiel|stock price|dividend|analist', re.I)
 NEWS_PATH = re.compile(r'/(nieuws|news|pers|press|persberichten|media|actueel|newsroom)(/|$|-)', re.I)
 BLOG_PATH = re.compile(r'/(blog|blogs|tips|kennisbank|inspiratie|magazine|artikelen?|gids|veelgestelde)(/|$|-)', re.I)

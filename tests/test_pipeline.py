@@ -272,3 +272,12 @@ def test_news_filters_market_news_only():
     assert c('Nieuwe fietsbrug in Breda geopend voor het verkeer', snippet='De brug is open.')['reason'] == 'niet over de opslagmarkt'
     assert c('Shurgard opent in Breda', snippet='Opslag in de stad.', pub='2025-01-01')['reason'] == 'te oud'
     assert news.item_id('Shurgard opent in Breda - AD.nl') == news.item_id('Shurgard opent in Breda')
+
+
+def test_news_drops_device_storage():
+    import datetime as dt
+    from gpmon import config, news
+    it = news.classify(dict(source='alerts', query='q', title='Goedkope telefoon met 128 GB opslagruimte in de aanbieding',
+                            url='https://www.telegraaf.nl/x', snippet='De smartphone heeft veel opslagruimte voor foto\'s en apps.',
+                            published='2026-11-05', publisher=None), config.load(), dt.date(2026, 11, 9))
+    assert it['reason'] == 'ander soort opslag'

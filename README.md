@@ -194,6 +194,15 @@ TO "serviceAccount:garagepark-monitor@folloagency.iam.gserviceaccount.com";
 ```
 Zonder dat recht bouwt het dashboard gewoon, alleen zonder ChatGPT (de log meldt dat).
 
+### Local Nieuws
+
+Het tabblad Local Nieuws verzamelt nieuws over de opslagmarkt, de concurrenten, GaragePark zelf en de plaatsen met een park. Bronnen:
+
+- **Google Alerts** in het account seodata@folloagency.com (Nieuws, Nederlands, Nederland, alle resultaten, RSS-feed). De feed-URL's staan, gescheiden door spaties of regels, in het GitHub-secret **NEWS_ALERT_FEEDS**. Een alert erbij: maak hem op google.com/alerts met dezelfde instellingen en voeg de RSS-link toe aan het secret.
+- **DataForSEO Google Nieuws** voor de zoektermen onder `news.queries` en één lokale zoekopdracht per plaats (`news.local_query`); ongeveer $0,15 per week.
+
+Alleen nieuws over de Nederlandse opslagmarkt blijft over: Nederlandstalig, over opslag of over een gevolgd merk in een marktcontext, niet over energie-, data- of telefoonopslag, geen blogs of kennisbankpagina's, geen pagina's op de site van een concurrent buiten hun nieuws- of persrubriek en geen beurskoersen. Alles wordt met `keep` en `reason` opgeslagen in `news_items`, zodat je kunt nagaan wat er is weggefilterd. Alleen het nieuws ophalen: Run workflow met mode `news`.
+
 ### Prestaties en nieuwe parken (Business Profile API)
 
 Met de koppeling aan Bedrijfsprofielmanager (account seodata@folloagency.com) komt er elke week bij:
