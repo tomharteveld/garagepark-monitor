@@ -1,4 +1,4 @@
-"""One-time login for the Business Profile API. Run in Cloud Shell (or anywhere) next to client.json:
+"""One-time login of seodata@folloagency.com for the Business Profile API and Google Analytics (read only). Run in Cloud Shell (or anywhere) next to client.json:
     python3 gbp_oauth.py
 Prints the JSON for the GitHub secret GBP_OAUTH_JSON. Needs no extra packages."""
 import glob, json, os, urllib.parse, urllib.request
@@ -11,7 +11,7 @@ c = c.get('installed') or c.get('web') or c
 redirect = 'http://localhost:8085/'
 url = 'https://accounts.google.com/o/oauth2/auth?' + urllib.parse.urlencode(dict(
     client_id=c['client_id'], redirect_uri=redirect, response_type='code', access_type='offline', prompt='consent',
-    scope='https://www.googleapis.com/auth/business.manage'))
+    scope='https://www.googleapis.com/auth/business.manage https://www.googleapis.com/auth/analytics.readonly'))
 print('\n1. Open deze link in een incognitovenster en log in met seodata@folloagency.com:\n\n' + url + '\n')
 print('2. Na Toestaan krijg je een pagina die niet laadt (localhost). Dat klopt.')
 pasted = input('3. Kopieer de volledige adresbalk van die pagina en plak hem hier: ').strip()

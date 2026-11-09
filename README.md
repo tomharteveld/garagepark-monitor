@@ -198,9 +198,9 @@ Zonder dat recht bouwt het dashboard gewoon, alleen zonder ChatGPT (de log meldt
 
 Het tabblad Aggregators laat zien wat platforms als huren.nl, Marktplaats, Funda en Opslagmarkt opleveren: bezoeken, leads en conversie per platform, per park (landingspagina /locaties/...) en per bron/medium. De platforms staan onder `aggregators.sites` in de config (regex op sessionSource); leads zijn de key events onder `aggregators.lead_events`. Elke run haalt de laatste 400 dagen op via de GA4 Data API en zet die als momentopname in `ga_aggregators`.
 
-Eenmalig:
-1. GA4, Beheer, property **garagepark.nl - GA4**, Toegangsbeheer: voeg `garagepark-monitor@folloagency.iam.gserviceaccount.com` toe met de rol **Lezer**.
-2. Zet in Google Cloud (project folloagency) de **Google Analytics Data API** aan: https://console.cloud.google.com/apis/library/analyticsdata.googleapis.com?project=folloagency
+Eenmalig: de data wordt gelezen met de login van **seodata@folloagency.com** (het account dat is uitgenodigd voor de GA4 van GaragePark), dezelfde login als voor Bedrijfsprofielen.
+1. Zet de **Google Analytics Data API** aan in het project van de OAuth-client: https://console.cloud.google.com/apis/library/analyticsdata.googleapis.com?project=folloagency
+2. Log opnieuw in met `scripts/gbp_oauth.py` (vraagt nu ook leesrechten voor Analytics) en vervang het secret **GBP_OAUTH_JSON** door de nieuwe JSON.
 
 Daarna komt de data mee in de wekelijkse run (of meteen met mode `news`).
 

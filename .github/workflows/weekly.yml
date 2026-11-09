@@ -167,8 +167,10 @@ jobs:
       - name: Fetch aggregators (Google Analytics)
         id: ga
         if: ${{ env.MODE != 'smoke' }}
-        # needs the service account as Viewer on the GA4 property; until then the tab shows what is missing
+        # uses the seodata@folloagency.com login (GBP_OAUTH_JSON with analytics.readonly); until then the tab shows what is missing
         continue-on-error: true
+        env:
+          GBP_OAUTH_JSON: ${{ secrets.GBP_OAUTH_JSON }}
         run: python -m gpmon.ga
       - name: Load aggregators into BigQuery
         if: ${{ env.MODE != 'smoke' && steps.ga.outcome == 'success' }}

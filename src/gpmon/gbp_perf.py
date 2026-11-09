@@ -48,7 +48,7 @@ class Api:
                 refresh_token=self.o['refresh_token'], grant_type='refresh_token')).json()
             if 'access_token' not in r:
                 raise SystemExit(f"OAuth refresh failed: {r.get('error')} {r.get('error_description')}")
-            if SCOPE not in (r.get('scope') or ''):
+            if r.get('scope') and SCOPE not in r['scope']:
                 raise SystemExit(f'The token lacks the scope {SCOPE}. Repeat the login with --scopes including it.')
             self.token, self.exp = r['access_token'], time.time() + int(r.get('expires_in', 3000))
         return {'Authorization': f'Bearer {self.token}'}

@@ -1,9 +1,9 @@
 """Aggregators: visits and leads that come to garagepark.nl via third party platforms (huren.nl, Marktplaats,
 Funda, Opslagmarkt ...), from the GA4 Data API into BigQuery.
 
-Auth: the pipeline's own Google identity (Workload Identity Federation, the BigQuery service account). That
-service account needs the role Viewer (Lezer) on the GA4 property, and the Google Analytics Data API must be
-enabled in the Cloud project. Nothing else.
+Auth: the OAuth login of seodata@folloagency.com (secret GBP_OAUTH_JSON, scopes business.manage and
+analytics.readonly), the account that was invited to the client's GA4. The Google Analytics Data API must be
+enabled in the Cloud project of that OAuth client. Without that secret it falls back to the pipeline's own identity.
 
 Every run stores a full snapshot of the last `days` days (default 400) under its run_date; the dashboard
 reads the newest snapshot. Rows: one per date, aggregator, source, medium and landing page, plus a row per
@@ -25,12 +25,22 @@ from . import config
 TABLE = 'ga_aggregators'
 API = 'https://analyticsdata.googleapis.com/v1beta/properties/{pid}:runReport'
 SITE = '(site)'
+SCOPE = 'https://www.googleapis.com/auth/analytics.readonly'
 
 
 def session():
-    import google.auth
+    """The login of seodata@folloagency.com (secret GBP_OAUTH_JSON, which also carries the analytics.readonly
+    scope) when present, because that account has access to the client's GA4; else the pipeline's own identity."""
     from google.auth.transport.requests import AuthorizedSession
-    creds, _ = google.auth.default(scopes=['https://www.googleapis.com/auth/analytics.readonly'])
+    if config.env('GBP_OAUTH_JSON'):
+        from google.oauth2.credentials import Credentials
+        from .gbp_perf import load_oauth
+        o = load_oauth()
+        creds = Credentials(None, refresh_token=o['refresh_token'], client_id=o['client_id'], client_secret=o['client_secret'],
+                            token_uri='https://oauth2.googleapis.com/token', scopes=[SCOPE])
+        return AuthorizedSession(creds)
+    import google.auth
+    creds, _ = google.auth.default(scopes=[SCOPE])
     return AuthorizedSession(creds)
 
 
@@ -38,9 +48,9 @@ def report(s, pid, body):
     rows, offset = [], 0
     while True:
         r = s.post(API.format(pid=pid), json=dict(body, limit=100000, offset=offset), timeout=120)
-        if r.status_code == 403:
-            raise SystemExit('No access to GA4: add the service account as Viewer on the property and enable the '
-                             f'Google Analytics Data API in the Cloud project. {r.text[:300]}')
+        if r.status_code in (401, 403):
+            raise SystemExit('No access to GA4. Log in again with scripts/gbp_oauth.py (it now also asks for Analytics) '
+                             f'and enable the Google Analytics Data API in the OAuth client\'s Cloud project. {r.text[:300]}')
         r.raise_for_status()
         d = r.json()
         dims = [h['name'] for h in d.get('dimensionHeaders', [])]
