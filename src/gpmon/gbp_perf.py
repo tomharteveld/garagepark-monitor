@@ -84,9 +84,19 @@ class Api:
 
 
 def load_oauth():
-    raw = config.env('GBP_OAUTH_JSON')
-    if raw and raw.strip().startswith('{'):
-        return json.loads(raw)
+    raw = (config.env('GBP_OAUTH_JSON') or '').strip()
+    m = re.search(r'\{.*\}', raw, re.S)  # tolerate extra text pasted around the JSON (headers, ==== lines)
+    if m:
+        try:
+            o = json.loads(m.group(0))
+        except json.JSONDecodeError as e:
+            raise SystemExit(f'GBP_OAUTH_JSON is not valid JSON ({e.msg} at {e.pos}); paste only the line between the ==== lines')
+        missing = [k for k in ('client_id', 'client_secret', 'refresh_token') if not o.get(k)]
+        if missing:
+            raise SystemExit(f'GBP_OAUTH_JSON lacks {", ".join(missing)}')
+        return o
+    if raw and not os.path.exists(raw):
+        raise SystemExit(f'GBP_OAUTH_JSON is set ({len(raw)} characters) but contains no JSON object; paste the line between the ==== lines')
     path = raw or os.path.expanduser('~/.config/gcloud/application_default_credentials.json')
     if not os.path.exists(path):
         raise SystemExit('No GBP_OAUTH_JSON secret and no gcloud application default credentials found')
