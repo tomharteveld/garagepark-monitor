@@ -37,6 +37,10 @@ SCHEMAS = {
                      F('has_hours', B), F('open_247', B), F('attributes', S, 'REPEATED'), F('services', S, 'REPEATED'),
                      F('place_topics', S, 'REPEATED'), F('book_online_url', S), F('contact_url', S), F('from_listing_only', B),
                      F('check_url', S), F('listing_updated', TS), F('source', S)],
+    'news_items': [F('run_date', D, 'REQUIRED'), F('id', S), F('source', S), F('query', S), F('grp', S), F('title', S),
+                   F('url', S), F('domain', S), F('publisher', S), F('snippet', S), F('published', D),
+                   F('brands', S, 'REPEATED'), F('cities', S, 'REPEATED'), F('topic', S), F('keep', B), F('reason', S),
+                   F('fetched_at', TS)],
     'gbp_competitors': [F('run_date', D, 'REQUIRED'), F('own_cid', S), F('comp_cid', S), F('rank', I)],
     'gbp_reviews': [F('run_date', D, 'REQUIRED'), F('cid', S), F('is_own', B), F('review_id', S), F('rating', FL), F('posted_at', TS),
                     F('time_ago', S), F('text', S), F('language', S), F('has_text', B), F('photos', B), F('local_guide', B),
@@ -54,7 +58,7 @@ SCHEMAS = {
 CLUSTER = {'serp_summary': ['city', 'keyword'], 'serp_results': ['domain', 'city'], 'local_pack': ['city'],
            'ai_answers': ['engine', 'city'], 'ai_citations': ['engine', 'domain'], 'run_log': ['engine'], 'raw_tasks': ['engine', 'city'],
            'gbp_profiles': ['is_own', 'cid'], 'gbp_competitors': ['own_cid'], 'gbp_reviews': ['is_own', 'cid'],
-           'gbp_posts': ['cid'], 'gbp_run_log': ['kind'],
+           'gbp_posts': ['cid'], 'news_items': ['grp', 'keep'], 'gbp_run_log': ['kind'],
            'gbp_locations': ['location_id'], 'gbp_perf_daily': ['location_id', 'metric'], 'gbp_keywords': ['location_id']}
 
 
@@ -144,6 +148,11 @@ def fetch_tables(history_runs=26, detail_runs=2, c=None):
         print(f'WARNING: FolloEngine ChatGPT not read: {e!r}', flush=True)
         T['_gpt'] = dict(error=str(e)[:200])
     T.update(fetch_gbp(c, q))
+    try:  # kept news of the last 26 news runs; the dashboard dedupes and marks what is new
+        T['news_items'] = q(f"SELECT * EXCEPT(fetched_at) FROM `{tid('news_items')}` WHERE keep AND run_date IN "
+                            f"(SELECT DISTINCT run_date FROM `{tid('news_items')}` ORDER BY run_date DESC LIMIT {int(history_runs)})")
+    except Exception as e:  # table missing before the first news run
+        print(f'No news yet ({e.__class__.__name__})')
     for name, rows in T.items():
         if name.startswith('_'):
             continue
@@ -205,10 +214,18 @@ def main(argv=None):
     l.add_argument('raw', nargs='+')
     lg = sub.add_parser('load-gbp')
     lg.add_argument('raw', nargs='+')
+    ln = sub.add_parser('load-news')
+    ln.add_argument('raw', nargs='+')
     a = ap.parse_args(argv)
     c = client()
     if a.cmd == 'setup':
         setup(c)
+    elif a.cmd == 'load-news':
+        from . import news
+        setup(c)
+        for p in a.raw:
+            print(f'Loading {p}')
+            load_tables(news.transform_files([p]), c)
     elif a.cmd == 'load-gbp':
         from . import gbp
         setup(c)

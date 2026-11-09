@@ -251,3 +251,24 @@ def test_folloengine_chatgpt_mapping():
     assert not a[1]['mentioned'] and a[1]['markdown'] == 'Ongeveer 50 euro.'
     a2, c2 = fe.to_tables(rows, {'2026-11-02': '2026-11-06'}, set())   # slim run: no text, no citation rows
     assert a2[0]['markdown'] is None and not c2 and a2[0]['brands_cited']
+
+
+def test_news_filters_market_news_only():
+    import datetime as dt
+    from gpmon import config, news
+    cfg, today = config.load(), dt.date(2026, 11, 9)
+    def c(title, url='https://www.ad.nl/x', snippet='', pub='2026-11-01'):
+        return news.classify(dict(source='alerts', query='q', title=title, url=url, snippet=snippet, published=pub, publisher=None), cfg, today)
+    ok = c('Shurgard opent nieuwe vestiging in Breda', snippet='Het opslagbedrijf opent volgende maand de deuren.')
+    assert ok['keep'] and ok['grp'] == 'concurrent' and ok['brands'] == ['Shurgard'] and ok['cities'] == ['Breda'] and ok['topic'] == 'Nieuwe locatie'
+    assert c('Inbrekers slaan toe bij garageboxen in Almelo', snippet='De politie onderzoekt de inbraak in de garageboxen.')['grp'] == 'lokaal'
+    assert c('GaragePark opent nieuw park in Venlo', snippet='Het nieuwe park met garageboxen opent in de zomer.')['grp'] == 'eigen'
+    assert c('Gemeente kiest locatie voor batterij-opslag bij Breda', snippet='De energieopslag moet netcongestie verminderen.')['reason'] == 'ander soort opslag'
+    assert c('Global Self Storage reports earnings for the third quarter')['reason'] == 'niet Nederlands'
+    assert c('Tips: zo richt je je opslagruimte in', url='https://www.shurgard.com/nl-nl/blog/tips', snippet='Met deze tips richt je de opslag in.')['reason'] == 'blog of kennisbank'
+    assert c('Shurgard opent in Utrecht', url='https://www.shurgard.com/nl-nl/opslagruimte-utrecht', snippet='Huur een opslagruimte in de stad.')['reason'] == 'pagina op eigen site, geen nieuws'
+    assert c('Shurgard opent in Utrecht', url='https://www.shurgard.com/nl-nl/pers/opening-utrecht', snippet='Persbericht over de opening van de opslag.')['keep']
+    assert c('Koersdoel aandeel Shurgard verhoogd door analist', snippet='De analist ziet de koers van het aandeel stijgen.')['reason'] == 'beursinformatie'
+    assert c('Nieuwe fietsbrug in Breda geopend voor het verkeer', snippet='De brug is open.')['reason'] == 'niet over de opslagmarkt'
+    assert c('Shurgard opent in Breda', snippet='Opslag in de stad.', pub='2025-01-01')['reason'] == 'te oud'
+    assert news.item_id('Shurgard opent in Breda - AD.nl') == news.item_id('Shurgard opent in Breda')

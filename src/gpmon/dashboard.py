@@ -67,7 +67,26 @@ def build_data(T, detail_runs=2):
     from . import gbp_view
     gbp = gbp_view.build(T) if T.get('gbp_profiles') else None
     meta['gbp_run'] = gbp['run'] if gbp else None
-    return dict(meta=meta, serps=serps, ai=ai, gbp=gbp)
+    return dict(meta=meta, serps=serps, ai=ai, gbp=gbp, news=build_news(T.get('news_items') or []))
+
+
+def build_news(rows, limit=400):
+    """One entry per story (id), first_seen = first news run that found it; newest first."""
+    if not rows:
+        return None
+    runs = sorted({_d(r['run_date']) for r in rows})
+    by = {}
+    for r in sorted(rows, key=lambda r: _d(r['run_date'])):
+        x = by.get(r['id'])
+        if x:
+            x['q'] = sorted(set(x['q']) | {r.get('query') or ''})
+            continue
+        by[r['id']] = dict(id=r['id'], t=r['title'], u=r['url'], d=r.get('domain') or '', p=r.get('publisher') or '',
+                           s=(r.get('snippet') or '')[:300], dt=_d(r.get('published')) or _d(r['run_date']),
+                           g=r['grp'], b=list(r.get('brands') or []), c=list(r.get('cities') or []), tp=r.get('topic') or 'Overig',
+                           src=r.get('source'), q=[r.get('query') or ''], fs=_d(r['run_date']))
+    items = sorted(by.values(), key=lambda x: (x['dt'] or '', x['fs']), reverse=True)[:limit]
+    return dict(runs=runs, last=runs[-1], items=items)
 
 
 HEAD = """<!doctype html>
@@ -98,6 +117,7 @@ def render(data, out_dir, secret_path=None):
     payload = json.dumps(data, ensure_ascii=False, separators=(',', ':'), default=str).replace('</', '<\\/')
     tpl = tpl.replace('__DATA__', payload)
     tpl = tpl.replace('/*__GBP_JS__*/', (DASH / 'gbp_tab.js').read_text(encoding='utf-8'))
+    tpl = tpl.replace('/*__NEWS_JS__*/', (DASH / 'news_tab.js').read_text(encoding='utf-8'))
     split = tpl.index('<div class="app">')  # title, fonts and styles go in <head>, the rest in <body>
     html = HEAD + tpl[:split] + '</head>\n<body>\n' + tpl[split:] + '\n</body>\n</html>\n'
     (page_dir / 'index.html').write_text(html, encoding='utf-8')
@@ -130,6 +150,10 @@ def main(argv=None):
             from . import gbp
             G = gbp.transform_files(gfiles[-1:])
             T.update({k: v for k, v in G.items() if k != 'gbp_run_log'})
+        nfiles = sorted((config.ROOT / 'data' / 'raw').glob('news_*.jsonl.gz'))
+        if nfiles:
+            from . import news
+            T['news_items'] = [r for r in news.transform_files(nfiles)['news_items'] if r['keep']]
         pfiles = sorted((config.ROOT / 'data' / 'raw').glob('gbpperf_*.jsonl.gz'))
         if pfiles:
             from . import gbp_perf

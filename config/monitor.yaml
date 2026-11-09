@@ -21,6 +21,21 @@ scrape:
 chatgpt_source:
   table: folloagency.llm_reporting_tables.garagepark_nl_llm_combined_canonical
   max_age_days: 10
+# Local news (tab Local Nieuws): Google Alerts RSS (secret NEWS_ALERT_FEEDS) + DataForSEO Google News.
+news:
+  enabled: true
+  period: m                 # DataForSEO: news of the past month (h, d, w, m, y)
+  depth: 20
+  max_age_days: 120         # older articles are ignored
+  queries:
+    markt: ['self storage', 'opslagruimte huren', 'garagebox', 'garageboxen', 'opslagbox', 'bedrijfsunits huren']
+    concurrent: ['Shurgard', 'Allsafe opslag', '1BOX opslag', 'Boxie24', 'XL Box opslag', 'Eurobox opslag', 'Storage Share opslag', 'Boxcomplex']
+    eigen: ['GaragePark']
+  local_query: '(garagebox OR garageboxen OR opslagruimte OR "self storage") {city}'
+  extra_brands:             # brands that only matter for news (the AI tabs use `brands`)
+    Storage Share: 'storage\s?share'
+    Boxcomplex: 'box\s?complex'
+    Big Yellow: 'big yellow'
 dashboard:
   detail_runs: 2
   history_runs: 26

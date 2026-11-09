@@ -329,6 +329,18 @@ ul.acts{list-style:none;margin:0;padding:0}
 }
 @media (max-width:560px){.g4{grid-template-columns:minmax(0,1fr)} .cols{grid-template-columns:minmax(0,1fr)} select,input[type=search]{min-width:0;width:100%} .filters,.filters label{width:100%} .selbar .sep{display:none} .band>div{padding:24px}}
 @media (prefers-reduced-motion:no-preference){.view{animation:fade .25s ease}@keyframes fade{from{opacity:.4}to{opacity:1}}}
+.nlist{display:grid}
+.nitem{padding:16px 20px;border-top:1px solid var(--line)}
+.nitem:first-child{border-top:0}
+.nitem.own{background:var(--row-own,rgba(124,77,255,.05))}
+.nitem h4{margin:4px 0 6px;font-size:15px;line-height:1.35}
+.nitem h4 a{color:var(--fg);text-decoration:none}
+.nitem h4 a:hover{text-decoration:underline}
+.nitem h4 svg{width:12px;height:12px;margin-left:6px;vertical-align:-1px;opacity:.6}
+.nitem p{margin:0 0 8px;color:var(--muted);font-size:13px;line-height:1.5}
+.nmeta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--subtle)}
+.nmeta .chip{margin-left:4px}
+.thead .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 </style>
 
 <div class="app">
@@ -376,13 +388,14 @@ const ICON = {
   aio: '<path d="M12 3l1.8 5.4L19 10l-5.2 1.6L12 17l-1.8-5.4L5 10l5.2-1.6z"/>',
   chatgpt: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
   aimode: '<path d="m6 4 14 8-14 8z"/>',
-  gbp: '<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>'
+  gbp: '<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  nieuws: '<path d="M4 5h13v14H6a2 2 0 0 1-2-2z"/><path d="M17 9h3v8a2 2 0 0 1-2 2"/><path d="M7 9h7M7 13h7M7 16h4"/>'
 };
 const HAS_GPT = (D.meta.engines || []).includes('cgpt');
 const ENG = { aio: 'aio', aimode: 'aim', chatgpt: 'cgpt' };
 const engOf = t => ENG[t] || 'aim';
 const isDetail = r => !D.meta.detail_runs || D.meta.detail_runs.includes(r);
-const TABS = [['overzicht', 'Overzicht'], ['google', 'Google Search'], ['gbp', 'Bedrijfsprofielen'], ['aio', 'AI Overviews'], ['chatgpt', 'ChatGPT'], ['aimode', 'AI Mode']];
+const TABS = [['overzicht', 'Overzicht'], ['google', 'Google Search'], ['gbp', 'Bedrijfsprofielen'], ['aio', 'AI Overviews'], ['chatgpt', 'ChatGPT'], ['aimode', 'AI Mode'], ['nieuws', 'Local Nieuws']];
 const st = { city: '', kw: '', run: RUNS[RUNS.length - 1] };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -435,6 +448,14 @@ function streak(keyFn, okFn, items) {
 
 // ==== selection bar ====
 function selbar() {
+  if (tab() === 'nieuws') {
+    const it = NW ? NW.items : [], c = it.filter(x => !st.city || x.c.includes(st.city));
+    $('#selbar').innerHTML = `<div class="k"><b>${c.length}</b><span>berichten${st.city ? ' · ' + esc(st.city) : ''}</span></div><div class="sep"></div>
+    <div class="k"><b>${c.filter(x => x.g === 'concurrent').length}</b><span>over concurrenten</span></div><div class="sep"></div>
+    <div class="k"><b>${c.filter(x => x.g === 'eigen').length}</b><span>over GaragePark</span></div><div class="sep"></div>
+    <div class="k"><b>${NW ? fmtDate(NW.last) : 'n.v.t.'}</b><span>laatste nieuwsmeting</span></div>`;
+    return;
+  }
   if (tab() === 'gbp' && D.gbp) {
     const ps = gProfiles();
     $('#selbar').innerHTML = `<div class="k"><b>${ps.length}</b><span>eigen profielen${st.city ? ' · ' + esc(st.city) : ''}</span></div><div class="sep"></div>
@@ -831,6 +852,7 @@ function featDrawer(f) {
 }
 
 /*__GBP_JS__*/
+/*__NEWS_JS__*/
 
 // ==== router ====
 function tab() { const h = location.hash.slice(1); return TABS.some(t => t[0] === h) ? h : 'overzicht'; }
@@ -839,6 +861,7 @@ const META = {
   google: ['Google Search · mobiel · top 20', 'Google Search', 'Organische posities, concurrerende domeinen, local pack en SERP features per plaats.'],
   aio: ['Google · AI Overviews', 'AI Overviews', 'Wordt GaragePark genoemd en als bron gebruikt in de AI Overview boven de zoekresultaten?'],
   chatgpt: ['OpenAI · ChatGPT · Nederland', 'ChatGPT', HAS_GPT ? `Wat antwoordt ChatGPT op de vaste FolloEngine-promptset? Wekelijkse meting, lokaal en algemeen.` : 'Komt in de volgende fase.'],
+  nieuws: ['Google Alerts · Google Nieuws · Nederland', 'Local Nieuws', 'Nieuws over de opslagmarkt, de concurrenten en GaragePark zelf: waar kunnen we op inhaken?'],
   gbp: ['Google Bedrijfsprofielen · eigen parken en concurrenten', 'Bedrijfsprofielen', 'Profiel, reviews en concurrentie per park, met wat er per park beter moet.'],
   aimode: ['Google · AI Mode', 'AI Mode', 'Wat antwoordt Google AI Mode als iemand een garagebox of opslagruimte zoekt in de buurt?']
 };
@@ -849,8 +872,8 @@ function render() {
   $('#eyebrow').textContent = e + (st.city ? ' · ' + st.city : ''); $('#title').innerHTML = h + '<span class="p">.</span>'; $('#lede').innerHTML = l;
   $('#crumb').textContent = TABS.find(x => x[0] === t)[1];
   selbar();
-  ['fKw', 'fRun'].forEach(id => { const l = $('#' + id).closest('label'); if (l) l.hidden = t === 'gbp'; });
-  $('#view').innerHTML = t === 'gbp' ? vGBP() : t === 'overzicht' ? vOverview() : t === 'google' ? vGoogle() : t === 'aio' ? vAI('aio') : t === 'aimode' ? vAI('aim') : HAS_GPT ? vAI('cgpt') : vChatGPT();
+  ['fKw', 'fRun'].forEach(id => { const l = $('#' + id).closest('label'); if (l) l.hidden = t === 'gbp' || t === 'nieuws'; });
+  $('#view').innerHTML = t === 'nieuws' ? vNews() : t === 'gbp' ? vGBP() : t === 'overzicht' ? vOverview() : t === 'google' ? vGoogle() : t === 'aio' ? vAI('aio') : t === 'aimode' ? vAI('aim') : HAS_GPT ? vAI('cgpt') : vChatGPT();
   const aif = $('#aif'); if (aif) aif.value = AIF[engOf(t)];
 }
 document.addEventListener('click', ev => {
@@ -858,7 +881,7 @@ document.addEventListener('click', ev => {
   if (!el) return;
   if (el.id === 'ov') { if (ev.target === el) closeDrawer(); return; }
   if (el.dataset.sub) { const [k, v] = el.dataset.sub.split('|'); subSt[k] = v; stkQ = ''; stkAll = false; render(); return; }
-  if (el.dataset.seg) { const [k, v] = el.dataset.seg.split('|'); if (gSeg(k, v)) return; if (k === 'gtop') GTOP.n = +v; else if (k === 'mapm') mapMetric = v; else AIMET[engOf(tab())] = v; render(); return; }
+  if (el.dataset.seg) { const [k, v] = el.dataset.seg.split('|'); if (gSeg(k, v) || nSeg(k, v)) return; if (k === 'gtop') GTOP.n = +v; else if (k === 'mapm') mapMetric = v; else AIMET[engOf(tab())] = v; render(); return; }
   if (el.dataset.dom) { domDrawer(el.dataset.dom); return; }
   if (el.dataset.brand) { brandDrawer(el.dataset.brand); return; }
   if (el.id === 'stkall') { stkAll = !stkAll; render(); return; }
@@ -881,5 +904,6 @@ document.addEventListener('input', ev => {
 document.addEventListener('change', ev => { if (ev.target.id === 'aif') { AIF[engOf(tab())] = ev.target.value; render(); } });
 window.addEventListener('hashchange', () => { render(); scrollTo({ top: 0 }); });
 gbpEvents();
+newsEvents();
 fill(); render();
 </script>
