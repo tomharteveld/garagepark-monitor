@@ -3,6 +3,7 @@ const AG = D.agg;
 const ast = { sort: ['sessions', -1] };
 const ACOLS = ['var(--brand)', 'var(--accent)', 'var(--heat-3)', 'var(--accent-soft)', 'var(--heat-1)', 'var(--heat-2)', 'var(--subtle)', 'var(--line)'];
 
+const pc1 = x => x == null ? 'n.v.t.' : nf(100 * x, x < .1 ? 2 : 1) + '%';
 function aDelta(c, p) { if (!p) return ''; const d = (c - p) / p; return `<span class="pill2 ${d >= 0 ? 'ok' : 'bad'}">${d >= 0 ? '+' : ''}${nf(100 * d, 0)}%</span>`; }
 
 function aMonthly() {
@@ -34,14 +35,14 @@ function vAgg() {
   return `<section><div class="grid g4">
     <div class="card kpi"><span class="stat-l">Bezoeken via aggregators</span><span class="num">${s.toLocaleString('nl-NL')}</span><span class="of">laatste 28 dagen</span><div class="vs"><span>vs vorige 28 dagen</span>${aDelta(s, sp)}</div></div>
     <div class="card kpi"><span class="stat-l">Aandeel van alle bezoeken</span><span class="num">${pc(site.sessions ? s / site.sessions : null)}</span><span class="of">${(site.sessions || 0).toLocaleString('nl-NL')} bezoeken op garagepark.nl</span></div>
-    <div class="card kpi"><span class="stat-l">Leads via aggregators</span><span class="num">${l}</span><span class="of">${AG.lead_events.length} soorten leads (huur, afspraak, bezichtiging, contact, brochure)</span><div class="vs"><span>vorige 28 dagen ${lp}</span></div></div>
-    <div class="card kpi"><span class="stat-l">Conversie</span><span class="num">${pc(conv)}</span><span class="of">site gemiddeld ${pc(sconv)}</span></div>
+    <div class="card kpi"><span class="stat-l">Leads via aggregators</span><span class="num">${l}</span><span class="of">huur, bezichtiging en contactaanvraag (key events in GA4)</span><div class="vs"><span>vorige 28 dagen ${lp}</span></div></div>
+    <div class="card kpi"><span class="stat-l">Conversie</span><span class="num">${pc1(conv)}</span><span class="of">site gemiddeld ${pc1(sconv)}</span></div>
   </div></section>
-  ${best && best.c.sessions ? `<section><div class="note"><b>${esc(best.a)}</b> brengt de meeste bezoekers (${best.c.sessions.toLocaleString('nl-NL')} in 28 dagen) met een conversie van ${pc(best.conv)}${sconv != null && best.conv != null ? (best.conv < sconv / 2 ? ', ruim onder het sitegemiddelde: kijk naar de landingspagina of de prijsvermelding op het platform' : best.conv > sconv ? ', boven het sitegemiddelde' : '') : ''}.</div></section>` : ''}
+  ${best && best.c.sessions ? `<section><div class="note"><b>${esc(best.a)}</b> brengt de meeste bezoekers (${best.c.sessions.toLocaleString('nl-NL')} in 28 dagen) met een conversie van ${pc1(best.conv)} (site gemiddeld ${pc1(sconv)})${sconv != null && best.conv != null ? (best.conv < sconv / 2 ? ', ruim onder het sitegemiddelde: kijk naar de landingspagina of de prijsvermelding op het platform' : best.conv > sconv ? ', boven het sitegemiddelde' : '') : ''}.</div></section>` : ''}
   <section><div class="card"><h4>Bezoeken per maand</h4><p class="cap">Per platform, laatste 13 maanden</p>${aMonthly()}</div></section>
   <section><div class="tcard"><div class="thead"><div><h4>Per platform</h4><p>Laatste 28 dagen tot en met ${fmtDate(AG.end)}; jaar = laatste 12 volle maanden.</p></div></div>
     <div class="scroll"><table><thead><tr>${th('a', 'Platform')}${th('sessions', 'Bezoeken', 1)}<th class="r">vs vorige</th>${th('eng', 'Betrokken', 1)}${th('leads', 'Leads', 1)}${th('purchases', 'Huur', 1)}${th('conv', 'Conversie', 1)}${th('y', 'Bezoeken jaar', 1)}</tr></thead><tbody>
-    ${rows.map(r => `<tr><td><b>${esc(r.a)}</b></td><td class="r">${(r.c.sessions || 0).toLocaleString('nl-NL')}</td><td class="r">${aDelta(r.c.sessions || 0, r.p.sessions || 0) || 'n.v.t.'}</td><td class="r">${pc(r.eng)}</td><td class="r">${r.c.leads || 0}</td><td class="r">${r.c.purchases || 0}</td><td class="r">${pc(r.conv)}</td><td class="r">${r.y.toLocaleString('nl-NL')}</td></tr>`).join('')}
+    ${rows.map(r => `<tr><td><b>${esc(r.a)}</b></td><td class="r">${(r.c.sessions || 0).toLocaleString('nl-NL')}</td><td class="r">${aDelta(r.c.sessions || 0, r.p.sessions || 0) || 'n.v.t.'}</td><td class="r">${pc(r.eng)}</td><td class="r">${r.c.leads || 0}</td><td class="r">${r.c.purchases || 0}</td><td class="r">${pc1(r.conv)}</td><td class="r">${r.y.toLocaleString('nl-NL')}</td></tr>`).join('')}
     </tbody></table></div></div></section>
   <section><div class="grid g2 gtop">
     <div class="tcard"><div class="thead"><div><h4>Per park</h4><p>Landingspagina /locaties/…, laatste 90 dagen.</p></div></div>
