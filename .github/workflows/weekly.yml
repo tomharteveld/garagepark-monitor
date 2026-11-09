@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'full = search + business profiles + news + BigQuery + dashboard · gbp = business profiles only · news = local news only · rebuild = dashboard from BigQuery only · backfill = load the encrypted runs in data/backfill · smoke = 6 calls, nothing stored'
+        description: 'full = search + business profiles + news + BigQuery + dashboard · gbp = business profiles only · news = local news + aggregators (GA4) only · rebuild = dashboard from BigQuery only · backfill = load the encrypted runs in data/backfill · smoke = 6 calls, nothing stored'
         type: choice
         options: [full, gbp, news, rebuild, backfill, smoke]
         default: full
@@ -163,6 +163,16 @@ jobs:
       - name: Load into BigQuery
         if: ${{ env.MODE != 'smoke' }}
         run: python -m gpmon.bq load-news data/raw/news_*.jsonl.gz
+
+      - name: Fetch aggregators (Google Analytics)
+        id: ga
+        if: ${{ env.MODE != 'smoke' }}
+        # needs the service account as Viewer on the GA4 property; until then the tab shows what is missing
+        continue-on-error: true
+        run: python -m gpmon.ga
+      - name: Load aggregators into BigQuery
+        if: ${{ env.MODE != 'smoke' && steps.ga.outcome == 'success' }}
+        run: python -m gpmon.bq load-ga data/raw/ga_*.jsonl.gz
 
   build:
     needs: [scrape, gbp, news]

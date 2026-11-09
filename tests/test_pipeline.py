@@ -281,3 +281,36 @@ def test_news_drops_device_storage():
                             url='https://www.telegraaf.nl/x', snippet='De smartphone heeft veel opslagruimte voor foto\'s en apps.',
                             published='2026-11-05', publisher=None), config.load(), dt.date(2026, 11, 9))
     assert it['reason'] == 'ander soort opslag'
+
+
+def test_news_drops_roundups_and_foreign_market():
+    import datetime as dt
+    from gpmon import config, news
+    cfg, today = config.load(), dt.date(2026, 11, 9)
+    c = lambda t, s, u='https://www.ad.nl/x': news.classify(dict(source='dataforseo', query='q', title=t, url=u, snippet=s,
+                                                                published='2026-11-05', publisher=None), cfg, today)
+    assert c('Rechtszaak Tarwekamp en bijzondere paddenstoelen: dit mag je niet missen',
+             'In een garagebox in Dinteloord zijn bijna 10.000 cobras gevonden in Den Haag.')['reason'] == 'nieuwsoverzicht'
+    assert c('Global Self Storage winst lager dan voorspeld', 'Global Self Storage (NASDAQ: SELF) rapporteerde een lagere winst.',
+             'https://nl.investing.com/news/x')['keep'] is False
+    assert c('Shurgard krijgt bouwvergunning in regio Manchester', 'Shurgard heeft een bouwvergunning voor een nieuwe opslag in Manchester.')['reason'] == 'buitenlandse markt'
+    assert c('Dertig nieuwe bedrijfsunits aan de Schelluinsestraat', 'In Gorinchem verrijst een nieuw bedrijfscomplex.')['keep']
+    assert c('Nederlands grootste nieuws overzicht', 'Bedrijven hebben plotseling meer opslagruimte nodig.')['keep'] is False
+
+
+def test_ga_aggregators_build():
+    from gpmon import ga, bq
+    cfg_sites = {'Huren.nl': 'hurennl|huren\\.nl', 'Marktplaats': 'marktplaats'}
+    assert ga.classify_source('hurennl', cfg_sites) == 'Huren.nl' and ga.classify_source('google', cfg_sites) is None
+    assert ga.park_of('/locaties/den-haag/checkout/samenstellen') == 'den-haag'
+    rows = [dict(run_date='2026-11-09', date='2026-11-08', aggregator='Huren.nl', source='hurennl', medium='cpc', landing_page='/locaties/den-haag',
+                 park='den-haag', sessions=100, engaged=60, key_events=3, leads=2, purchases=1),
+            dict(run_date='2026-11-09', date='2026-10-01', aggregator='Huren.nl', source='huren.nl', medium='referral', landing_page='/',
+                 park=None, sessions=50, engaged=30, key_events=0, leads=0, purchases=0),
+            dict(run_date='2026-11-09', date='2026-11-08', aggregator='(site)', source=None, medium=None, landing_page=None, park=None,
+                 sessions=1000, engaged=600, key_events=40, leads=30, purchases=10)]
+    fields = {f.name for f in bq.SCHEMAS['ga_aggregators']}
+    assert all(not set(r) - fields for r in rows)
+    B = ga.build(rows)
+    assert B['aggregators'] == ['Huren.nl'] and B['window']['Huren.nl']['cur']['sessions'] == 100
+    assert B['window']['Huren.nl']['prev']['sessions'] == 50 and B['parks'][0]['p'] == 'den-haag'

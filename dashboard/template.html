@@ -389,13 +389,14 @@ const ICON = {
   chatgpt: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
   aimode: '<path d="m6 4 14 8-14 8z"/>',
   gbp: '<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  aggregators: '<path d="M3 7h18M3 12h18M3 17h18"/><circle cx="7" cy="7" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="10" cy="17" r="1.5"/>',
   nieuws: '<path d="M4 5h13v14H6a2 2 0 0 1-2-2z"/><path d="M17 9h3v8a2 2 0 0 1-2 2"/><path d="M7 9h7M7 13h7M7 16h4"/>'
 };
 const HAS_GPT = (D.meta.engines || []).includes('cgpt');
 const ENG = { aio: 'aio', aimode: 'aim', chatgpt: 'cgpt' };
 const engOf = t => ENG[t] || 'aim';
 const isDetail = r => !D.meta.detail_runs || D.meta.detail_runs.includes(r);
-const TABS = [['overzicht', 'Overzicht'], ['google', 'Google Search'], ['gbp', 'Bedrijfsprofielen'], ['aio', 'AI Overviews'], ['chatgpt', 'ChatGPT'], ['aimode', 'AI Mode'], ['nieuws', 'Local Nieuws']];
+const TABS = [['overzicht', 'Overzicht'], ['google', 'Google Search'], ['gbp', 'Bedrijfsprofielen'], ['aio', 'AI Overviews'], ['chatgpt', 'ChatGPT'], ['aimode', 'AI Mode'], ['aggregators', 'Aggregators'], ['nieuws', 'Local Nieuws']];
 const st = { city: '', kw: '', run: RUNS[RUNS.length - 1] };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -448,6 +449,13 @@ function streak(keyFn, okFn, items) {
 
 // ==== selection bar ====
 function selbar() {
+  if (tab() === 'aggregators') {
+    const a = D.agg;
+    $('#selbar').innerHTML = a ? `<div class="k"><b>${a.aggregators.length}</b><span>platforms</span></div><div class="sep"></div>
+    <div class="k"><b>${a.aggregators.reduce((s, x) => s + (((a.window[x] || {}).cur || {}).sessions || 0), 0).toLocaleString('nl-NL')}</b><span>bezoeken, 28 dagen</span></div><div class="sep"></div>
+    <div class="k"><b>${fmtDate(a.end)}</b><span>data tot en met</span></div>` : '<div class="k"><b>n.v.t.</b><span>nog geen Analytics-data</span></div>';
+    return;
+  }
   if (tab() === 'nieuws') {
     const it = NW ? NW.items : [], c = it.filter(x => !st.city || x.c.includes(st.city));
     $('#selbar').innerHTML = `<div class="k"><b>${c.length}</b><span>berichten${st.city ? ' · ' + esc(st.city) : ''}</span></div><div class="sep"></div>
@@ -861,6 +869,7 @@ const META = {
   google: ['Google Search · mobiel · top 20', 'Google Search', 'Organische posities, concurrerende domeinen, local pack en SERP features per plaats.'],
   aio: ['Google · AI Overviews', 'AI Overviews', 'Wordt GaragePark genoemd en als bron gebruikt in de AI Overview boven de zoekresultaten?'],
   chatgpt: ['OpenAI · ChatGPT · Nederland', 'ChatGPT', HAS_GPT ? `Wat antwoordt ChatGPT op de vaste FolloEngine-promptset? Wekelijkse meting, lokaal en algemeen.` : 'Komt in de volgende fase.'],
+  aggregators: ['Google Analytics · garagepark.nl', 'Aggregators', 'Wat leveren platforms als huren.nl, Marktplaats en Funda op aan bezoekers en leads, per platform en per park?'],
   nieuws: ['Google Alerts · Google Nieuws · Nederland', 'Local Nieuws', 'Nieuws over de opslagmarkt, de concurrenten en GaragePark zelf: waar kunnen we op inhaken?'],
   gbp: ['Google Bedrijfsprofielen · eigen parken en concurrenten', 'Bedrijfsprofielen', 'Profiel, reviews en concurrentie per park, met wat er per park beter moet.'],
   aimode: ['Google · AI Mode', 'AI Mode', 'Wat antwoordt Google AI Mode als iemand een garagebox of opslagruimte zoekt in de buurt?']
@@ -872,8 +881,9 @@ function render() {
   $('#eyebrow').textContent = e + (st.city ? ' · ' + st.city : ''); $('#title').innerHTML = h + '<span class="p">.</span>'; $('#lede').innerHTML = l;
   $('#crumb').textContent = TABS.find(x => x[0] === t)[1];
   selbar();
-  ['fKw', 'fRun'].forEach(id => { const l = $('#' + id).closest('label'); if (l) l.hidden = t === 'gbp' || t === 'nieuws'; });
-  $('#view').innerHTML = t === 'nieuws' ? vNews() : t === 'gbp' ? vGBP() : t === 'overzicht' ? vOverview() : t === 'google' ? vGoogle() : t === 'aio' ? vAI('aio') : t === 'aimode' ? vAI('aim') : HAS_GPT ? vAI('cgpt') : vChatGPT();
+  ['fKw', 'fRun'].forEach(id => { const l = $('#' + id).closest('label'); if (l) l.hidden = t === 'gbp' || t === 'nieuws' || t === 'aggregators'; });
+  { const l = $('#fCity').closest('label'); if (l) l.hidden = t === 'aggregators'; }
+  $('#view').innerHTML = t === 'aggregators' ? vAgg() : t === 'nieuws' ? vNews() : t === 'gbp' ? vGBP() : t === 'overzicht' ? vOverview() : t === 'google' ? vGoogle() : t === 'aio' ? vAI('aio') : t === 'aimode' ? vAI('aim') : HAS_GPT ? vAI('cgpt') : vChatGPT();
   const aif = $('#aif'); if (aif) aif.value = AIF[engOf(t)];
 }
 document.addEventListener('click', ev => {
@@ -905,5 +915,6 @@ document.addEventListener('change', ev => { if (ev.target.id === 'aif') { AIF[en
 window.addEventListener('hashchange', () => { render(); scrollTo({ top: 0 }); });
 gbpEvents();
 newsEvents();
+aggEvents();
 fill(); render();
 </script>

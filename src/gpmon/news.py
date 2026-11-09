@@ -41,6 +41,11 @@ OFF_TOPIC = re.compile(r'energieopslag|batterij|accu|thuisbatterij|stroomopslag|
                        r'gasopslag|data[\s-]?opslag|cloudopslag|cloud|opslagcapaciteit (van )?(stroom|energie)|zonnepanel|'
                        r'netcongestie|kernafval|graanopslag|mestopslag|\d+\s?(gb|tb)\b|smartphone|telefoon|iphone|laptop|ssd|geheugen|'
                        r'game|playstation|xbox|console|icloud', re.I)
+ROUNDUP = re.compile(r'niet missen|nieuwsoverzicht|nieuws overzicht|weekoverzicht|dagoverzicht|kort nieuws|liveblog|'
+                     r'uitgaanstips|agenda|het nieuws van|in het kort|de ochtend|de avond|podcast', re.I)
+FOREIGN = re.compile(r'nasdaq|nyse|\breit\b|hong kong|\bvs\b|amerika|verenigd koninkrijk|brits|engeland|manchester|londen|'
+                     r'duitsland|frankrijk|spanje|belgi|zaventem|antwerpen|gent\b|brussel', re.I)
+FINANCE_SITES = ('investing.com', 'beursgenoten.nl', 'iex.nl', 'marketscreener.com', 'abm.nl', 'businessinsider.nl')
 FINANCE_ONLY = re.compile(r'koersdoel|beurskoers|aandeel|kerncijfers|zakelijk profiel|stock price|dividend|analist', re.I)
 NEWS_PATH = re.compile(r'/(nieuws|news|pers|press|persberichten|media|actueel|newsroom)(/|$|-)', re.I)
 BLOG_PATH = re.compile(r'/(blog|blogs|tips|kennisbank|inspiratie|magazine|artikelen?|gids|veelgestelde)(/|$|-)', re.I)
@@ -102,18 +107,37 @@ def read_alert(url, s=None):
     return out
 
 
-def resolve(url, s):
-    """DataForSEO returns google.com/goto redirects; follow one hop to learn the publisher."""
+GOOGLE_COOKIES = {'SOCS': 'CAESHAgBEhJnd3NfMjAyNTAxMDEtMF9SQzEaAmVuIAEaBgiA_LyaBg', 'CONSENT': 'YES+'}
+
+
+def resolve(url, s, hops=6):
+    """DataForSEO returns google.com/goto redirects. Follow them hop by hop (google.com -> www.google.com ->
+    the article), with the consent cookie set so the EU consent page does not get in the way."""
     if 'google.com/goto' not in (url or ''):
         return url
+    cur = url
     try:
-        r = s.get(url, allow_redirects=False, timeout=10, headers={'User-Agent': 'Mozilla/5.0'})
-        loc = r.headers.get('Location') or ''
-        if loc.startswith('http') and 'google.' not in domain_of(loc):
-            return loc
-        m = re.search(r'URL=\'?(https?://[^\'" >]+)', r.text or '')
-        if m and 'google.' not in domain_of(m.group(1)):
-            return html.unescape(m.group(1))
+        for _ in range(hops):
+            r = s.get(cur, allow_redirects=False, timeout=10, cookies=GOOGLE_COOKIES,
+                      headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/130 Safari/537.36',
+                               'Accept-Language': 'nl-NL,nl;q=0.9'})
+            loc = r.headers.get('Location') or ''
+            if not loc:
+                m = re.search(r'(?:URL=\'?|href=")(https?://[^\'" >]+)', r.text or '')
+                loc = html.unescape(m.group(1)) if m else ''
+            if not loc:
+                break
+            if loc.startswith('/'):
+                loc = 'https://www.google.com' + loc
+            host = domain_of(loc)
+            if 'consent.google' in host:  # follow the original target behind the consent page
+                loc = (parse_qs(urlparse(loc).query).get('continue') or [''])[0]
+                if not loc:
+                    break
+                host = domain_of(loc)
+            if 'google.' not in host:
+                return loc
+            cur = loc
     except requests.RequestException:
         pass
     return url
@@ -195,8 +219,16 @@ def classify(it, cfg, today, B=None):
         reason = 'blog of kennisbank'
     elif any(bd and d.endswith(bd) for bd in brand_domains) and not NEWS_PATH.search(urlparse(it.get('url') or '').path):
         reason = 'pagina op eigen site, geen nieuws'
-    elif FINANCE_ONLY.search(it['title']) and not MARKET.search(it['title']):
+    elif (FINANCE_ONLY.search(it['title']) and not MARKET.search(it['title'])) or any(d.endswith(f) for f in FINANCE_SITES):
         reason = 'beursinformatie'
+    elif ROUNDUP.search(it['title']):
+        reason = 'nieuwsoverzicht'
+    elif not is_dutch(it['title'] + ' ' + it['title']) and sum(w in ENGLISH for w in re.findall(r'[a-z]+', it['title'].lower())) >= 2:
+        reason = 'niet Nederlands'
+    elif FOREIGN.search(text) and not cities and own not in brands:
+        reason = 'buitenlandse markt'
+    elif not brands and not MARKET.search(it['title']):
+        reason = 'niet over de opslagmarkt'  # the market term must be in the headline, not only in a teaser
     elif not MARKET.search(text) and not (brands and CONTEXT.search(text)):
         reason = 'niet over de opslagmarkt'
     return dict(it, id=item_id(it['title']), domain=d, brands=brands, cities=cities, topic=topic, grp=group,

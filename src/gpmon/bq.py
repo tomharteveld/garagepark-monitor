@@ -37,6 +37,9 @@ SCHEMAS = {
                      F('has_hours', B), F('open_247', B), F('attributes', S, 'REPEATED'), F('services', S, 'REPEATED'),
                      F('place_topics', S, 'REPEATED'), F('book_online_url', S), F('contact_url', S), F('from_listing_only', B),
                      F('check_url', S), F('listing_updated', TS), F('source', S)],
+    'ga_aggregators': [F('run_date', D, 'REQUIRED'), F('date', D), F('aggregator', S), F('source', S), F('medium', S),
+                       F('landing_page', S), F('park', S), F('sessions', I), F('engaged', I), F('key_events', I),
+                       F('leads', I), F('purchases', I)],
     'news_items': [F('run_date', D, 'REQUIRED'), F('id', S), F('source', S), F('query', S), F('grp', S), F('title', S),
                    F('url', S), F('domain', S), F('publisher', S), F('snippet', S), F('published', D),
                    F('brands', S, 'REPEATED'), F('cities', S, 'REPEATED'), F('topic', S), F('keep', B), F('reason', S),
@@ -58,7 +61,7 @@ SCHEMAS = {
 CLUSTER = {'serp_summary': ['city', 'keyword'], 'serp_results': ['domain', 'city'], 'local_pack': ['city'],
            'ai_answers': ['engine', 'city'], 'ai_citations': ['engine', 'domain'], 'run_log': ['engine'], 'raw_tasks': ['engine', 'city'],
            'gbp_profiles': ['is_own', 'cid'], 'gbp_competitors': ['own_cid'], 'gbp_reviews': ['is_own', 'cid'],
-           'gbp_posts': ['cid'], 'news_items': ['grp', 'keep'], 'gbp_run_log': ['kind'],
+           'gbp_posts': ['cid'], 'news_items': ['grp', 'keep'], 'ga_aggregators': ['aggregator'], 'gbp_run_log': ['kind'],
            'gbp_locations': ['location_id'], 'gbp_perf_daily': ['location_id', 'metric'], 'gbp_keywords': ['location_id']}
 
 
@@ -148,6 +151,10 @@ def fetch_tables(history_runs=26, detail_runs=2, c=None):
         print(f'WARNING: FolloEngine ChatGPT not read: {e!r}', flush=True)
         T['_gpt'] = dict(error=str(e)[:200])
     T.update(fetch_gbp(c, q))
+    try:  # newest GA snapshot only
+        T['ga_aggregators'] = q(f"SELECT * FROM `{tid('ga_aggregators')}` WHERE run_date = (SELECT MAX(run_date) FROM `{tid('ga_aggregators')}`)")
+    except Exception as e:
+        print(f'No aggregator data yet ({e.__class__.__name__})')
     try:  # kept news of the last 26 news runs; the dashboard dedupes and marks what is new
         T['news_items'] = q(f"SELECT * EXCEPT(fetched_at) FROM `{tid('news_items')}` WHERE keep AND run_date IN "
                             f"(SELECT DISTINCT run_date FROM `{tid('news_items')}` ORDER BY run_date DESC LIMIT {int(history_runs)})")
@@ -214,12 +221,20 @@ def main(argv=None):
     l.add_argument('raw', nargs='+')
     lg = sub.add_parser('load-gbp')
     lg.add_argument('raw', nargs='+')
+    lga = sub.add_parser('load-ga')
+    lga.add_argument('raw', nargs='+')
     ln = sub.add_parser('load-news')
     ln.add_argument('raw', nargs='+')
     a = ap.parse_args(argv)
     c = client()
     if a.cmd == 'setup':
         setup(c)
+    elif a.cmd == 'load-ga':
+        from . import ga
+        setup(c)
+        for p in a.raw:
+            print(f'Loading {p}')
+            load_tables(ga.transform_files([p]), c)
     elif a.cmd == 'load-news':
         from . import news
         setup(c)

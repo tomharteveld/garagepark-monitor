@@ -67,7 +67,13 @@ def build_data(T, detail_runs=2):
     from . import gbp_view
     gbp = gbp_view.build(T) if T.get('gbp_profiles') else None
     meta['gbp_run'] = gbp['run'] if gbp else None
-    return dict(meta=meta, serps=serps, ai=ai, gbp=gbp, news=build_news(T.get('news_items') or []))
+    return dict(meta=meta, serps=serps, ai=ai, gbp=gbp, news=build_news(T.get('news_items') or []),
+                agg=ga_build(T.get('ga_aggregators') or []))
+
+
+def ga_build(rows):
+    from . import ga
+    return ga.build(rows)
 
 
 def build_news(rows, limit=400):
@@ -117,7 +123,7 @@ def render(data, out_dir, secret_path=None):
     payload = json.dumps(data, ensure_ascii=False, separators=(',', ':'), default=str).replace('</', '<\\/')
     tpl = tpl.replace('__DATA__', payload)
     tpl = tpl.replace('/*__GBP_JS__*/', (DASH / 'gbp_tab.js').read_text(encoding='utf-8'))
-    tpl = tpl.replace('/*__NEWS_JS__*/', (DASH / 'news_tab.js').read_text(encoding='utf-8'))
+    tpl = tpl.replace('/*__NEWS_JS__*/', (DASH / 'news_tab.js').read_text(encoding='utf-8') + '\n' + (DASH / 'agg_tab.js').read_text(encoding='utf-8'))
     split = tpl.index('<div class="app">')  # title, fonts and styles go in <head>, the rest in <body>
     html = HEAD + tpl[:split] + '</head>\n<body>\n' + tpl[split:] + '\n</body>\n</html>\n'
     (page_dir / 'index.html').write_text(html, encoding='utf-8')
@@ -150,6 +156,10 @@ def main(argv=None):
             from . import gbp
             G = gbp.transform_files(gfiles[-1:])
             T.update({k: v for k, v in G.items() if k != 'gbp_run_log'})
+        afiles = sorted((config.ROOT / 'data' / 'raw').glob('ga_*.jsonl.gz'))
+        if afiles:
+            from . import ga
+            T['ga_aggregators'] = ga.transform_files(afiles[-1:])['ga_aggregators']
         nfiles = sorted((config.ROOT / 'data' / 'raw').glob('news_*.jsonl.gz'))
         if nfiles:
             from . import news

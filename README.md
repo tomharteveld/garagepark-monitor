@@ -194,6 +194,16 @@ TO "serviceAccount:garagepark-monitor@folloagency.iam.gserviceaccount.com";
 ```
 Zonder dat recht bouwt het dashboard gewoon, alleen zonder ChatGPT (de log meldt dat).
 
+### Aggregators (Google Analytics)
+
+Het tabblad Aggregators laat zien wat platforms als huren.nl, Marktplaats, Funda en Opslagmarkt opleveren: bezoeken, leads en conversie per platform, per park (landingspagina /locaties/...) en per bron/medium. De platforms staan onder `aggregators.sites` in de config (regex op sessionSource); leads zijn de key events onder `aggregators.lead_events`. Elke run haalt de laatste 400 dagen op via de GA4 Data API en zet die als momentopname in `ga_aggregators`.
+
+Eenmalig:
+1. GA4, Beheer, property **garagepark.nl - GA4**, Toegangsbeheer: voeg `garagepark-monitor@folloagency.iam.gserviceaccount.com` toe met de rol **Lezer**.
+2. Zet in Google Cloud (project folloagency) de **Google Analytics Data API** aan: https://console.cloud.google.com/apis/library/analyticsdata.googleapis.com?project=folloagency
+
+Daarna komt de data mee in de wekelijkse run (of meteen met mode `news`).
+
 ### Local Nieuws
 
 Het tabblad Local Nieuws verzamelt nieuws over de opslagmarkt, de concurrenten, GaragePark zelf en de plaatsen met een park. Bronnen:

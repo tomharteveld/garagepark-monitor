@@ -36,6 +36,22 @@ news:
     Storage Share: 'storage\s?share'
     Boxcomplex: 'box\s?complex'
     Big Yellow: 'big yellow'
+# Aggregators (tab Aggregators): visits and leads via third party platforms, from GA4 (property garagepark.nl - GA4).
+# Sources are matched on sessionSource (case-insensitive regex); the first match names the platform.
+aggregators:
+  property_id: 280694664
+  lead_events: [purchase, appointment_request, viewing_planned, contact_request, brochure_consumer_request]
+  sites:
+    Huren.nl: 'hurennl|huren\.nl'
+    Marktplaats: 'marktplaats'
+    Funda: 'funda'
+    Opslagmarkt: 'opslagmarkt'
+    0m2: '0m2\.nl'
+    1Stalling: '1stalling'
+    Storage Share: 'storage-?share'
+    Opslagzoeker: 'opslagzoeker|thestoragescanner|storeandpark|boxss'
+    Trustpilot: 'trustpilot'
+    Startpagina & gidsen: 'startpagina|kadaza|cylex|indebuurt|goudengids|telefoongids'
 dashboard:
   detail_runs: 2
   history_runs: 26
