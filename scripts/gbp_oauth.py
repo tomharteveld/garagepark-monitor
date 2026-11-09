@@ -3,11 +3,13 @@
 Prints the JSON for the GitHub secret GBP_OAUTH_JSON. Needs no extra packages."""
 import glob, json, os, urllib.parse, urllib.request
 files = [f for f in ['client.json'] + sorted(glob.glob('client_secret*.json'), key=os.path.getmtime, reverse=True) if os.path.exists(f)]
-if not files:
-    raise SystemExit('Geen client.json of client_secret_....json in deze map. Upload het gedownloade OAuth-bestand via (drie puntjes) > Upload en probeer opnieuw.')
-print('OAuth-client uit ' + files[0])
-c = json.load(open(files[0]))
-c = c.get('installed') or c.get('web') or c
+if files:
+    print('OAuth-client uit ' + files[0])
+    c = json.load(open(files[0]))
+    c = c.get('installed') or c.get('web') or c
+else:  # Google no longer lets you download an existing secret: paste the client ID and a (new) secret instead
+    print('Geen client_secret-bestand gevonden. Plak de gegevens van de OAuth-client (Google Auth Platform > Clients).')
+    c = dict(client_id=input('Client ID: ').strip(), client_secret=input('Client secret: ').strip())
 redirect = 'http://localhost:8085/'
 url = 'https://accounts.google.com/o/oauth2/auth?' + urllib.parse.urlencode(dict(
     client_id=c['client_id'], redirect_uri=redirect, response_type='code', access_type='offline', prompt='consent',
