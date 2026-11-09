@@ -44,14 +44,12 @@ function vAgg() {
     <div class="scroll"><table><thead><tr>${th('a', 'Platform')}${th('sessions', 'Bezoeken', 1)}<th class="r">vs vorige</th>${th('eng', 'Betrokken', 1)}${th('leads', 'Leads', 1)}${th('purchases', 'Huur', 1)}${th('conv', 'Conversie', 1)}${th('y', 'Bezoeken jaar', 1)}</tr></thead><tbody>
     ${rows.map(r => `<tr><td><b>${esc(r.a)}</b></td><td class="r">${(r.c.sessions || 0).toLocaleString('nl-NL')}</td><td class="r">${aDelta(r.c.sessions || 0, r.p.sessions || 0) || 'n.v.t.'}</td><td class="r">${pc(r.eng)}</td><td class="r">${r.c.leads || 0}</td><td class="r">${r.c.purchases || 0}</td><td class="r">${pc1(r.conv)}</td><td class="r">${r.y.toLocaleString('nl-NL')}</td></tr>`).join('')}
     </tbody></table></div></div></section>
-  <section><div class="grid g2 gtop">
-    <div class="tcard"><div class="thead"><div><h4>Per park</h4><p>Landingspagina /locaties/…, laatste 90 dagen.</p></div></div>
+  <section><div class="tcard"><div class="thead"><div><h4>Per park</h4><p>Landingspagina /locaties/…, laatste 90 dagen.</p></div></div>
       <div class="scroll"><table><thead><tr><th>Park</th>${top.map(a => `<th class="r">${esc(a)}</th>`).join('')}<th class="r">Leads</th></tr></thead><tbody>
-      ${pl.map(p => `<tr><td>${esc(p.p.replace(/-\d+$/, '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))}</td>${top.map(a => `<td class="r">${(p.by[a] || 0).toLocaleString('nl-NL')}</td>`).join('')}<td class="r">${p.l || 0}</td></tr>`).join('')}</tbody></table></div></div>
-    <div class="tcard"><div class="thead"><div><h4>Bron en medium</h4><p>Betaald (cpc, advertentie) of verwijzing, laatste 90 dagen.</p></div></div>
+      ${pl.map(p => `<tr><td>${esc(p.p.replace(/-\d+$/, '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))}</td>${top.map(a => `<td class="r">${(p.by[a] || 0).toLocaleString('nl-NL')}</td>`).join('')}<td class="r">${p.l || 0}</td></tr>`).join('')}</tbody></table></div></div></section>
+  <section><div class="tcard"><div class="thead"><div><h4>Bron en medium</h4><p>Betaald (cpc, advertentie) of verwijzing, laatste 90 dagen.</p></div></div>
       <div class="scroll"><table><thead><tr><th>Platform</th><th>Bron / medium</th><th class="r">Bezoeken</th><th class="r">Leads</th></tr></thead><tbody>
-      ${AG.sources.map(x => `<tr><td>${esc(x.a)}</td><td class="of">${esc(x.s)} / ${esc(x.m)}</td><td class="r">${x.sessions.toLocaleString('nl-NL')}</td><td class="r">${x.leads}</td></tr>`).join('')}</tbody></table></div></div>
-  </div></section>`;
+      ${AG.sources.map(x => `<tr><td>${esc(x.a)}</td><td class="of">${esc(x.s)} / ${esc(x.m)}</td><td class="r">${x.sessions.toLocaleString('nl-NL')}</td><td class="r">${x.leads}</td></tr>`).join('')}</tbody></table></div></div></section>`;
 }
 
 function aggEvents() {
