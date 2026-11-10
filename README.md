@@ -204,9 +204,9 @@ Eenmalig: de data wordt gelezen met de login van **seodata@folloagency.com** (he
 
 Daarna komt de data mee in de wekelijkse run (of meteen met mode `news`).
 
-### Local Nieuws
+### Lokaal Nieuws
 
-Het tabblad Local Nieuws verzamelt nieuws over de opslagmarkt, de concurrenten, GaragePark zelf en de plaatsen met een park. Bronnen:
+Het tabblad Lokaal Nieuws verzamelt nieuws over de opslagmarkt, de concurrenten, GaragePark zelf en de plaatsen met een park. Bronnen:
 
 - **Google Alerts** in het account seodata@folloagency.com (Nieuws, Nederlands, Nederland, alle resultaten, RSS-feed). De feed-URL's staan, gescheiden door spaties of regels, in het GitHub-secret **NEWS_ALERT_FEEDS**. Een alert erbij: maak hem op google.com/alerts met dezelfde instellingen en voeg de RSS-link toe aan het secret.
 - **DataForSEO Google Nieuws** voor de zoektermen onder `news.queries` en één lokale zoekopdracht per plaats (`news.local_query`); ongeveer $0,15 per week.

@@ -21,7 +21,7 @@ scrape:
 chatgpt_source:
   table: folloagency.llm_reporting_tables.garagepark_nl_llm_combined_canonical
   max_age_days: 10
-# Local news (tab Local Nieuws): Google Alerts RSS (secret NEWS_ALERT_FEEDS) + DataForSEO Google News.
+# Local news (tab Lokaal Nieuws): Google Alerts RSS (secret NEWS_ALERT_FEEDS) + DataForSEO Google News.
 news:
   enabled: true
   period: m                 # DataForSEO: news of the past month (h, d, w, m, y)

@@ -402,7 +402,7 @@ const HAS_GPT = (D.meta.engines || []).includes('cgpt');
 const ENG = { aio: 'aio', aimode: 'aim', chatgpt: 'cgpt' };
 const engOf = t => ENG[t] || 'aim';
 const isDetail = r => !D.meta.detail_runs || D.meta.detail_runs.includes(r);
-const TABS = [['overzicht', 'Overzicht'], ['google', 'Google Search'], ['gbp', 'Bedrijfsprofielen'], ['aio', 'AI Overviews'], ['chatgpt', 'ChatGPT'], ['aimode', 'AI Mode'], ['aggregators', 'Aggregators'], ['nieuws', 'Local Nieuws']];
+const TABS = [['overzicht', 'Overzicht'], ['google', 'Google Search'], ['gbp', 'Bedrijfsprofielen'], ['aio', 'AI Overviews'], ['chatgpt', 'ChatGPT'], ['aimode', 'AI Mode'], ['aggregators', 'Aggregators'], ['nieuws', 'Lokaal Nieuws']];
 const st = { city: '', kw: '', run: RUNS[RUNS.length - 1] };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -880,7 +880,7 @@ const META = {
   aio: ['Google · AI Overviews', 'AI Overviews', 'Wordt GaragePark genoemd en als bron gebruikt in de AI Overview boven de zoekresultaten?'],
   chatgpt: ['OpenAI · ChatGPT · Nederland', 'ChatGPT', HAS_GPT ? `Wat antwoordt ChatGPT op de vaste FolloEngine-promptset? Wekelijkse meting, lokaal en algemeen.` : 'Komt in de volgende fase.'],
   aggregators: ['Google Analytics · garagepark.nl', 'Aggregators', 'Wat leveren platforms als huren.nl, Marktplaats en Funda op aan bezoekers en leads, per platform en per park?'],
-  nieuws: ['Google Alerts · Google Nieuws · Nederland', 'Local Nieuws', 'Nieuws over de opslagmarkt, de concurrenten en GaragePark zelf: waar kunnen we op inhaken?'],
+  nieuws: ['Google Alerts · Google Nieuws · Nederland', 'Lokaal Nieuws', 'Nieuws over de opslagmarkt, de concurrenten en GaragePark zelf: waar kunnen we op inhaken?'],
   gbp: ['Google Bedrijfsprofielen · eigen parken en concurrenten', 'Bedrijfsprofielen', 'Profiel, reviews en concurrentie per park, met wat er per park beter moet.'],
   aimode: ['Google · AI Mode', 'AI Mode', 'Wat antwoordt Google AI Mode als iemand een garagebox of opslagruimte zoekt in de buurt?']
 };

@@ -1,4 +1,4 @@
-// ==== Local Nieuws ====
+// ==== Lokaal Nieuws ====
 const NW = D.news;
 const nst = { g: 'all', per: '90', q: '', tp: 'all', all: false };
 const NGROUP = { concurrent: 'Concurrenten', eigen: 'GaragePark', lokaal: 'Lokaal', markt: 'Markt' };
@@ -44,7 +44,7 @@ function nWeeks(items) {
 }
 
 function vNews() {
-  if (!NW || !NW.items.length) return `<section><div class="band"><div><p class="eyebrow">Local Nieuws</p><h2>Nog geen <span class="hl">nieuws.</span></h2><p>Het nieuws komt mee in de wekelijkse run: Google Alerts en Google Nieuws voor de markt, de concurrenten, GaragePark zelf en de plaatsen met een park.</p></div><div><p class="eyebrow">Wat er nodig is</p><p>Run de workflow met mode <b>full</b> of <b>news</b>.</p></div></div></section>`;
+  if (!NW || !NW.items.length) return `<section><div class="band"><div><p class="eyebrow">Lokaal Nieuws</p><h2>Nog geen <span class="hl">nieuws.</span></h2><p>Het nieuws komt mee in de wekelijkse run: Google Alerts en Google Nieuws voor de markt, de concurrenten, GaragePark zelf en de plaatsen met een park.</p></div><div><p class="eyebrow">Wat er nodig is</p><p>Run de workflow met mode <b>full</b> of <b>news</b>.</p></div></div></section>`;
   const base = nItems(true), list = nItems(false);
   const cnt = g => base.filter(x => x.g === g).length;
   const fresh = NW.runs.length > 1 ? NW.items.filter(x => x.fs === NW.last).length : null;
