@@ -194,4 +194,5 @@ gbp:
   competitors_per_location: 5
   reviews_depth: {own_max: 200, competitor: 40}
   posts_depth: 10
+  competitor_details_every_weeks: 2   # reviews and posts of competitors every 2nd week (even ISO weeks); own parks weekly
   max_queue_minutes: 50

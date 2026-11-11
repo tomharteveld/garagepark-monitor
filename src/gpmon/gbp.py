@@ -171,7 +171,7 @@ def collect(cli, pending, workers, max_wait_min, poll_s=45):
     return done, errors
 
 
-def fetch(cli, cfg, run_date, limit=0):
+def fetch(cli, cfg, run_date, limit=0, force_all=False):
     g = cfg['gbp']
     own = search_own(cli, g)
     for o in own:
@@ -209,11 +209,16 @@ def fetch(cli, cfg, run_date, limit=0):
 
     rd = g['reviews_depth']
     votes = {o['cid']: ((o.get('rating') or {}).get('votes_count') or 0) for o in own}
+    every = int(g.get('competitor_details_every_weeks', 1) or 1)
+    week = dt.date.fromisoformat(run_date).isocalendar()[1]
+    comp_details = force_all or week % every == 0
+    print(f"Competitor reviews and posts: {'yes' if comp_details else 'no'} this run (ISO week {week}, every {every} weeks)", flush=True)
+    comp_list = list(comps) if comp_details else []
     jobs = {
         'info': [(c, {}) for c in all_cids],
         'reviews': [(c, {'depth': min(rd['own_max'], max(10, -(-votes[c] // 10) * 10)), 'sort_by': 'newest'}) for c in own_cids]
-                   + [(c, {'depth': rd['competitor'], 'sort_by': 'newest'}) for c in comps],
-        'posts': [(c, {'depth': g['posts_depth']}) for c in all_cids],
+                   + [(c, {'depth': rd['competitor'], 'sort_by': 'newest'}) for c in comp_list],
+        'posts': [(c, {'depth': g['posts_depth']}) for c in own_cids + [c for c in comp_list if c not in set(own_cids)]],
     }
     pending, post_failed = {}, []
     for kind, items in jobs.items():
@@ -249,11 +254,12 @@ def main(argv=None):
     ap.add_argument('--out', default=None)
     ap.add_argument('--limit', type=int, default=0, help='only the first N own profiles (smoke test)')
     ap.add_argument('--max-error-rate', type=float, default=0.15)
+    ap.add_argument('--all', action='store_true', help='also fetch competitor reviews and posts in an off week')
     a = ap.parse_args(argv)
     cfg = config.load()
     cli = Client(config.env('DATAFORSEO_LOGIN', required=True), config.env('DATAFORSEO_PASSWORD', required=True))
     cli.balance()
-    recs, ok, bad = fetch(cli, cfg, a.date, a.limit)
+    recs, ok, bad = fetch(cli, cfg, a.date, a.limit, a.all)
     out = Path(a.out or config.ROOT / 'data' / 'raw' / f'gbp_{a.date}.jsonl.gz')
     out.parent.mkdir(parents=True, exist_ok=True)
     with gzip.open(out, 'wt', encoding='utf-8') as fh:

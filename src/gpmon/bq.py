@@ -193,9 +193,12 @@ def fetch_gbp(c, q, history_runs=26):
         'gbp_profiles': q(f"SELECT * FROM `{tid('gbp_profiles')}` WHERE run_date = {last}")
         + q(f"SELECT run_date, cid, is_own, rating, votes, total_photos FROM `{tid('gbp_profiles')}` WHERE run_date IN {inn} AND run_date < {last}"),
         'gbp_competitors': q(f"SELECT * FROM `{tid('gbp_competitors')}` WHERE run_date = {last}"),
+        # own parks from the newest run; competitors from the newest run that fetched them (every 2nd week)
         'gbp_reviews': q(f"SELECT * EXCEPT(text, owner_answer), IF(is_own, text, NULL) AS text, IF(is_own, owner_answer, NULL) AS owner_answer, "
-                         f"owner_answer IS NOT NULL AS answered FROM `{tid('gbp_reviews')}` WHERE run_date = {last}"),
-        'gbp_posts': q(f"SELECT run_date, cid, is_own, posted_at, IF(is_own, text, NULL) AS text, url FROM `{tid('gbp_posts')}` WHERE run_date = {last}"),
+                         f"owner_answer IS NOT NULL AS answered FROM `{tid('gbp_reviews')}` WHERE (is_own AND run_date = {last}) OR "
+                         f"(NOT is_own AND run_date = (SELECT MAX(run_date) FROM `{tid('gbp_reviews')}` WHERE NOT is_own))"),
+        'gbp_posts': q(f"SELECT run_date, cid, is_own, posted_at, IF(is_own, text, NULL) AS text, url FROM `{tid('gbp_posts')}` WHERE "
+                       f"(is_own AND run_date = {last}) OR (NOT is_own AND run_date = (SELECT MAX(run_date) FROM `{tid('gbp_posts')}` WHERE NOT is_own))"),
     }
     out.update(fetch_gbp_perf(q))
     return out
