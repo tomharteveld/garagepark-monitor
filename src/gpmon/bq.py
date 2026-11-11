@@ -164,7 +164,8 @@ def fetch_tables(history_runs=26, detail_runs=2, c=None):
         if name.startswith('_'):
             continue
         for r in rows:
-            r['run_date'] = r['run_date'].isoformat() if hasattr(r['run_date'], 'isoformat') else r['run_date']
+            if 'run_date' in r:  # performance aggregates (gbp_perf_monthly, gbp_perf_window) have no run_date
+                r['run_date'] = r['run_date'].isoformat() if hasattr(r['run_date'], 'isoformat') else r['run_date']
     return T
 
 
