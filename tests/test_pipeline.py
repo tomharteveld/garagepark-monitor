@@ -324,3 +324,17 @@ def test_news_keeps_brand_headlines_and_new_openings():
                                         published='2026-11-05', publisher=None), cfg, today)
     assert c('Groot deel gevel Shurgard in Veldhoven waait los: auto en vrachtwagentje geraakt', 'Door de storm waaide een deel van de gevel los.')['keep']
     assert c('Spullen opslaan zónder de stad uit te moeten: deze opslag opent midden in Apeldoorn', 'Een nieuw initiatief in het centrum.')['keep']
+
+
+def test_costs_are_logged(tmp_path):
+    import gzip, json
+    from gpmon import news, gbp, bq
+    p = tmp_path / 'news_2026-11-16.jsonl.gz'
+    with gzip.open(p, 'wt') as fh:
+        fh.write(json.dumps(dict(run_date='2026-11-16', id='x', title='t', keep=True, grp='markt')) + '\n')
+        fh.write(json.dumps(dict(kind='cost', run_date='2026-11-16', query='garagebox', cost=0.004)) + '\n')
+    T = news.transform_files([p])
+    assert len(T['news_items']) == 1 and T['news_run_log'] == [dict(run_date='2026-11-16', query='garagebox', cost=0.004)]
+    assert {f.name for f in bq.SCHEMAS['news_run_log']} >= set(T['news_run_log'][0])
+    G = gbp.transform([dict(kind='search', cid=None, own=None, run_date='2026-11-16', fetched_at='x', cost=0.05, task={'searches': 2})])
+    assert G['gbp_run_log'] == [dict(run_date='2026-11-16', kind='search', cid=None, is_own=None, status='ok', error=None, cost=0.05)]

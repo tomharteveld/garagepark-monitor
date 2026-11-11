@@ -32,6 +32,9 @@ NOW = lambda: dt.datetime.now(dt.timezone.utc).isoformat()
 
 # ==== fetch ====
 
+SEARCH_COST, POST_COST = [], {}  # costs of the live listing searches of this run (the queued tasks carry their own cost)
+
+
 def search_own(cli, g):
     """All own profiles from the Business Listings database (paged)."""
     flt = [['domain', 'like', f"%{g['own_domain']}%"], 'or', ['phone', '=', g['own_phone']]]
@@ -42,6 +45,7 @@ def search_own(cli, g):
         t = (r.get('tasks') or [{}])[0]
         if t.get('status_code') != 20000:
             raise SystemExit(f"Business listings search failed: {t.get('status_code')} {t.get('status_message')}")
+        SEARCH_COST.append(t.get('cost') or 0)
         res = (t.get('result') or [{}])[0]
         items = res.get('items') or []
         out += items
@@ -59,6 +63,7 @@ def nearby_competitors(cli, lat, lon, exclude, n, radius_km=10):
              'order_by': ['rating.votes_count,desc'], 'limit': 20}]
     try:
         r = cli.session().post(API + '/v3/business_data/business_listings/search/live', json=body, timeout=120).json()
+        SEARCH_COST.append((r.get('tasks') or [{}])[0].get('cost') or 0)
         items = (((r.get('tasks') or [{}])[0].get('result') or [{}])[0] or {}).get('items') or []
     except Exception as e:
         print(f'  nearby search failed: {e!r}', flush=True)
@@ -125,6 +130,7 @@ def post_tasks(cli, kind, items, g):
             cid = batch[int(n)][0]
             if t.get('status_code') == 20100:
                 pending[t['id']] = (kind, cid)
+                POST_COST[t['id']] = t.get('cost') or 0  # DataForSEO charges at task_post; task_get reports 0
             else:
                 failed.append(cid)
     return pending, failed
@@ -228,7 +234,10 @@ def fetch(cli, cfg, run_date, limit=0):
     recs += [dict(kind='link', run_date=run_date, **l) for l in links]
     own_set = set(own_cids)
     for kind, cid, task in done:
-        recs.append(dict(kind=kind, cid=cid, own=cid in own_set, run_date=run_date, fetched_at=NOW(), cost=task.get('cost'), task=task))
+        recs.append(dict(kind=kind, cid=cid, own=cid in own_set, run_date=run_date, fetched_at=NOW(),
+                         cost=POST_COST.get(task.get('id'), task.get('cost') or 0), task=task))
+    recs.append(dict(kind='search', cid=None, own=None, run_date=run_date, fetched_at=NOW(), cost=round(sum(SEARCH_COST), 5),
+                     task={'searches': len(SEARCH_COST)}))
     for kind, cid, err in errors:
         recs.append(dict(kind=kind, cid=cid, own=cid in own_set, run_date=run_date, fetched_at=NOW(), cost=0, task=None, error=err))
     return recs, len(done), len(errors)
@@ -250,7 +259,7 @@ def main(argv=None):
     with gzip.open(out, 'wt', encoding='utf-8') as fh:
         for r in recs:
             fh.write(json.dumps(r, ensure_ascii=False) + '\n')
-    cost = sum(r.get('cost') or 0 for r in recs)
+    cost = sum(r.get('cost') or 0 for r in recs if r.get('kind') in ('info', 'reviews', 'posts', 'search'))
     print(f'Wrote {out.name} | tasks ok {ok} | failed {bad} | cost ${cost:.2f}')
     if bad > a.max_error_rate * max(ok + bad, 1):
         sys.exit(f'Error rate too high ({bad}/{ok + bad}); not loading this run')
@@ -293,6 +302,9 @@ def transform(records):
             comp_parent.setdefault(r['comp_cid'], r['own_cid'])
     infos = {}
     for r in records:
+        if r.get('kind') == 'search':
+            T['gbp_run_log'].append(dict(run_date=r['run_date'], kind='search', cid=None, is_own=None, status='ok', error=None,
+                                         cost=r.get('cost') or 0))
         if r.get('kind') not in FN:
             continue
         T['gbp_run_log'].append(dict(run_date=r['run_date'], kind=r['kind'], cid=r['cid'], is_own=r['cid'] in own_cids,

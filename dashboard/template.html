@@ -511,7 +511,7 @@ function vOverview() {
   const best = [...rows].sort((a, b) => b.cells[2] - a.cells[2]);
   return `
   <div class="band"><div><p class="eyebrow">Nederland · ${CITIES.length} plaatsen · ${KWS.length} keywords</p><h2>Elke plaats <span class="hl">in beeld.</span></h2><p>Volg per vestigingsplaats hoe GaragePark wordt gevonden, genoemd en geciteerd.</p></div>
-  <div><p class="eyebrow">Meting</p><div class="big">${fmtDate(st.run)}</div><p>${RUNS.length} meetmoment${RUNS.length > 1 ? 'en' : ''} beschikbaar · ${D.serps.filter(s => s.r === st.run).length + D.ai.filter(a => a.r === st.run && a.e === 'aim').length} metingen · kosten $${nf((D.meta.costs || {})[st.run] ?? D.meta.cost, 2)}</p></div></div>
+  <div><p class="eyebrow">Meting</p><div class="big">${fmtDate(st.run)}</div><p>${RUNS.length} meetmoment${RUNS.length > 1 ? 'en' : ''} beschikbaar · ${D.serps.filter(s => s.r === st.run).length + D.ai.filter(a => a.r === st.run && a.e === 'aim').length} metingen · kosten $${nf((D.meta.costs || {})[st.run] ?? D.meta.cost, 2)}${(D.meta.cost_parts || {})[st.run] && Object.keys(D.meta.cost_parts[st.run]).length > 1 ? ' (' + Object.entries(D.meta.cost_parts[st.run]).map(([p, v]) => p + ' $' + nf(v, 2)).join(', ') + ')' : ''}</p></div></div>
 
   <section><h3>Gevonden in Google</h3><p class="sub">Organische posities van garagepark.nl in de mobiele top 20, per plaats en keyword</p>
   <div class="grid g4">

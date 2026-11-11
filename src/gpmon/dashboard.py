@@ -58,7 +58,18 @@ def build_data(T, detail_runs=2):
         costs[_d(r['run_date'])] += r.get('cost') or 0
         if r.get('status') == 'error':
             errors.append(dict(r=_d(r['run_date']), e=r['engine'], c=r['city'], k=r['keyword'], err=r.get('error')))
+    # every part's cost is booked on the newest search run on or after its own run date (a full run is one week)
+    parts = defaultdict(lambda: defaultdict(float))
+    for k, v in costs.items():
+        parts[k]['zoekresultaten'] += v
+    for c in T.get('_costs') or []:
+        r = next((x for x in runs if x >= c['run_date']), None)
+        if r:
+            parts[r][c['part']] += c['cost']
+    for r in parts:
+        costs[r] = sum(parts[r].values())
     meta = dict(runs=runs, detail_runs=sorted(detail), costs={k: round(v, 2) for k, v in costs.items()},
+                cost_parts={r: {p: round(v, 2) for p, v in d.items()} for r, d in parts.items()},
                 cost=round(costs.get(runs[-1], 0), 2), errors=errors, own_domain=cfg['client']['own_domain'],
                 own_brand=cfg['client']['own_brand'], engines=sorted({a['e'] for a in ai}),
                 prompt_template=cfg['scrape']['prompt_template'],

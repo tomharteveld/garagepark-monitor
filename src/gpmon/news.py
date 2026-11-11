@@ -169,17 +169,18 @@ def read_dfs(cli, queries, period, depth, workers=8):
                     items = ((t.get('result') or [{}])[0] or {}).get('items') or []
                     return [dict(source='dataforseo', query=kw, group_hint=group, title=i.get('title') or '', url=i.get('url'),
                                  snippet=(i.get('snippet') or '')[:400], published=(i.get('timestamp') or '')[:10] or None,
-                                 publisher=i.get('source')) for i in items if i.get('type') == 'news_search'], t.get('cost') or 0, None
+                                 publisher=i.get('source')) for i in items if i.get('type') == 'news_search'], (kw, t.get('cost') or 0), None
                 err = f"{t.get('status_code')} {t.get('status_message')}"
             except Exception as e:
                 err = repr(e)
-        return [], 0, f'{kw}: {err}'
+        return [], (kw, 0), f'{kw}: {err}'
 
-    items, cost, errors = [], 0.0, []
+    items, cost, errors = [], [], []
     with ThreadPoolExecutor(workers) as ex:
         for its, c, e in ex.map(one, queries):
             items += its
-            cost += c
+            if c:
+                cost.append(c)
             if e:
                 errors.append(e)
     return items, cost, errors
@@ -242,7 +243,7 @@ def fetch(cfg, run_date, limit=0):
     from .scrape import Client
     today = dt.date.fromisoformat(run_date)
     n = cfg['news']
-    items, errors, cost = [], [], 0.0
+    items, errors, cost = [], [], []
     s = requests.Session()
     for url in alert_feeds():
         try:
@@ -300,9 +301,12 @@ def main(argv=None):
     with gzip.open(out, 'wt', encoding='utf-8') as fh:
         for r in rows:
             fh.write(json.dumps(r, ensure_ascii=False) + '\n')
+        for q, c in cost:  # one cost line per DataForSEO query (news_run_log)
+            fh.write(json.dumps(dict(kind='cost', run_date=a.date, query=q, cost=c)) + '\n')
     kept = [r for r in rows if r['keep']]
     from collections import Counter
-    print(f"Wrote {out.name} | {len(rows)} articles, {len(kept)} kept | alerts feeds {len(alert_feeds())} | cost ${cost:.2f}")
+    print(f"Wrote {out.name} | {len(rows)} articles, {len(kept)} kept | alerts feeds {len(alert_feeds())} | "
+          f"cost ${sum(c for _, c in cost):.2f}")
     for k, v in Counter(r['reason'] for r in rows if not r['keep']).most_common():
         print(f'  dropped {v:>4}  {k}')
     for k, v in Counter(r['grp'] for r in kept).most_common():
@@ -318,7 +322,8 @@ def transform_files(paths):
     for p in paths:
         with gzip.open(p, 'rt', encoding='utf-8') as fh:
             rows += [json.loads(l) for l in fh if l.strip()]
-    return {TABLE: rows}
+    log = [dict(run_date=r['run_date'], query=r['query'], cost=r['cost']) for r in rows if r.get('kind') == 'cost']
+    return {TABLE: [r for r in rows if r.get('kind') != 'cost'], 'news_run_log': log}
 
 
 if __name__ == '__main__':

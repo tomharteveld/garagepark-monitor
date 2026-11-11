@@ -40,6 +40,7 @@ SCHEMAS = {
     'ga_aggregators': [F('run_date', D, 'REQUIRED'), F('date', D), F('aggregator', S), F('source', S), F('medium', S),
                        F('landing_page', S), F('park', S), F('sessions', I), F('engaged', I), F('key_events', I),
                        F('leads', I), F('purchases', I)],
+    'news_run_log': [F('run_date', D, 'REQUIRED'), F('query', S), F('cost', FL)],
     'news_items': [F('run_date', D, 'REQUIRED'), F('id', S), F('source', S), F('query', S), F('grp', S), F('title', S),
                    F('url', S), F('domain', S), F('publisher', S), F('snippet', S), F('published', D),
                    F('brands', S, 'REPEATED'), F('cities', S, 'REPEATED'), F('topic', S), F('keep', B), F('reason', S),
@@ -61,7 +62,7 @@ SCHEMAS = {
 CLUSTER = {'serp_summary': ['city', 'keyword'], 'serp_results': ['domain', 'city'], 'local_pack': ['city'],
            'ai_answers': ['engine', 'city'], 'ai_citations': ['engine', 'domain'], 'run_log': ['engine'], 'raw_tasks': ['engine', 'city'],
            'gbp_profiles': ['is_own', 'cid'], 'gbp_competitors': ['own_cid'], 'gbp_reviews': ['is_own', 'cid'],
-           'gbp_posts': ['cid'], 'news_items': ['grp', 'keep'], 'ga_aggregators': ['aggregator'], 'gbp_run_log': ['kind'],
+           'gbp_posts': ['cid'], 'news_items': ['grp', 'keep'], 'ga_aggregators': ['aggregator'], 'gbp_run_log': ['kind'], 'news_run_log': ['query'],
            'gbp_locations': ['location_id'], 'gbp_perf_daily': ['location_id', 'metric'], 'gbp_keywords': ['location_id']}
 
 
@@ -139,6 +140,14 @@ def fetch_tables(history_runs=26, detail_runs=2, c=None):
         q(f"SELECT * EXCEPT(fetched_at, markdown) FROM `{tid('ai_answers')}` WHERE run_date IN {inn(slim)}")
     T['ai_citations'] = q(f"SELECT * FROM `{tid('ai_citations')}` WHERE run_date IN {inn(detail)}")
     T['run_log'] = q(f"SELECT run_date, engine, city, keyword, status, error, cost FROM `{tid('run_log')}` WHERE run_date IN {inn(runs)}")
+    # DataForSEO costs of the other parts, per run date (they may run on other days than the search scrape)
+    T['_costs'] = []
+    for part, table in (('bedrijfsprofielen', 'gbp_run_log'), ('nieuws', 'news_run_log')):
+        try:
+            T['_costs'] += [dict(part=part, run_date=str(r['d']), cost=r['c'] or 0) for r in
+                            q(f"SELECT run_date AS d, SUM(cost) AS c FROM `{tid(table)}` GROUP BY 1 ORDER BY 1 DESC LIMIT 60")]
+        except Exception as e:
+            print(f'No {table} yet ({e.__class__.__name__})')
     # ChatGPT comes from FolloEngine (read in place), not from our own scrape
     from . import folloengine
     try:
