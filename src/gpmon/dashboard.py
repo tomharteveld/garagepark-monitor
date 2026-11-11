@@ -68,9 +68,8 @@ def build_data(T, detail_runs=2):
             parts[r][c['part']] += c['cost']
     for r in parts:
         costs[r] = sum(parts[r].values())
-    meta = dict(runs=runs, detail_runs=sorted(detail), costs={k: round(v, 2) for k, v in costs.items()},
-                cost_parts={r: {p: round(v, 2) for p, v in d.items()} for r, d in parts.items()},
-                cost=round(costs.get(runs[-1], 0), 2), errors=errors, own_domain=cfg['client']['own_domain'],
+    # costs stay out of the page (the client sees it); they live in BigQuery (run_log, gbp_run_log, news_run_log)
+    meta = dict(runs=runs, detail_runs=sorted(detail), errors=errors, own_domain=cfg['client']['own_domain'],
                 own_brand=cfg['client']['own_brand'], engines=sorted({a['e'] for a in ai}),
                 prompt_template=cfg['scrape']['prompt_template'],
                 gpt=dict(source='FolloEngine', last=(T.get('_gpt') or {}).get('last'),
