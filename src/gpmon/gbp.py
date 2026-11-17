@@ -57,9 +57,11 @@ def search_own(cli, g):
     return own
 
 
-def nearby_competitors(cli, lat, lon, exclude, n, radius_km=10):
+def nearby_competitors(cli, lat, lon, exclude, n, radius_km=10, categories=None):
     """Competitors around a park that has no 'people also search' list yet (for example a new park)."""
-    body = [{'categories': ['self_storage_facility', 'storage_facility'], 'location_coordinate': f'{lat:.6f},{lon:.6f},{radius_km}',
+    if not categories:
+        return []
+    body = [{'categories': list(categories), 'location_coordinate': f'{lat:.6f},{lon:.6f},{radius_km}',
              'order_by': ['rating.votes_count,desc'], 'limit': 20}]
     try:
         r = cli.session().post(API + '/v3/business_data/business_listings/search/live', json=body, timeout=120).json()
@@ -199,7 +201,7 @@ def fetch(cli, cfg, run_date, limit=0, force_all=False):
     own_cids_all = {o['cid'] for o in own}
     for o in own:
         if o['cid'] not in linked and o.get('latitude'):
-            near = nearby_competitors(cli, o['latitude'], o['longitude'], own_cids_all, per)
+            near = nearby_competitors(cli, o['latitude'], o['longitude'], own_cids_all, per, categories=g.get('categories'))
             for rank, c in enumerate(near, 1):
                 links.append(dict(own_cid=o['cid'], comp_cid=c['cid'], rank=rank))
                 comps[c['cid']] = c['title']

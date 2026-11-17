@@ -16,7 +16,7 @@ def load():
     cfg['_own_re'] = re.compile(cfg['client']['own_pattern'])  # case-sensitive on purpose
     brand_res = {}
     for name, b in cfg['brands'].items():
-        brand_res[name] = cfg['_own_re'] if name == cfg['client']['own_brand'] else re.compile(b['pattern'], re.I)
+        brand_res[name] = cfg['_own_re'] if name == cfg['client']['own_brand'] else re.compile(b.get('pattern') or re.escape(name), re.I)
     cfg['_brand_res'] = brand_res
     cfg['_domain_to_brand'] = {b['domain']: n for n, b in cfg['brands'].items() if b.get('domain')}
     return cfg

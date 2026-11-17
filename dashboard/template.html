@@ -1,4 +1,4 @@
-<title>GaragePark Lokale Zichtbaarheid</title>
+<title>{{CLIENT}} Lokale Zichtbaarheid</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=DM+Serif+Display&family=DM+Serif+Text&family=Inter:wght@400;500;600&display=swap">
@@ -352,19 +352,19 @@ ul.acts{list-style:none;margin:0;padding:0}
 <div class="app">
   <aside class="side">
     <div class="logo"><img class="light" alt="Follo" src="__LOGO__"><img class="dark" alt="Follo" src="__LOGO_WHITE__"></div>
-    <div class="client"><div class="mono">G</div><div><b>GaragePark</b><small>Lokale Search &amp; AI monitor</small></div></div>
+    <div class="client"><div class="mono">{{MONO}}</div><div><b>{{CLIENT}}</b><small>Lokale Search &amp; AI monitor</small></div></div>
     <div class="navlabel">Performance</div>
     <nav class="tabs" id="tabs"></nav>
     <div class="foot"><b><span class="dot"></span>Wekelijkse meting</b><span>DataForSEO · mobiel · top 20</span><span id="footrun"></span></div>
   </aside>
   <main>
-    <div class="topbar"><div class="crumb">GaragePark &nbsp;/&nbsp; <b id="crumb">Overzicht</b></div><span class="pill"><span class="dot"></span><span id="runpill"></span></span></div>
+    <div class="topbar"><div class="crumb">{{CLIENT}} &nbsp;/&nbsp; <b id="crumb">Overzicht</b></div><span class="pill"><span class="dot"></span><span id="runpill"></span></span></div>
     <div class="wrap">
       <div class="head">
         <div>
           <p class="eyebrow" id="eyebrow">Lokale vindbaarheid · 22 vestigingsplaatsen</p>
           <h1 id="title">Search &amp; AI performance<span class="p">.</span></h1>
-          <p class="lede" id="lede">Van zoekresultaat tot AI-antwoord. Per plaats zien waar GaragePark gevonden, genoemd en geciteerd wordt.</p>
+          <p class="lede" id="lede">Van zoekresultaat tot AI-antwoord. Per plaats zien waar {{CLIENT}} gevonden, genoemd en geciteerd wordt.</p>
         </div>
         <div class="filters">
           <label for="fCity">Plaats<select id="fCity"></select></label>
@@ -470,7 +470,7 @@ function selbar() {
     const it = NW ? NW.items : [], c = it.filter(x => !st.city || x.c.includes(st.city));
     $('#selbar').innerHTML = `<div class="k"><b>${c.length}</b><span>berichten${st.city ? ' · ' + esc(st.city) : ''}</span></div><div class="sep"></div>
     <div class="k"><b>${c.filter(x => x.g === 'concurrent').length}</b><span>over concurrenten</span></div><div class="sep"></div>
-    <div class="k"><b>${c.filter(x => x.g === 'eigen').length}</b><span>over GaragePark</span></div><div class="sep"></div>
+    <div class="k"><b>${c.filter(x => x.g === 'eigen').length}</b><span>over {{CLIENT}}</span></div><div class="sep"></div>
     <div class="k"><b>${NW ? fmtDate(NW.last) : 'n.v.t.'}</b><span>laatste nieuwsmeting</span></div>`;
     return;
   }
@@ -510,10 +510,10 @@ function vOverview() {
   const tabs = ['google', 'google', 'google', 'google', 'aio', 'aio', 'aimode', 'aimode'];
   const best = [...rows].sort((a, b) => b.cells[2] - a.cells[2]);
   return `
-  <div class="band"><div><p class="eyebrow">Nederland · ${CITIES.length} plaatsen · ${KWS.length} keywords</p><h2>Elke plaats <span class="hl">in beeld.</span></h2><p>Volg per vestigingsplaats hoe GaragePark wordt gevonden, genoemd en geciteerd.</p></div>
+  <div class="band"><div><p class="eyebrow">Nederland · ${CITIES.length} plaatsen · ${KWS.length} keywords</p><h2>Elke plaats <span class="hl">in beeld.</span></h2><p>Volg per vestigingsplaats hoe {{CLIENT}} wordt gevonden, genoemd en geciteerd.</p></div>
   <div><p class="eyebrow">Meting</p><div class="big">${fmtDate(st.run)}</div><p>${RUNS.length} meetmoment${RUNS.length > 1 ? 'en' : ''} beschikbaar · ${D.serps.filter(s => s.r === st.run).length + D.ai.filter(a => a.r === st.run && a.e === 'aim').length} metingen</p></div></div>
 
-  <section><h3>Gevonden in Google</h3><p class="sub">Organische posities van garagepark.nl in de mobiele top 20, per plaats en keyword</p>
+  <section><h3>Gevonden in Google</h3><p class="sub">Organische posities van {{DOMAIN}} in de mobiele top 20, per plaats en keyword</p>
   <div class="grid g4">
     <div class="card kpi"><span class="stat-l">Top 3</span><span class="num">${pct(g.t3, g.n)}</span><span class="of">${g.t3} van ${g.n} zoekresultaten</span>${deltaPP(100 * g.t3 / (g.n || 1), pg && 100 * pg.t3 / (pg.n || 1))}</div>
     <div class="card kpi"><span class="stat-l">Top 10</span><span class="num">${pct(g.t10, g.n)}</span><span class="of">${g.t10} van ${g.n} zoekresultaten</span>${deltaPP(100 * g.t10 / (g.n || 1), pg && 100 * pg.t10 / (pg.n || 1))}</div>
@@ -521,7 +521,7 @@ function vOverview() {
     <div class="card kpi"><span class="stat-l">In het local pack</span><span class="num">${pct(g.lp, g.n)}</span><span class="of">${g.lp} van ${g.n} zoekresultaten</span>${deltaPP(100 * g.lp / (g.n || 1), pg && 100 * pg.lp / (pg.n || 1))}</div>
   </div></section>
 
-  <section><h3>Genoemd én geciteerd</h3><p class="sub">Aandeel AI-antwoorden waarin GaragePark bij naam genoemd wordt (mention) of als bron gelinkt is (citatie, website of Google Bedrijfsprofiel)</p>
+  <section><h3>Genoemd én geciteerd</h3><p class="sub">Aandeel AI-antwoorden waarin {{CLIENT}} bij naam genoemd wordt (mention) of als bron gelinkt is (citatie, website of Google Bedrijfsprofiel)</p>
   <div class="grid g3">${aiCard('AI Overviews', 'aio', a1, p1, 'antwoorden')}
     ${HAS_GPT ? aiCard('ChatGPT', 'chatgpt', am(fA('cgpt')), pr && am(fA('cgpt', pr)), 'antwoorden') : `<div class="card muted-card"><h4>ChatGPT<a class="go" href="#chatgpt" aria-label="Naar ChatGPT">${arrow}</a></h4><div class="stats"><div><span class="stat-l">Mentions</span><span class="num" style="color:var(--subtle)">n.v.t.</span><span class="of">Nog niet gemeten</span></div><div><span class="stat-l">Citaties</span><span class="num" style="color:var(--subtle)">n.v.t.</span><span class="of">Volgt in de cloud-versie</span></div></div></div>`}
     ${aiCard('AI Mode', 'aimode', a2, p2, 'antwoorden')}</div></section>
@@ -583,7 +583,7 @@ function streakCard() {
   const a1 = streak(a => a.c + ' · ' + a.k, a => a.m, D.ai.filter(a => a.e === 'aio' && (!st.city || a.c === st.city) && (!st.kw || a.k === st.kw)));
   const a2 = streak(a => a.c + ' · ' + a.k, a => a.m, D.ai.filter(a => a.e === 'aim' && (!st.city || a.c === st.city) && (!st.kw || a.k === st.kw)));
   const line = (l, arr) => { const top = arr[0] ? arr[0][1] : 0, cnt = arr.filter(x => x[1] === top && top > 0).length; return `<div style="display:grid;grid-template-columns:120px 1fr 1fr;gap:12px;align-items:baseline;padding:10px 0;border-top:1px solid var(--line)"><b style="font-family:var(--font-head);font-size:13px">${l}</b><span><span class="num sm" style="color:var(--accent)">${top}</span> week${top === 1 ? '' : 'en'} op rij</span><span class="of">${cnt} combinatie${cnt === 1 ? '' : 's'} plaats × keyword</span></div>`; };
-  return `<div class="card"><h4>Blijvend zichtbaar</h4><p class="cap">Langste reeks opeenvolgende weken waarin GaragePark op dezelfde plaats × keyword zichtbaar is</p><div style="margin-top:12px">${line('Google top 10', g)}${line('AI Overviews', a1)}${line('AI Mode', a2)}</div>${RUNS.length < 2 ? '<div class="note" style="margin-top:12px">Na deze eerste meting staat elke reeks op 1. Vanaf de wekelijkse cloud-run groeit dit door.</div>' : ''}</div>`;
+  return `<div class="card"><h4>Blijvend zichtbaar</h4><p class="cap">Langste reeks opeenvolgende weken waarin {{CLIENT}} op dezelfde plaats × keyword zichtbaar is</p><div style="margin-top:12px">${line('Google top 10', g)}${line('AI Overviews', a1)}${line('AI Mode', a2)}</div>${RUNS.length < 2 ? '<div class="note" style="margin-top:12px">Na deze eerste meting staat elke reeks op 1. Vanaf de wekelijkse cloud-run groeit dit door.</div>' : ''}</div>`;
 }
 function changeCard() {
   const pr = prevRun();
@@ -661,10 +661,10 @@ function vGoogle() {
     html = `<section><div class="grid g4">
     <div class="card kpi"><span class="stat-l">Dekking (top 10)</span><span class="num">${pct(g.t10, g.n)}</span><span class="of">${g.t10} van ${g.n} zoekresultaten</span><div class="bar"><i style="width:${100 * g.t10 / (g.n || 1)}%"></i></div></div>
     <div class="card kpi"><span class="stat-l">Top 3</span><span class="num">${pct(g.t3, g.n)}</span><span class="of">${g.t3} van ${g.n} zoekresultaten</span><div class="bar"><i style="width:${100 * g.t3 / (g.n || 1)}%"></i></div></div>
-    <div class="card kpi"><span class="stat-l">Gem. beste positie</span><span class="num">${nf(g.avg)}</span><span class="of">over ${g.any} zoekresultaten waarin garagepark.nl in de top 20 staat</span></div>
+    <div class="card kpi"><span class="stat-l">Gem. beste positie</span><span class="num">${nf(g.avg)}</span><span class="of">over ${g.any} zoekresultaten waarin {{DOMAIN}} in de top 20 staat</span></div>
     <div class="card kpi"><span class="stat-l">Zichtbaarheid gewogen op zoekvolume</span><span class="num">${nf(100 * g.vis)}</span><span class="of">CTR-curve × zoekvolume, 100 = overal positie 1</span><div class="bar"><i style="width:${100 * g.vis}%"></i></div></div>
     </div></section>
-    <section><div class="tcard"><div class="thead"><div><h4>Organische domeinen</h4><p>Unieke zoekresultaten (plaats × keyword) per domein, beste organische positie per zoekresultaat in de mobiele top 20. www is samengevoegd. ${own ? `garagepark.nl staat op <b>#${own.rank}</b>.` : ''}</p></div>
+    <section><div class="tcard"><div class="thead"><div><h4>Organische domeinen</h4><p>Unieke zoekresultaten (plaats × keyword) per domein, beste organische positie per zoekresultaat in de mobiele top 20. www is samengevoegd. ${own ? `{{DOMAIN}} staat op <b>#${own.rank}</b>.` : ''}</p></div>
     <input type="search" id="domq" placeholder="Zoek domein…" value="${esc(domQuery)}" aria-label="Zoek domein"></div>
     <div class="scroll"><table id="domt"><thead><tr><th>#</th>${th('d', 'Domein')}${th('n', 'Zoekresultaten', 1)}${th('cov', 'Dekking', 1)}${th('t3', 'Top 3', 1)}${th('t10', 'Top 10', 1)}${th('avg', 'Gem. beste positie', 1)}</tr></thead><tbody>
     ${lim.map(r => `<tr class="${r.d === OWN ? 'own' : ''}"><td><span class="rank">${r.rank}</span></td><td>${esc(r.d)}${r.d === OWN ? '<span class="wij">Wij</span>' : ''}</td><td class="r">${r.n}</td><td class="r"><div class="meter"><span class="t"><i style="width:${100 * r.cov}%"></i></span><b>${pct(r.n, S.length)}</b></div></td><td class="r">${r.t3}</td><td class="r">${r.t10}</td><td class="r">${nf(r.avg)}</td></tr>`).join('')}
@@ -672,7 +672,7 @@ function vGoogle() {
   } else if (sub === 'posities') {
     const cities = st.city ? [st.city] : CITIES, kws = st.kw ? KWS.filter(x => x[0] === st.kw) : KWS;
     const pc = p => !p ? 'h0' : p <= 1 ? 'h5' : p <= 3 ? 'h4' : p <= 5 ? 'h3' : p <= 10 ? 'h2' : 'h1';
-    html = `<section><div class="tcard"><div class="thead"><div><h4>Positie per keyword en plaats</h4><p>Beste positie van garagepark.nl. Klik op een cel om het volledige zoekresultaat te openen.</p></div>
+    html = `<section><div class="tcard"><div class="thead"><div><h4>Positie per keyword en plaats</h4><p>Beste positie van {{DOMAIN}}. Klik op een cel om het volledige zoekresultaat te openen.</p></div>
     <div class="legend"><span><i class="h5"></i>#1</span><span><i class="h4"></i>2 tot 3</span><span><i class="h3"></i>4 tot 5</span><span><i class="h2"></i>6 tot 10</span><span><i class="h1"></i>11 tot 20</span><span><i class="h0"></i>niet in top 20</span></div></div>
     <div class="scroll"><table class="heat"><thead><tr><th>Keyword</th><th class="r">Volume</th>${cities.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>
     ${kws.map(([k, v]) => `<tr><td class="lab">${esc(k)}</td><td class="lab r">${v.toLocaleString('nl-NL')}</td>${cities.map(c => { const s = D.serps.find(x => x.r === st.run && x.c === c && x.k === k); return `<td class="c"><button class="${pc(s && s.pos)}" data-serp="${esc(c)}|${esc(k)}" title="${esc(c)} · ${esc(k)}">${s && s.pos ? s.pos : '·'}</button></td>`; }).join('')}</tr>`).join('')}
@@ -688,9 +688,9 @@ function vGoogle() {
     const withLp = S.filter(s => s.lp.length).length;
     html = `<section><div class="grid g4">
     <div class="card kpi"><span class="stat-l">Zoekresultaten met local pack</span><span class="num">${pct(withLp, S.length)}</span><span class="of">${withLp} van ${S.length}</span></div>
-    <div class="card kpi"><span class="stat-l">GaragePark in local pack</span><span class="num">${pct(g.lp, g.n)}</span><span class="of">${g.lp} van ${g.n} zoekresultaten</span></div>
+    <div class="card kpi"><span class="stat-l">{{CLIENT}} in local pack</span><span class="num">${pct(g.lp, g.n)}</span><span class="of">${g.lp} van ${g.n} zoekresultaten</span></div>
     <div class="card kpi"><span class="stat-l">Unieke bedrijven</span><span class="num">${lps.length}</span><span class="of">in alle local packs samen</span></div>
-    <div class="card kpi"><span class="stat-l">Plaatsen met GaragePark</span><span class="num">${new Set(S.filter(s => s.lpo).map(s => s.c)).size}</span><span class="of">van ${new Set(S.map(s => s.c)).size} plaatsen</span></div></div></section>
+    <div class="card kpi"><span class="stat-l">Plaatsen met {{CLIENT}}</span><span class="num">${new Set(S.filter(s => s.lpo).map(s => s.c)).size}</span><span class="of">van ${new Set(S.map(s => s.c)).size} plaatsen</span></div></div></section>
     <section><div class="tcard"><div class="thead"><div><h4>Bedrijven in het local pack</h4><p>Hoe vaak een bedrijf in het kaartblok verschijnt, op welke gemiddelde plek en in hoeveel plaatsen.</p></div></div>
     <div class="scroll"><table><thead><tr><th>#</th><th>Bedrijf</th><th class="r">Keer</th><th class="r">Gem. plek</th><th class="r">Plaatsen</th><th class="r">Rating</th></tr></thead><tbody>${lps.slice(0, 30).map((l, i) => `<tr class="${l.o ? 'own' : ''}"><td><span class="rank">${i + 1}</span></td><td><span class="trunc">${esc(l.t)}</span></td><td class="r">${l.n}</td><td class="r">${nf(l.pos / l.n)}</td><td class="r">${l.c.size}</td><td class="r">${l.rt ? nf(l.rt) + ' (' + l.v + ')' : 'n.v.t.'}</td></tr>`).join('')}</tbody></table></div><div class="tfoot"><span>Top 30 van ${lps.length} bedrijven</span></div></div></section>`;
   } else {
@@ -706,7 +706,7 @@ function vGoogle() {
     html = `<section style="display:flex;justify-content:space-between;gap:16px;align-items:flex-end;flex-wrap:wrap"><div><h3>Streaks</h3><p class="sub" style="margin-bottom:0">Hoeveel metingen op rij een domein of keyword in de top ${N} staat</p></div>${ctl}</section>
     ${runNote()}
     <section>${entityStreakTable({ h: 'Domeinzichtbaarheid', col: 'Domein' }, `Cellen: aantal zoekresultaten (plaats × keyword) waarin het domein in de top ${N} staat. Details opent de zoekresultaten.`, rows, x => x.name === OWN, x => `data-dom="${esc(x.name)}"`)}</section>
-    <section>${itemStreakTable('GaragePark per keyword en plaats', `Alle combinaties, ook zonder top ${N}-positie. Paars = in de top ${N} · streep = buiten de top ${N} · punt = geen meting.`, keys, stFn, k => `data-serp="${esc(k.c)}|${esc(k.k)}"`, '')}</section>`;
+    <section>${itemStreakTable('{{CLIENT}} per keyword en plaats', `Alle combinaties, ook zonder top ${N}-positie. Paars = in de top ${N} · streep = buiten de top ${N} · punt = geen meting.`, keys, stFn, k => `data-serp="${esc(k.c)}|${esc(k.k)}"`, '')}</section>`;
   }
   return subtabs('google') + html;
 }
@@ -726,7 +726,7 @@ function urlBoard(A) {
   return [...m.values()].sort((a, b) => b.n - a.n);
 }
 function gbpBoard(A) {
-  const m = new Map(); A.forEach(a => { new Set(a.refs.filter(r => r.g).map(r => r.t)).forEach(t => { const x = m.get(t) || { t, n: 0, o: /GaragePark/.test(t), c: new Set() }; x.n++; x.c.add(a.c); m.set(t, x); }); });
+  const m = new Map(); A.forEach(a => { new Set(a.refs.filter(r => r.g).map(r => r.t)).forEach(t => { const x = m.get(t) || { t, n: 0, o: new RegExp(D.meta.own_pattern, 'i').test(t), c: new Set() }; x.n++; x.c.add(a.c); m.set(t, x); }); });
   return [...m.values()].sort((a, b) => b.n - a.n);
 }
 function trendChart(e) {
@@ -752,15 +752,15 @@ function vAI(e) {
     const bb = brandBoard(A), cb = citeBoard(A);
     const ownB = bb.findIndex(x => x.b === OWNB), ownC = cb.findIndex(x => x.d === OWN);
     html = `<section><div class="grid g4">${presence}
-    <div class="card kpi"><span class="stat-l">Mentions</span><span class="num">${pct(a.m, a.n)}</span><span class="of">${a.m} van ${a.n} antwoorden noemen GaragePark</span>${deltaPP(100 * a.m / (a.n || 1), p && 100 * p.m / (p.n || 1))}</div>
-    <div class="card kpi"><span class="stat-l">Citaties</span><span class="num">${pct(a.c, a.n)}</span><span class="of">${a.c} van ${a.n} antwoorden linken naar GaragePark</span>${deltaPP(100 * a.c / (a.n || 1), p && 100 * p.c / (p.n || 1))}</div>
-    <div class="card kpi"><span class="stat-l">Citatie via</span><div class="cols" style="margin-top:6px"><div><span class="num sm">${pct(a.cw, a.n, 0)}</span><span class="of" style="display:block">garagepark.nl</span></div><div><span class="num sm">${pct(a.cg, a.n, 0)}</span><span class="of" style="display:block">Bedrijfsprofiel</span></div></div></div>
+    <div class="card kpi"><span class="stat-l">Mentions</span><span class="num">${pct(a.m, a.n)}</span><span class="of">${a.m} van ${a.n} antwoorden noemen {{CLIENT}}</span>${deltaPP(100 * a.m / (a.n || 1), p && 100 * p.m / (p.n || 1))}</div>
+    <div class="card kpi"><span class="stat-l">Citaties</span><span class="num">${pct(a.c, a.n)}</span><span class="of">${a.c} van ${a.n} antwoorden linken naar {{CLIENT}}</span>${deltaPP(100 * a.c / (a.n || 1), p && 100 * p.c / (p.n || 1))}</div>
+    <div class="card kpi"><span class="stat-l">Citatie via</span><div class="cols" style="margin-top:6px"><div><span class="num sm">${pct(a.cw, a.n, 0)}</span><span class="of" style="display:block">{{DOMAIN}}</span></div><div><span class="num sm">${pct(a.cg, a.n, 0)}</span><span class="of" style="display:block">Bedrijfsprofiel</span></div></div></div>
     </div></section>
-    <section><div class="card"><h4>Ontwikkeling</h4><p class="cap">Aandeel antwoorden met GaragePark per meting</p><div style="max-width:760px">${trendChart(e)}</div>${RUNS.length < 2 ? '<div class="empty">Eén meetpunt. De lijn ontstaat vanaf de tweede wekelijkse run.</div>' : ''}</div></section>
+    <section><div class="card"><h4>Ontwikkeling</h4><p class="cap">Aandeel antwoorden met {{CLIENT}} per meting</p><div style="max-width:760px">${trendChart(e)}</div>${RUNS.length < 2 ? '<div class="empty">Eén meetpunt. De lijn ontstaat vanaf de tweede wekelijkse run.</div>' : ''}</div></section>
     <section><div class="grid g2">
-    <div class="tcard"><div class="thead"><div><h4>Mention share</h4><p>Aandeel antwoorden waarin het merk bij naam genoemd wordt. ${ownB >= 0 ? `GaragePark staat op <b>#${ownB + 1}</b>.` : 'GaragePark wordt niet genoemd.'}</p></div></div>
+    <div class="tcard"><div class="thead"><div><h4>Mention share</h4><p>Aandeel antwoorden waarin het merk bij naam genoemd wordt. ${ownB >= 0 ? `{{CLIENT}} staat op <b>#${ownB + 1}</b>.` : '{{CLIENT}} wordt niet genoemd.'}</p></div></div>
     <div class="scroll"><table><thead><tr><th>#</th><th>Merk</th><th class="r">Antwoorden</th><th class="r">Share</th></tr></thead><tbody>${bb.slice(0, 12).map((r, i) => `<tr class="${r.b === OWNB ? 'own' : ''}"><td><span class="rank">${i + 1}</span></td><td>${esc(r.b)}${r.b === OWNB ? '<span class="wij">Wij</span>' : ''}</td><td class="r">${r.n}</td><td class="r"><div class="meter"><span class="t"><i style="width:${100 * r.s}%"></i></span><b>${pct(r.n, A.length)}</b></div></td></tr>`).join('')}</tbody></table></div></div>
-    <div class="tcard"><div class="thead"><div><h4>Citation share</h4><p>Aandeel antwoorden dat naar het domein linkt (websites, zonder Bedrijfsprofielen). ${ownC >= 0 ? `garagepark.nl staat op <b>#${ownC + 1}</b>.` : ''}</p></div></div>
+    <div class="tcard"><div class="thead"><div><h4>Citation share</h4><p>Aandeel antwoorden dat naar het domein linkt (websites, zonder Bedrijfsprofielen). ${ownC >= 0 ? `{{DOMAIN}} staat op <b>#${ownC + 1}</b>.` : ''}</p></div></div>
     <div class="scroll"><table><thead><tr><th>#</th><th>Domein</th><th class="r">Antwoorden</th><th class="r">Share</th></tr></thead><tbody>${cb.slice(0, 12).map((r, i) => `<tr class="${r.d === OWN ? 'own' : ''}"><td><span class="rank">${i + 1}</span></td><td>${esc(r.d)}${r.d === OWN ? '<span class="wij">Wij</span>' : ''}</td><td class="r">${r.n}</td><td class="r"><div class="meter"><span class="t"><i style="width:${100 * r.s}%"></i></span><b>${pct(r.n, A.length)}</b></div></td></tr>`).join('')}</tbody></table></div></div>
     </div></section>`;
   } else if (sub === 'prompts') {
@@ -768,7 +768,7 @@ function vAI(e) {
     const list = A.filter(x => (!q || (x.p + ' ' + x.c).toLowerCase().includes(q)) && (flt === 'all' || (flt === 'm' ? x.m : flt === 'c' ? x.ci : flt === 'none' ? !x.m && !x.ci : 1)))
       .sort((x, y) => CITIES.indexOf(x.c) - CITIES.indexOf(y.c) || y.v - x.v);
     html = `<section><div class="tcard"><div class="thead"><div><h4>${e === 'aio' ? 'Zoekopdrachten met AI Overview' : 'Prompts'}</h4><p>${e === 'aio' ? 'Alle zoekresultaten waarin een AI Overview verscheen.' : e === 'cgpt' ? 'De vaste promptset uit FolloEngine: lokale vragen per plaats en algemene vragen (plaats: Algemeen).' : 'Prompt: "' + esc(D.meta.prompt_template || 'Waar kan ik een {keyword} in de omgeving van {city}').replace('{city}', '{plaats}') + '".'} Klik op een rij voor het volledige antwoord en de bronnen.</p></div>
-    <div class="filters"><input type="search" id="aiq" placeholder="Zoek prompt of plaats…" value="${esc(AIQ[e])}" aria-label="Zoek prompt"><select id="aif" aria-label="Filter"><option value="all">Alle antwoorden</option><option value="m">Met mention</option><option value="c">Met citatie</option><option value="none">Zonder GaragePark</option></select></div></div>
+    <div class="filters"><input type="search" id="aiq" placeholder="Zoek prompt of plaats…" value="${esc(AIQ[e])}" aria-label="Zoek prompt"><select id="aif" aria-label="Filter"><option value="all">Alle antwoorden</option><option value="m">Met mention</option><option value="c">Met citatie</option><option value="none">Zonder {{CLIENT}}</option></select></div></div>
     <div class="scroll"><table><thead><tr><th>Plaats</th><th>${e === 'aio' ? 'Zoekopdracht' : 'Prompt'}</th><th>Genoemd</th><th>Geciteerd</th><th class="r">Merken</th><th class="r">Bronnen</th></tr></thead><tbody>
     ${(AIALL[e] ? list : list.slice(0, 40)).map(x => `<tr class="click" data-ai="${D.ai.indexOf(x)}" tabindex="0"><td>${esc(x.c)}</td><td><span class="trunc">${esc(x.p)}</span></td><td><span class="chip ${x.m ? 'yes' : 'no'}">${x.m ? 'Ja' : 'Nee'}</span></td><td><span class="chip ${x.ci ? 'yes' : 'no'}">${x.cw && x.cg ? 'Site + profiel' : x.cw ? 'Site' : x.cg ? 'Profiel' : 'Nee'}</span></td><td class="r">${x.mb.length}</td><td class="r">${x.refs.length}</td></tr>`).join('')}
     </tbody></table></div><div class="tfoot"><span>${Math.min(list.length, AIALL[e] ? 1e9 : 40)} getoond · ${list.length} van ${A.length} antwoorden</span>${list.length > 40 ? `<button id="aiall">${AIALL[e] ? 'Toon minder' : 'Toon alle ' + list.length}</button>` : ''}</div></div></section>`;
@@ -796,7 +796,7 @@ function vAI(e) {
     html = `<section style="display:flex;justify-content:space-between;gap:16px;align-items:flex-end;flex-wrap:wrap"><div><h3>Streaks</h3><p class="sub" style="margin-bottom:0">Hoeveel metingen op rij een merk of prompt ${lbl} wordt</p></div>${seg('aimet', [['m', 'Mentions'], ['c', 'Citaties']], met)}</section>
     ${runNote()}
     <section>${entityStreakTable({ h: 'Merkzichtbaarheid', col: 'Merk' }, `Cellen: aantal ${e === 'aio' ? 'AI Overviews' : 'antwoorden'} waarin het merk ${lbl} wordt. Details opent die antwoorden.`, rows, x => x.name === OWNB, x => `data-brand="${esc(x.name)}"`)}</section>
-    <section>${itemStreakTable('GaragePark per ' + (e === 'aio' ? 'zoekopdracht' : 'prompt'), `Paars = GaragePark ${lbl} · streep = niet ${lbl} · punt = geen antwoord gemeten.`, keys, stFn, k => { const x = A.find(z => z.c === k.c && z.k === k.k); return `data-ai="${D.ai.indexOf(x)}"`; }, '')}</section>`;
+    <section>${itemStreakTable('{{CLIENT}} per ' + (e === 'aio' ? 'zoekopdracht' : 'prompt'), `Paars = {{CLIENT}} ${lbl} · streep = niet ${lbl} · punt = geen antwoord gemeten.`, keys, stFn, k => { const x = A.find(z => z.c === k.c && z.k === k.k); return `data-ai="${D.ai.indexOf(x)}"`; }, '')}</section>`;
   }
   return subtabs(e) + html;
 }
@@ -816,7 +816,7 @@ function md(s) {
   const inline = t => t.replace(/\[\[(\d+)\]\]\((https?:[^)\s]+)\)/g, '<sup><a href="$2" target="_blank" rel="noopener">$1</a></sup>')
     .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>').replace(/`([^`]+)`/g, '$1')
-    .replace(/(GaragePark|Garage Park|garagepark\.nl)(?![^<]*>)/g, '<mark>$1</mark>');
+    .replace(new RegExp('(' + D.meta.own_pattern + ')(?![^<]*>)', 'gi'), '<mark>$1</mark>');
   lines.forEach(l => {
     const t = l.trim();
     if (/^[-*] /.test(t)) { if (!inList) { out += '<ul>'; inList = true; } out += '<li>' + inline(t.slice(2)) + '</li>'; return; }
@@ -835,7 +835,7 @@ function aiDrawer(i) {
   const x = D.ai[i];
   const s = D.serps.find(z => z.r === x.r && z.c === x.c && z.k === x.k);
   openDrawer(`<div><p class="eyebrow">${({ aio: 'AI Overview', aim: 'AI Mode', cgpt: 'ChatGPT' })[x.e]} · ${esc(x.c)} · ${fmtDate(x.r)}</p><h2>${esc(x.p)}</h2></div>
-  <div class="chips"><span class="chip ${x.m ? 'yes' : 'no'}">${x.m ? 'GaragePark genoemd' : 'GaragePark niet genoemd'}</span><span class="chip ${x.cw ? 'yes' : 'no'}">${x.cw ? 'garagepark.nl geciteerd' : 'garagepark.nl niet geciteerd'}</span><span class="chip ${x.cg ? 'yes' : 'no'}">${x.cg ? 'Bedrijfsprofiel geciteerd' : 'Geen eigen Bedrijfsprofiel'}</span><span class="chip soft">Zoekvolume keyword ${x.v.toLocaleString('nl-NL')}</span></div>
+  <div class="chips"><span class="chip ${x.m ? 'yes' : 'no'}">${x.m ? '{{CLIENT}} genoemd' : '{{CLIENT}} niet genoemd'}</span><span class="chip ${x.cw ? 'yes' : 'no'}">${x.cw ? '{{DOMAIN}} geciteerd' : '{{DOMAIN}} niet geciteerd'}</span><span class="chip ${x.cg ? 'yes' : 'no'}">${x.cg ? 'Bedrijfsprofiel geciteerd' : 'Geen eigen Bedrijfsprofiel'}</span><span class="chip soft">Zoekvolume keyword ${x.v.toLocaleString('nl-NL')}</span></div>
   ${x.mb.length ? `<div><p class="eyebrow">Genoemde merken</p><div class="chips">${x.mb.map(b => `<span class="chip ${b === OWNB ? 'yes' : 'soft'}">${esc(b)}</span>`).join('')}</div></div>` : ''}
   ${x.md ? `<div class="answer">${md(x.md)}</div>` : slimNote()}
   <div><p class="eyebrow">Bronnen (${x.refs.length})</p><div class="src">${x.refs.map(r => `<a class="s ${r.d === OWN || (r.g && r.b === OWNB) ? 'own' : ''}" href="${esc(r.u)}" target="_blank" rel="noopener"><span class="d">${esc(r.d)}${r.k === 'link' ? ' · inline link' : ''}</span><span>${esc(r.t)}</span>${r.x ? `<small>${esc(r.x)}</small>` : ''}</a>`).join('')}</div></div>
@@ -845,7 +845,7 @@ function serpDrawer(c, k) {
   const s = D.serps.find(z => z.r === st.run && z.c === c && z.k === k); if (!s) return;
   const ai = D.ai.find(z => z.e === 'aio' && z.r === s.r && z.c === c && z.k === k);
   openDrawer(`<div><p class="eyebrow">Google · mobiel · ${esc(c)} · ${fmtDate(s.r)}</p><h2>${esc(k)}</h2></div>
-  <div class="chips"><span class="chip ${s.pos ? 'yes' : 'no'}">${s.pos ? 'garagepark.nl op #' + s.pos : 'Niet in top 20'}</span><span class="chip ${s.lpo ? 'yes' : 'no'}">${s.lpo ? 'In local pack' : 'Niet in local pack'}</span>${ai ? `<span class="chip ${ai.m ? 'yes' : 'no'}">AIO ${ai.m ? 'noemt' : 'noemt niet'} GaragePark</span>` : '<span class="chip no">Geen AI Overview</span>'}<span class="chip soft">Volume ${s.v.toLocaleString('nl-NL')}</span></div>
+  <div class="chips"><span class="chip ${s.pos ? 'yes' : 'no'}">${s.pos ? '{{DOMAIN}} op #' + s.pos : 'Niet in top 20'}</span><span class="chip ${s.lpo ? 'yes' : 'no'}">${s.lpo ? 'In local pack' : 'Niet in local pack'}</span>${ai ? `<span class="chip ${ai.m ? 'yes' : 'no'}">AIO ${ai.m ? 'noemt' : 'noemt niet'} {{CLIENT}}</span>` : '<span class="chip no">Geen AI Overview</span>'}<span class="chip soft">Volume ${s.v.toLocaleString('nl-NL')}</span></div>
   <div><p class="eyebrow">SERP features</p><div class="chips">${s.f.map(f => `<span class="chip soft">${esc(f.replace(/_/g, ' '))}</span>`).join('')}</div></div>
   ${s.lp.length ? `<div><p class="eyebrow">Local pack</p><div class="serp">${s.lp.map((l, i) => `<div class="r ${l.o ? 'own' : ''}"><b>${i + 1}</b><div>${esc(l.t)}<small>${l.rt ? '★ ' + nf(l.rt) + ' (' + l.n + ' reviews)' : ''}</small></div></div>`).join('')}</div></div>` : ''}
   ${ai ? `<button class="x" style="align-self:flex-start" data-ai="${D.ai.indexOf(ai)}">Open de AI Overview</button>` : ''}
@@ -861,12 +861,12 @@ function brandDrawer(b) {
   const e = engOf(tab()), met = AIMET[e];
   const A = fA(e).filter(x => (met === 'm' ? x.mb : x.cb).includes(b));
   openDrawer(`<div><p class="eyebrow">${({ aio: 'AI Overviews', aim: 'AI Mode', cgpt: 'ChatGPT' })[e]} · ${met === 'm' ? 'genoemd' : 'geciteerd'} · ${fmtDate(st.run)}</p><h2>${esc(b)}</h2><p class="of">${A.length} antwoorden. Klik voor het volledige antwoord.</p></div>
-  <div class="tcard"><div class="scroll"><table><thead><tr><th>Plaats</th><th>${e === 'aio' ? 'Zoekopdracht' : 'Prompt'}</th><th>GaragePark</th></tr></thead><tbody>${A.map(x => `<tr class="click" data-ai="${D.ai.indexOf(x)}"><td>${esc(x.c)}</td><td><span class="trunc">${esc(x.p)}</span></td><td><span class="chip ${x.m ? 'yes' : 'no'}">${x.m ? 'Genoemd' : 'Niet genoemd'}</span></td></tr>`).join('')}</tbody></table></div></div>`);
+  <div class="tcard"><div class="scroll"><table><thead><tr><th>Plaats</th><th>${e === 'aio' ? 'Zoekopdracht' : 'Prompt'}</th><th>{{CLIENT}}</th></tr></thead><tbody>${A.map(x => `<tr class="click" data-ai="${D.ai.indexOf(x)}"><td>${esc(x.c)}</td><td><span class="trunc">${esc(x.p)}</span></td><td><span class="chip ${x.m ? 'yes' : 'no'}">${x.m ? 'Genoemd' : 'Niet genoemd'}</span></td></tr>`).join('')}</tbody></table></div></div>`);
 }
 function featDrawer(f) {
   const S = fS().filter(s => s.f.includes(f));
   openDrawer(`<div><p class="eyebrow">SERP feature</p><h2>${esc(f.replace(/_/g, ' '))}</h2><p class="of">${S.length} zoekresultaten. Klik voor het volledige resultaat.</p></div>
-  <div class="tcard"><div class="scroll"><table><thead><tr><th>Plaats</th><th>Keyword</th><th class="r">Positie GaragePark</th></tr></thead><tbody>${S.map(s => `<tr class="click" data-serp="${esc(s.c)}|${esc(s.k)}"><td>${esc(s.c)}</td><td>${esc(s.k)}</td><td class="r">${s.pos || 'n.v.t.'}</td></tr>`).join('')}</tbody></table></div></div>`);
+  <div class="tcard"><div class="scroll"><table><thead><tr><th>Plaats</th><th>Keyword</th><th class="r">Positie {{CLIENT}}</th></tr></thead><tbody>${S.map(s => `<tr class="click" data-serp="${esc(s.c)}|${esc(s.k)}"><td>${esc(s.c)}</td><td>${esc(s.k)}</td><td class="r">${s.pos || 'n.v.t.'}</td></tr>`).join('')}</tbody></table></div></div>`);
 }
 
 /*__GBP_JS__*/
@@ -875,14 +875,14 @@ function featDrawer(f) {
 // ==== router ====
 function tab() { const h = location.hash.slice(1); return TABS.some(t => t[0] === h) ? h : 'overzicht'; }
 const META = {
-  overzicht: ['Lokale vindbaarheid · ' + CITIES.length + ' vestigingsplaatsen', 'Search &amp; AI performance', 'Van zoekresultaat tot AI-antwoord. Per plaats zien waar GaragePark gevonden, genoemd en geciteerd wordt.'],
+  overzicht: ['Lokale vindbaarheid · ' + CITIES.length + ' vestigingsplaatsen', 'Search &amp; AI performance', 'Van zoekresultaat tot AI-antwoord. Per plaats zien waar {{CLIENT}} gevonden, genoemd en geciteerd wordt.'],
   google: ['Google Search · mobiel · top 20', 'Google Search', 'Organische posities, concurrerende domeinen, local pack en SERP features per plaats.'],
-  aio: ['Google · AI Overviews', 'AI Overviews', 'Wordt GaragePark genoemd en als bron gebruikt in de AI Overview boven de zoekresultaten?'],
+  aio: ['Google · AI Overviews', 'AI Overviews', 'Wordt {{CLIENT}} genoemd en als bron gebruikt in de AI Overview boven de zoekresultaten?'],
   chatgpt: ['OpenAI · ChatGPT · Nederland', 'ChatGPT', HAS_GPT ? `Wat antwoordt ChatGPT op de vaste FolloEngine-promptset? Wekelijkse meting, lokaal en algemeen.` : 'Komt in de volgende fase.'],
-  aggregators: ['Google Analytics · garagepark.nl', 'Aggregators', 'Wat leveren platforms als huren.nl, Marktplaats en Funda op aan bezoekers en leads, per platform en per park?'],
-  nieuws: ['Google Alerts · Google Nieuws · Nederland', 'Lokaal Nieuws', 'Nieuws over de opslagmarkt, de concurrenten en GaragePark zelf: waar kunnen we op inhaken?'],
-  gbp: ['Google Bedrijfsprofielen · eigen parken en concurrenten', 'Bedrijfsprofielen', 'Profiel, reviews en concurrentie per park, met wat er per park beter moet.'],
-  aimode: ['Google · AI Mode', 'AI Mode', 'Wat antwoordt Google AI Mode als iemand een garagebox of opslagruimte zoekt in de buurt?']
+  aggregators: ['Google Analytics · {{DOMAIN}}', 'Aggregators', 'Wat leveren platforms als huren.nl, Marktplaats en Funda op aan bezoekers en leads, per platform en per {{loc}}?'],
+  nieuws: ['Google Alerts · Google Nieuws · Nederland', 'Lokaal Nieuws', 'Nieuws over de {{MARKET}}, de concurrenten en {{CLIENT}} zelf: waar kunnen we op inhaken?'],
+  gbp: ['Google Bedrijfsprofielen · eigen {{locs}} en concurrenten', 'Bedrijfsprofielen', 'Profiel, reviews en concurrentie per {{loc}}, met wat er per {{loc}} beter moet.'],
+  aimode: ['Google · AI Mode', 'AI Mode', 'Wat antwoordt Google AI Mode als iemand een {{PRODUCT}} zoekt in de buurt?']
 };
 function render() {
   const t = tab();

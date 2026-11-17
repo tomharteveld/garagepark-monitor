@@ -41,7 +41,7 @@ function gKpis(ps) {
 }
 
 function vGBP() {
-  if (!G) return `<section><div class="band"><div><p class="eyebrow">Bedrijfsprofielen</p><h2>Nog geen <span class="hl">profieldata.</span></h2><p>Na de eerste run met bedrijfsprofielen verschijnt hier de analyse per park.</p></div><div><p class="eyebrow">Starten</p><p>Draai de workflow met mode <b>gbp</b> of wacht op de wekelijkse run.</p></div></div></section>`;
+  if (!G) return `<section><div class="band"><div><p class="eyebrow">Bedrijfsprofielen</p><h2>Nog geen <span class="hl">profieldata.</span></h2><p>Na de eerste run met bedrijfsprofielen verschijnt hier de analyse per {{loc}}.</p></div><div><p class="eyebrow">Starten</p><p>Draai de workflow met mode <b>gbp</b> of wacht op de wekelijkse run.</p></div></div></section>`;
   const body = { overzicht: gOverview, profielen: gTable, concurrenten: gCompetitors, reviews: gReviews, acties: gActions, prestaties: gPerformance }[gsub.v]();
   return `<div class="subtabs" role="tablist">${[['overzicht', 'Overzicht'], ['profielen', 'Profielen'], ['concurrenten', 'Concurrenten'], ['reviews', 'Reviews'], ['acties', 'Acties'], ['prestaties', 'Prestaties']].map(([id, l]) => `<button role="tab" aria-selected="${gsub.v === id}" class="${gsub.v === id ? 'on' : ''}" data-gsub="${id}">${l}${id === 'acties' ? ` <span class="cnt">${G.actions.filter(a => !gDone[a.id]).length}</span>` : ''}</button>`).join('')}</div>` + body;
 }
@@ -69,28 +69,28 @@ function gOverview() {
     ['Reactiepercentage op reviews', k.own.reply, k.comp.reply, pc, 'hi'], ["Foto's per profiel (mediaan)", k.own.ph, k.comp.ph, x => nf(x, 0), 'hi'], ['Profielen met post in 90 dagen', k.own.posts, k.comp.posts, pc, 'hi'], ['Profielscore', k.own.score, k.comp.score, pc, 'hi']];
   const mx = (a, b) => Math.max(a || 0, b || 0) || 1;
   return `
-  <section><div class="band"><div><p class="eyebrow">Google Bedrijfsprofielen · ${ps.length} parken${st.city ? ' · ' + esc(st.city) : ''}</p><h2>Wat moet er <span class="hl">per park</span> anders?</h2><p>Profiel, reviews en concurrentie van elk GaragePark, met de acties die het meeste opleveren.</p></div>
+  <section><div class="band"><div><p class="eyebrow">Google Bedrijfsprofielen · ${ps.length} {{locs}}${st.city ? ' · ' + esc(st.city) : ''}</p><h2>Wat moet er <span class="hl">per {{loc}}</span> anders?</h2><p>Profiel, reviews en concurrentie van elk {{CLIENT}}, met de acties die het meeste opleveren.</p></div>
   <div><p class="eyebrow">Meting</p><div class="big">${fmtDate(G.run)}</div><p>${ps.length} eigen profielen · ${k.nComp} concurrenten in de buurt · ${open.length} open acties</p></div></div></section>
   <section><div class="grid g4">
     ${cmpTile('Gemiddelde score', k.own.r, k.comp.r, sc, 'hi', `over ${ps.filter(p => p.r).length} profielen met reviews`)}
     ${cmpTile('Reviews per profiel', k.own.v, k.comp.v, x => nf(x, 0), 'hi', `mediaan · ${k.own.vt.toLocaleString('nl-NL')} reviews in totaal`)}
-    ${cmpTile('Reactiepercentage', k.own.reply, k.comp.reply, pc, 'hi', 'aandeel reviews met reactie van GaragePark')}
+    ${cmpTile('Reactiepercentage', k.own.reply, k.comp.reply, pc, 'hi', 'aandeel reviews met reactie van {{CLIENT}}')}
     ${cmpTile('Profielscore', k.own.score, k.comp.score, pc, 'hi', 'aandeel van 12 profielonderdelen ingevuld')}
   </div></section>
   <section><div class="grid g2 gtop">
-    <div class="tcard"><div class="thead"><div><h4>De acties met de meeste impact</h4><p>Over alle parken, op volgorde van impact en moeite. Klik voor de parken waar het speelt.</p></div></div>
-    <div class="scroll"><table><thead><tr><th>#</th><th>Actie</th><th class="r">Parken</th><th>Impact</th><th>Moeite</th></tr></thead><tbody>
+    <div class="tcard"><div class="thead"><div><h4>De acties met de meeste impact</h4><p>Over alle {{locs}}, op volgorde van impact en moeite. Klik voor de {{locs}} waar het speelt.</p></div></div>
+    <div class="scroll"><table><thead><tr><th>#</th><th>Actie</th><th class="r">{{Locs}}</th><th>Impact</th><th>Moeite</th></tr></thead><tbody>
     ${top.slice(0, 7).map((t, i) => `<tr class="click" data-gact="${t.key}" tabindex="0"><td><span class="rank">${i + 1}</span></td><td><b>${esc(t.title)}</b></td><td class="r">${t.open}</td><td>${lvl(t.impact)}</td><td>${lvl(t.effort)}</td></tr>`).join('') || '<tr><td colspan="5" class="of">Alle acties zijn afgevinkt.</td></tr>'}
     </tbody></table></div></div>
-    <div class="card"><h4>GaragePark tegenover de concurrentie</h4><p class="cap">Mediaan of gemiddelde van de eigen profielen naast de ${k.nComp} concurrenten die Google bij die profielen toont</p>
+    <div class="card"><h4>{{CLIENT}} tegenover de concurrentie</h4><p class="cap">Mediaan of gemiddelde van de eigen profielen naast de ${k.nComp} concurrenten die Google bij die profielen toont</p>
     <div class="vsrows">${rows.map(([l, a, b, f]) => `<div class="vsrow"><span class="vl">${l}</span><div class="vb"><i class="o" style="width:${100 * (a || 0) / mx(a, b)}%"></i><i class="c" style="width:${100 * (b || 0) / mx(a, b)}%"></i></div><span class="vn"><b>${f(a)}</b><span>${f(b)}</span></span></div>`).join('')}</div>
-    <div class="legend" style="margin-top:12px"><span><i style="background:var(--brand)"></i>GaragePark</span><span><i style="background:var(--accent-soft)"></i>Concurrenten</span></div></div>
+    <div class="legend" style="margin-top:12px"><span><i style="background:var(--brand)"></i>{{CLIENT}}</span><span><i style="background:var(--accent-soft)"></i>Concurrenten</span></div></div>
   </div></section>
-  <section><div class="card mapcard"><div class="maphead"><div><h4 style="display:block">Alle parken op de kaart</h4><p class="cap">Klik op een park voor het volledige profiel, de concurrenten en de acties.</p></div>${seg('gmap', MAPG, gst.map)}</div>
-  <div class="mapgrid"><div class="mapwrap"><svg viewBox="0 0 ${NLMAP.W} ${NLMAP.H}" role="img" aria-label="Kaart met alle GaragePark-profielen">
+  <section><div class="card mapcard"><div class="maphead"><div><h4 style="display:block">Alle {{locs}} op de kaart</h4><p class="cap">Klik op een {{loc}} voor het volledige profiel, de concurrenten en de acties.</p></div>${seg('gmap', MAPG, gst.map)}</div>
+  <div class="mapgrid"><div class="mapwrap"><svg viewBox="0 0 ${NLMAP.W} ${NLMAP.H}" role="img" aria-label="Kaart met alle {{CLIENT}}-profielen">
     <path d="${NLMAP.de}" class="nb"/><path d="${NLMAP.be}" class="nb"/><path d="${NLMAP.nl}" class="land"/>${dots}</svg></div>
   <div class="maplist"><div class="legend">${legend.map((l, i) => l ? `<span><i class="h${i}"></i>${l}</span>` : '').join('')}</div>
-  <ol class="rk">${[...ps].sort((a, b) => gst.map === 'acts' ? openActs(b.cid) - openActs(a.cid) : (val(a) ?? -1) - (val(b) ?? -1)).slice(0, 14).map((p, i) => `<li><button data-gp="${p.cid}"><span class="i">${i + 1}</span><span class="c">${esc(gShort(p.t).replace(/^GaragePark\s*/i, ''))}</span><span class="t"><i class="${cls(p)}" style="width:${gst.map === 'r' ? 20 * (p.r || 0) : gst.map === 'score' ? 100 * (p.score || 0) : gst.map === 'v' ? Math.min(100, 4 * p.v) : Math.min(100, 12 * openActs(p.cid))}%"></i></span><b>${lab(p)}</b></button></li>`).join('')}</ol>
+  <ol class="rk">${[...ps].sort((a, b) => gst.map === 'acts' ? openActs(b.cid) - openActs(a.cid) : (val(a) ?? -1) - (val(b) ?? -1)).slice(0, 14).map((p, i) => `<li><button data-gp="${p.cid}"><span class="i">${i + 1}</span><span class="c">${esc(gShort(p.t).replace(/^{{CLIENT}}\s*/i, ''))}</span><span class="t"><i class="${cls(p)}" style="width:${gst.map === 'r' ? 20 * (p.r || 0) : gst.map === 'score' ? 100 * (p.score || 0) : gst.map === 'v' ? Math.min(100, 4 * p.v) : Math.min(100, 12 * openActs(p.cid))}%"></i></span><b>${lab(p)}</b></button></li>`).join('')}</ol>
   <p class="of">${gst.map === 'acts' ? 'Meeste open acties eerst' : 'Laagste eerst: hier is de meeste winst'} · 14 van ${ps.length}</p></div></div></div></section>
   ${gNews(ps)}`;
 }
@@ -98,21 +98,21 @@ function gOverview() {
 function gNews(ps) {
   const nw = ps.filter(p => p.new), hidden = PF ? (PF.locations || []).filter(l => !l.visible) : (G.perf && G.perf.locations ? G.perf.locations.filter(l => !l.visible) : []);
   const out = [];
-  if (nw.length) out.push(`<div class="note"><b>${nw.length} nieuw${nw.length > 1 ? 'e parken' : ' park'} sinds de vorige meting:</b> ${nw.map(p => `<button class="lnk2" data-gp="${p.cid}">${esc(gShort(p.t))}</button>`).join(', ')}. Ze staan vanaf nu in alle overzichten, met concurrenten en acties.</div>`);
+  if (nw.length) out.push(`<div class="note"><b>${nw.length} nieuw${nw.length > 1 ? 'e {{locs}}' : ' {{loc}}'} sinds de vorige meting:</b> ${nw.map(p => `<button class="lnk2" data-gp="${p.cid}">${esc(gShort(p.t))}</button>`).join(', ')}. Ze staan vanaf nu in alle overzichten, met concurrenten en acties.</div>`);
   if (hidden.length) out.push(`<div class="note"><b>${hidden.length} locatie${hidden.length > 1 ? 's' : ''} in de Google-accounts nog niet zichtbaar in Google Maps:</b> ${hidden.map(l => esc(gShort(l.t))).join(', ')}. Controleer verificatie en publicatie in Bedrijfsprofielmanager.</div>`);
-  if (G.untracked_cities && G.untracked_cities.length) out.push(`<div class="note"><b>${G.untracked_cities.length} plaatsen met een park zonder zoekmeting:</b> ${G.untracked_cities.map(esc).join(', ')}. Voeg ze toe aan <code>cities</code> in de config om ook Google Search en AI per plaats te meten.</div>`);
+  if (G.untracked_cities && G.untracked_cities.length) out.push(`<div class="note"><b>${G.untracked_cities.length} plaatsen met een {{loc}} zonder zoekmeting:</b> ${G.untracked_cities.map(esc).join(', ')}. Voeg ze toe aan <code>cities</code> in de config om ook Google Search en AI per plaats te meten.</div>`);
   if (!PF) out.push(`<div class="note"><b>Prestaties per profiel</b> (weergaven, zoektermen, gesprekken, routes, websiteklikken) verschijnen zodra de koppeling met Bedrijfsprofielmanager actief is. Zie het tabblad Prestaties.</div>`);
   return out.length ? `<section style="display:grid;gap:12px">${out.join('')}</section>` : '';
 }
 
 function gTable() {
   const ps = gProfiles();
-  const cols = [['t', 'Park'], ['r', 'Score', 1], ['v', 'Reviews', 1], ['n365', '12 mnd', 1], ['reply', 'Reactie', 1], ['ph', "Foto's", 1], ['posts90', 'Posts 90d', 1], ['score', 'Profielscore', 1], ['cmax', 'Grootste concurrent', 1], ['acties', 'Open acties', 1]];
+  const cols = [['t', '{{Loc}}'], ['r', 'Score', 1], ['v', 'Reviews', 1], ['n365', '12 mnd', 1], ['reply', 'Reactie', 1], ['ph', "Foto's", 1], ['posts90', 'Posts 90d', 1], ['score', 'Profielscore', 1], ['cmax', 'Grootste concurrent', 1], ['acties', 'Open acties', 1]];
   const rows = ps.map(p => ({ p, cmax: Math.max(0, ...compsOf(p).map(c => c.v || 0)), acties: openActs(p.cid) }));
   const [k, dir] = gst.sort;
   const get = r => k === 'cmax' || k === 'acties' ? r[k] : k === 't' ? gShort(r.p.t) : r.p[k];
   rows.sort((a, b) => { const x = get(a), y = get(b); return (x == null) - (y == null) || dir * (x > y ? 1 : x < y ? -1 : 0); });
-  return `<section><div class="tcard"><div class="thead"><div><h4>Alle profielen</h4><p>${ps.length} GaragePark-profielen. Klik op een park voor profiel, concurrenten, reviews en acties.</p></div><input type="search" id="gq" placeholder="Zoek park of plaats…" value="${esc(gst.q)}" aria-label="Zoek park"></div>
+  return `<section><div class="tcard"><div class="thead"><div><h4>Alle profielen</h4><p>${ps.length} {{CLIENT}}-profielen. Klik op een {{loc}} voor profiel, concurrenten, reviews en acties.</p></div><input type="search" id="gq" placeholder="Zoek {{loc}} of plaats…" value="${esc(gst.q)}" aria-label="Zoek {{loc}}"></div>
   <div class="scroll"><table class="gtab"><thead><tr>${cols.map(([key, l, r]) => `<th class="${r ? 'r' : ''}" data-gsort="${key}">${l} ${k === key ? (dir < 0 ? '↓' : '↑') : '↕'}</th>`).join('')}</tr></thead><tbody>
   ${rows.map(({ p, cmax, acties }) => `<tr class="click" data-gp="${p.cid}" tabindex="0"><td><b>${esc(gShort(p.t))}</b>${p.new ? ' ' + chip('Nieuw', 'yes') : ''}<span class="of sub">${esc(p.c || '')}${p.cl === false ? ' · <b class="warn">niet geclaimd</b>' : ''}</span></td>
     <td class="r">${p.r ? sc(p.r) : '<span class="of">geen</span>'}</td><td class="r">${p.v}</td><td class="r">${p.n365}</td><td class="r">${pc(p.reply)}</td><td class="r">${p.ph}</td><td class="r">${p.posts90 || '<span class="of">0</span>'}</td>
@@ -129,14 +129,14 @@ function gCompetitors() {
     return { name, own, n: arr.length, r: avg(arr.map(p => p.r)), v: med(arr.map(p => p.v)), n365: med(arr.map(p => p.n365)), reply: f ? (f - u) / f : null, posts: arr.filter(p => p.posts90).length / arr.length, score: avg(arr.map(p => p.score)), ph: med(arr.map(p => p.ph)) }; };
   let rows = [...groups].map(([b, arr]) => agg(b, arr, false)).sort((a, b) => b.n - a.n || (b.v || 0) - (a.v || 0));
   const lim = gst.cmpAll ? rows : rows.slice(0, 12);
-  const all = [agg('GaragePark', ps, true), ...lim];
+  const all = [agg('{{CLIENT}}', ps, true), ...lim];
   const gap = ps.map(p => { const c = compsOf(p).sort((a, b) => (b.v || 0) - (a.v || 0))[0]; return { p, c }; }).filter(x => x.c).sort((a, b) => ((b.c.v || 0) - b.p.v) - ((a.c.v || 0) - a.p.v));
-  return `<section><div class="tcard"><div class="thead"><div><h4>Merken rond de parken</h4><p>Concurrenten die Google bij de GaragePark-profielen toont onder "Mensen zoeken ook", per merk samengevoegd. Mediaan per profiel.</p></div></div>
+  return `<section><div class="tcard"><div class="thead"><div><h4>Merken rond de {{locs}}</h4><p>Concurrenten die Google bij de {{CLIENT}}-profielen toont onder "Mensen zoeken ook", per merk samengevoegd. Mediaan per profiel.</p></div></div>
   <div class="scroll"><table><thead><tr><th>Merk</th><th class="r">Profielen</th><th class="r">Score</th><th class="r">Reviews</th><th class="r">Nieuw 12 mnd</th><th class="r">Reactie</th><th class="r">Foto's</th><th class="r">Posts 90d</th><th class="r">Profielscore</th></tr></thead><tbody>
   ${all.map(r => `<tr class="${r.own ? 'own' : ''}"><td>${esc(r.name)}${r.own ? '<span class="wij">Wij</span>' : ''}</td><td class="r">${r.n}</td><td class="r">${sc(r.r)}</td><td class="r">${nf(r.v, 0)}</td><td class="r">${nf(r.n365, 0)}</td><td class="r">${pc(r.reply)}</td><td class="r">${nf(r.ph, 0)}</td><td class="r">${pc(r.posts)}</td><td class="r"><div class="meter"><span class="t"><i style="width:${100 * (r.score || 0)}%"></i></span><b>${pc(r.score)}</b></div></td></tr>`).join('')}
   </tbody></table></div><div class="tfoot"><span>${rows.length} merken en losse aanbieders</span>${rows.length > 12 ? `<button id="cmpall">${gst.cmpAll ? 'Toon top 12' : 'Toon alle ' + rows.length}</button>` : ''}</div></div></section>
-  <section><div class="tcard"><div class="thead"><div><h4>Per park: de sterkste concurrent</h4><p>De concurrent met de meeste reviews naast elk park, grootste achterstand eerst. Klik voor de volledige vergelijking.</p></div></div>
-  <div class="scroll"><table><thead><tr><th>Park</th><th class="r">Reviews · score</th><th>Sterkste concurrent</th><th class="r">Reviews · score</th><th class="r">Verschil in reviews</th></tr></thead><tbody>
+  <section><div class="tcard"><div class="thead"><div><h4>Per {{loc}}: de sterkste concurrent</h4><p>De concurrent met de meeste reviews naast elk {{loc}}, grootste achterstand eerst. Klik voor de volledige vergelijking.</p></div></div>
+  <div class="scroll"><table><thead><tr><th>{{Loc}}</th><th class="r">Reviews · score</th><th>Sterkste concurrent</th><th class="r">Reviews · score</th><th class="r">Verschil in reviews</th></tr></thead><tbody>
   ${gap.map(({ p, c }) => `<tr class="click" data-gp="${p.cid}" tabindex="0"><td><b>${esc(gShort(p.t))}</b></td><td class="r">${p.v} · ${p.r ? sc(p.r) : 'n.v.t.'}</td><td>${esc(gShort(c.t))}</td><td class="r">${c.v} · ${c.r ? sc(c.r) : 'n.v.t.'}</td><td class="r"><b class="${(c.v || 0) > p.v ? 'warn' : ''}">${(c.v || 0) - p.v > 0 ? '+' : ''}${(c.v || 0) - p.v}</b></td></tr>`).join('')}
   </tbody></table></div></div></section>`;
 }
@@ -175,20 +175,20 @@ function gReviews() {
     <div class="card kpi"><span class="stat-l">Negatief zonder reactie</span><span class="num" style="color:${negOpen ? 'var(--bad)' : 'inherit'}">${negOpen}</span><span class="of">reviews met 1 of 2 sterren zonder antwoord</span></div>
   </div></section>
   <section><div class="grid g2">
-    <div class="card"><h4>Reviews per maand</h4><p class="cap">Alle GaragePark-profielen samen, laatste 24 maanden</p>${barMonths(ms)}</div>
-    <div class="card"><h4>Verdeling van de sterren</h4><p class="cap">Alle reviews volgens Google, GaragePark naast de concurrenten in de buurt</p>
-      <div style="margin-top:14px;display:grid;gap:12px">${dist(distO, 'GaragePark')}${dist(distC, 'Concurrenten')}</div>
+    <div class="card"><h4>Reviews per maand</h4><p class="cap">Alle {{CLIENT}}-profielen samen, laatste 24 maanden</p>${barMonths(ms)}</div>
+    <div class="card"><h4>Verdeling van de sterren</h4><p class="cap">Alle reviews volgens Google, {{CLIENT}} naast de concurrenten in de buurt</p>
+      <div style="margin-top:14px;display:grid;gap:12px">${dist(distO, '{{CLIENT}}')}${dist(distC, 'Concurrenten')}</div>
       <div class="legend" style="margin-top:12px">${[5, 4, 3, 2, 1].map(s => `<span><i class="s${s}"></i>${s} ster${s > 1 ? 'ren' : ''}</span>`).join('')}</div></div>
   </div></section>
   <section><div class="tcard"><div class="thead"><div><h4>Waar reviews over gaan</h4><p>Onderwerpen in de reviewteksten (indeling op trefwoorden). Negatief is 1 of 2 sterren, positief 4 of 5. Concurrenten: laatste 40 reviews per profiel.</p></div></div>
-  <div class="scroll"><table><thead><tr><th>Onderwerp</th><th>GaragePark negatief</th><th>GaragePark positief</th><th class="r">Concurrenten negatief</th><th class="r">Concurrenten positief</th></tr></thead><tbody>
+  <div class="scroll"><table><thead><tr><th>Onderwerp</th><th>{{CLIENT}} negatief</th><th>{{CLIENT}} positief</th><th class="r">Concurrenten negatief</th><th class="r">Concurrenten positief</th></tr></thead><tbody>
   ${th.map(t => `<tr class="click" data-gtheme="${t.key}" tabindex="0"><td><b>${esc(t.label)}</b></td><td><div class="tb"><i class="neg" style="width:${100 * t.own_neg / mxT}%"></i><b>${t.own_neg}</b></div></td><td><div class="tb"><i class="pos" style="width:${100 * t.own_pos / mxT}%"></i><b>${t.own_pos}</b></div></td><td class="r">${t.comp_neg}</td><td class="r">${t.comp_pos}</td></tr>`).join('')}
   </tbody></table></div></div></section>
   <section><div class="tcard"><div class="thead"><div><h4>Reviews</h4><p>Nieuwste eerst. Klik op een review voor de tekst en de reactie.</p></div>
-  <div class="filters"><input type="search" id="grq" placeholder="Zoek in reviews of park…" value="${esc(gst.rvQ)}" aria-label="Zoek in reviews">
+  <div class="filters"><input type="search" id="grq" placeholder="Zoek in reviews of {{loc}}…" value="${esc(gst.rvQ)}" aria-label="Zoek in reviews">
   ${seg('grs', [['all', 'Alle'], ['neg', '1 tot 2'], ['mid', '3'], ['pos', '4 tot 5']], gst.rvStars)}${seg('gra', [['all', 'Alle'], ['open', 'Zonder reactie'], ['done', 'Met reactie']], gst.rvAns)}</div></div>
-  <div class="rvlist">${lim.map(r => `<details class="rv ${r.s <= 2 ? 'neg' : ''}"><summary><span class="stars">${stars(r.s)}</span><span class="rvt">${r.t ? esc(r.t.slice(0, 140)) + (r.t.length > 140 ? '…' : '') : '<span class="of">Alleen sterren, geen tekst</span>'}</span><span class="of">${esc(gShort(GALL[r.cid]?.t).replace(/^GaragePark\s*/i, ''))} · ${r.d ? fmtDate(r.d) : esc(r.ago || '')}</span>${r.ans ? chip('Beantwoord', 'soft') : chip('Geen reactie', r.s <= 2 ? 'bad' : 'no')}</summary>
-    <div class="rvbody">${r.t ? `<p>${esc(r.t)}</p>` : ''}${r.th.length ? `<div class="chips">${r.th.map(k => chip(G.themes.find(t => t.key === k)?.label || k, 'soft')).join('')}</div>` : ''}${r.a ? `<div class="ans"><b>Reactie GaragePark</b><p>${esc(r.a)}</p></div>` : ''}${r.u ? `<a class="plain" href="${esc(r.u)}" target="_blank" rel="noopener">Open in Google${extIcon}</a>` : ''}</div></details>`).join('') || '<p class="of" style="padding:16px 24px">Geen reviews met deze filters.</p>'}</div>
+  <div class="rvlist">${lim.map(r => `<details class="rv ${r.s <= 2 ? 'neg' : ''}"><summary><span class="stars">${stars(r.s)}</span><span class="rvt">${r.t ? esc(r.t.slice(0, 140)) + (r.t.length > 140 ? '…' : '') : '<span class="of">Alleen sterren, geen tekst</span>'}</span><span class="of">${esc(gShort(GALL[r.cid]?.t).replace(/^{{CLIENT}}\s*/i, ''))} · ${r.d ? fmtDate(r.d) : esc(r.ago || '')}</span>${r.ans ? chip('Beantwoord', 'soft') : chip('Geen reactie', r.s <= 2 ? 'bad' : 'no')}</summary>
+    <div class="rvbody">${r.t ? `<p>${esc(r.t)}</p>` : ''}${r.th.length ? `<div class="chips">${r.th.map(k => chip(G.themes.find(t => t.key === k)?.label || k, 'soft')).join('')}</div>` : ''}${r.a ? `<div class="ans"><b>Reactie {{CLIENT}}</b><p>${esc(r.a)}</p></div>` : ''}${r.u ? `<a class="plain" href="${esc(r.u)}" target="_blank" rel="noopener">Open in Google${extIcon}</a>` : ''}</div></details>`).join('') || '<p class="of" style="padding:16px 24px">Geen reviews met deze filters.</p>'}</div>
   <div class="tfoot"><span>${lim.length} getoond · ${list.length} reviews</span>${list.length > 40 ? `<button id="rvall">${gst.rvAll ? 'Toon minder' : 'Toon alle ' + list.length}</button>` : ''}</div></div></section>`;
 }
 
@@ -207,12 +207,12 @@ function gActions() {
     body = [...by].sort((x, y) => y[1].filter(a => !gDone[a.id]).length - x[1].filter(a => !gDone[a.id]).length).map(([cid, as]) => `<div class="agrp"><button class="aghead" data-gp="${cid}"><b>${esc(gShort(GALL[cid].t))}</b><span class="of">${as.filter(a => !gDone[a.id]).length} open van ${as.length}</span></button><ul class="acts">${as.map(item).join('')}</ul></div>`).join('');
   } else {
     const by = new Map(); A.forEach(a => { const k = a.key.startsWith('theme_') ? a.key : a.key; if (!by.has(k)) by.set(k, []); by.get(k).push(a); });
-    body = [...by].map(([k, as]) => `<div class="agrp"><div class="aghead"><b>${esc(as[0].key.startsWith('theme_') ? as[0].title : (G.top.find(t => t.key === k)?.title || as[0].title))}</b><span class="of">${as.length} park${as.length > 1 ? 'en' : ''} · ${lvl(as[0].impact)} impact · ${lvl(as[0].effort)} moeite</span></div>
+    body = [...by].map(([k, as]) => `<div class="agrp"><div class="aghead"><b>${esc(as[0].key.startsWith('theme_') ? as[0].title : (G.top.find(t => t.key === k)?.title || as[0].title))}</b><span class="of">${as.length} ${as.length > 1 ? '{{locs}}' : '{{loc}}'} · ${lvl(as[0].impact)} impact · ${lvl(as[0].effort)} moeite</span></div>
       <ul class="acts">${as.map(a => `<li class="act ${gDone[a.id] ? 'done' : ''}"><label><input type="checkbox" data-gdone="${a.id}" ${gDone[a.id] ? 'checked' : ''}><span class="box"></span></label><div><button class="lnk2" data-gp="${a.cid}">${esc(gShort(GALL[a.cid].t))}</button><p>${esc(a.why)}</p></div></li>`).join('')}</ul></div>`).join('');
   }
   return `<section><div class="card"><div class="aprog"><div><h4>Actielijst</h4><p class="cap">Afvinken wordt in deze browser onthouden, niet gedeeld met anderen. Een nieuwe meting maakt opgeloste punten vanzelf ongedaan.</p></div>
     <div class="pg"><span class="num sm">${done}<span class="of"> / ${total}</span></span><div class="bar"><i style="width:${total ? 100 * done / total : 0}%"></i></div><span class="of">afgevinkt</span></div></div>
-    <div class="filters" style="margin-top:14px">${seg('gav', [['actie', 'Per actie'], ['park', 'Per park']], gst.actView)}${seg('gag', [['all', 'Alles'], ['Reviews', 'Reviews'], ['Profiel', 'Profiel'], ['Beheer', 'Beheer']], gst.actGroup)}${seg('gai', [['all', 'Alle impact'], ['Hoog', 'Hoog'], ['Middel', 'Middel'], ['Laag', 'Laag']], gst.actImpact)}
+    <div class="filters" style="margin-top:14px">${seg('gav', [['actie', 'Per actie'], ['park', 'Per {{loc}}']], gst.actView)}${seg('gag', [['all', 'Alles'], ['Reviews', 'Reviews'], ['Profiel', 'Profiel'], ['Beheer', 'Beheer']], gst.actGroup)}${seg('gai', [['all', 'Alle impact'], ['Hoog', 'Hoog'], ['Middel', 'Middel'], ['Laag', 'Laag']], gst.actImpact)}
     ${gst.actKey ? `<button class="chip soft" id="gactclear">Filter: ${esc(G.top.find(t => t.key === gst.actKey)?.title || gst.actKey)} ✕</button>` : ''}<button class="x2" id="gcopy">Kopieer als tekst</button></div></div></section>
   <section class="alist">${body || '<p class="of">Geen acties met deze filters.</p>'}</section>`;
 }
@@ -240,7 +240,7 @@ function stackChart(rows, keys, colors, label, partial) {
 }
 
 function gPerformance() {
-  if (!PF) return `<section><div class="band"><div><p class="eyebrow">Prestaties uit Bedrijfsprofielmanager</p><h2>Nog geen <span class="hl">prestaties.</span></h2><p>Weergaven, zoektermen en acties per park komen uit de Business Profile API van de beheerde profielen.</p></div>
+  if (!PF) return `<section><div class="band"><div><p class="eyebrow">Prestaties uit Bedrijfsprofielmanager</p><h2>Nog geen <span class="hl">prestaties.</span></h2><p>Weergaven, zoektermen en acties per {{loc}} komen uit de Business Profile API van de beheerde profielen.</p></div>
     <div><p class="eyebrow">Wat er nodig is</p><p>Secret <b>GBP_OAUTH_JSON</b> van het beheeraccount in GitHub. Daarna komt deze data wekelijks mee in dezelfde run (zie README, Bedrijfsprofielen).</p></div></div></section>`;
   const ps = gProfiles();
   const rows = ps.map(p => ({ p, f: p.pf })).filter(x => x.f);
@@ -265,20 +265,20 @@ function gPerformance() {
   </div></section>
   <section><div class="grid g4">${ACT_KEYS.filter(k => actBy(k) || actByP(k)).map(k => `<div class="card kpi"><span class="stat-l">${k}</span><span class="num sm">${kNum(actBy(k))}</span><div class="vs"><span>vorige 28 dagen ${kNum(actByP(k))}</span>${dLab(actBy(k), actByP(k))}</div></div>`).join('')}</div></section>
   <section><div class="grid g2">
-    <div class="card"><h4>Weergaven per maand</h4><p class="cap">${months ? 'Geselecteerde parken' : 'Alle profielen'}, naar platform en apparaat${months ? ' (totaal)' : ''}</p>${months ? stackChart(months, ['Weergaven'], { Weergaven: 'var(--brand)' }, 'Weergaven per maand', partial) : stackChart(PF.months, VIEW_KEYS, VCOL, 'Weergaven per maand', partial)}</div>
+    <div class="card"><h4>Weergaven per maand</h4><p class="cap">${months ? 'Geselecteerde {{locs}}' : 'Alle profielen'}, naar platform en apparaat${months ? ' (totaal)' : ''}</p>${months ? stackChart(months, ['Weergaven'], { Weergaven: 'var(--brand)' }, 'Weergaven per maand', partial) : stackChart(PF.months, VIEW_KEYS, VCOL, 'Weergaven per maand', partial)}</div>
     <div class="card"><h4>Acties per maand</h4><p class="cap">Wat mensen vanuit het profiel deden</p>${months ? stackChart(months, ['Acties'], { Acties: 'var(--accent)' }, 'Acties per maand', partial) : stackChart(PF.months, ACT_KEYS.filter(k => PF.months.some(m => m[k])), ACOL, 'Acties per maand', partial)}</div>
   </div></section>
-  <section><div class="tcard"><div class="thead"><div><h4>Per park</h4><p>Laatste 28 dagen tot en met ${PF.end ? fmtDate(PF.end) : 'n.v.t.'}. Klik voor het volledige profiel.</p></div></div>
-  <div class="scroll" style="max-height:560px;overflow-y:auto"><table><thead><tr>${th('t', 'Park')}${th('views', 'Weergaven', 1)}${th('dv', 'vs vorige', 1)}${th('Websiteklikken', 'Website', 1)}${th('Routes', 'Routes', 1)}${th('Gesprekken', 'Gesprekken', 1)}${th('act', 'Acties', 1)}${th('conv', 'Actieratio', 1)}</tr></thead><tbody>
+  <section><div class="tcard"><div class="thead"><div><h4>Per {{loc}}</h4><p>Laatste 28 dagen tot en met ${PF.end ? fmtDate(PF.end) : 'n.v.t.'}. Klik voor het volledige profiel.</p></div></div>
+  <div class="scroll" style="max-height:560px;overflow-y:auto"><table><thead><tr>${th('t', '{{Loc}}')}${th('views', 'Weergaven', 1)}${th('dv', 'vs vorige', 1)}${th('Websiteklikken', 'Website', 1)}${th('Routes', 'Routes', 1)}${th('Gesprekken', 'Gesprekken', 1)}${th('act', 'Acties', 1)}${th('conv', 'Actieratio', 1)}</tr></thead><tbody>
   ${rows.map(({ p, f }) => `<tr class="click" data-gp="${p.cid}" tabindex="0"><td><b>${esc(gShort(p.t))}</b>${p.new ? ' ' + chip('Nieuw', 'yes') : ''}</td><td class="r">${kNum(f.views)}</td><td class="r">${dLab(f.views, f.views_prev) || 'n.v.t.'}</td><td class="r">${(f.actions || {}).Websiteklikken || 0}</td><td class="r">${(f.actions || {}).Routes || 0}</td><td class="r">${(f.actions || {}).Gesprekken || 0}</td><td class="r">${f.act}</td><td class="r">${pc(f.conv)}</td></tr>`).join('')}
   </tbody></table></div>${hidden.length ? `<div class="tfoot"><span>${hidden.length} locatie${hidden.length > 1 ? 's' : ''} in het account zonder zichtbaar profiel in Google: ${hidden.map(l => esc(gShort(l.t))).join(', ')}</span></div>` : ''}</div></section>
   <section><div class="grid gtop g21">
     <div class="tcard"><div class="thead"><div><h4>Zoektermen</h4><p>Waarop de profielen gevonden werden, laatste ${PF.kw_months ? PF.kw_months.length : 6} maanden samen. Termen met minder dan 15 vertoningen geeft Google niet prijs.</p></div>
       ${seg('pfkw', [['all', 'Alle'], ...PF.kw_cats.map(c => [c.key, c.label])], gst2.kwCat)}</div>
-    <div class="scroll"><table><thead><tr><th>Zoekterm</th><th>Soort</th><th>Vertoningen</th><th class="r">Parken</th></tr></thead><tbody>
+    <div class="scroll"><table><thead><tr><th>Zoekterm</th><th>Soort</th><th>Vertoningen</th><th class="r">{{Locs}}</th></tr></thead><tbody>
     ${klim.map(k => `<tr><td>${esc(k.k)}</td><td><span class="chip soft">${esc(PF.kw_cats.find(c => c.key === k.cat)?.label || k.cat)}</span></td><td><div class="meter l"><span class="t"><i style="width:${100 * k.v / mxk}%"></i></span><b>${kNum(k.v)}</b></div></td><td class="r">${k.n}</td></tr>`).join('')}
     </tbody></table></div><div class="tfoot"><span>${klim.length} van ${kws.length} termen</span>${kws.length > 25 ? `<button id="kwall">${gst2.kwAll ? 'Toon top 25' : 'Toon alle ' + kws.length}</button>` : ''}</div></div>
-    <div class="card"><h4>Soort zoekopdracht</h4><p class="cap">Aandeel vertoningen per soort term. Merk is gezocht op GaragePark zelf; de rest zijn mensen die nog geen aanbieder kozen.</p>
+    <div class="card"><h4>Soort zoekopdracht</h4><p class="cap">Aandeel vertoningen per soort term. Merk is gezocht op {{CLIENT}} zelf; de rest zijn mensen die nog geen aanbieder kozen.</p>
       <div class="vsrows">${(() => { const t = PF.kw_cats.reduce((s, c) => s + c.v, 0) || 1; return PF.kw_cats.map(c => `<div class="vsrow"><span class="vl">${esc(c.label)}</span><div class="vb"><i class="o" style="width:${100 * c.v / t}%"></i></div><span class="vn"><b>${pc(c.v / t)}</b></span></div>`).join(''); })()}</div></div>
   </div></section>`;
 }
@@ -305,13 +305,13 @@ function gpDrawer(cid) {
     <div class="mini" style="margin-top:12px">${[['Weergaven', kNum(p.pf.views)], ['vs vorige', dPct(p.pf.views, p.pf.views_prev) == null ? 'n.v.t.' : (dPct(p.pf.views, p.pf.views_prev) >= 0 ? '+' : '') + nf(100 * dPct(p.pf.views, p.pf.views_prev), 0) + '%'], ['Website', (p.pf.actions || {}).Websiteklikken || 0], ['Routes', (p.pf.actions || {}).Routes || 0], ['Gesprekken', (p.pf.actions || {}).Gesprekken || 0], ['Actieratio', pc(p.pf.conv)]].map(([l, v]) => `<div><span>${l}</span><b>${v}</b></div>`).join('')}</div>
     ${p.pf.months && p.pf.months.length ? stackChart(p.pf.months.map(m => ({ m: m.m, Weergaven: m.views || 0 })), ['Weergaven'], { Weergaven: 'var(--brand)' }, 'Weergaven per maand', (r, i) => i === 0 || r.m === (PF.end || '').slice(0, 7)) : ''}
     ${p.pf.kw && p.pf.kw.length ? `<p class="eyebrow" style="margin-top:12px">Top zoektermen (6 maanden)</p><div class="chips">${p.pf.kw.slice(0, 15).map(k => chip(k.k + ' · ' + kNum(k.v), k.cat === 'merk' ? 'yes' : 'soft')).join('')}</div>` : ''}</div>` : ''}
-  <div class="tcard"><div class="thead"><div><h4>Naast de concurrenten</h4><p>Profielen die Google bij dit park toont onder "Mensen zoeken ook".</p></div></div>
+  <div class="tcard"><div class="thead"><div><h4>Naast de concurrenten</h4><p>Profielen die Google bij dit {{loc}} toont onder "Mensen zoeken ook".</p></div></div>
   <div class="scroll"><table><thead><tr><th>Profiel</th><th class="r">Score</th><th>Reviews</th><th class="r">12 mnd</th><th class="r">Reactie</th><th class="r">Foto's</th><th class="r">Posts</th><th class="r">Profielscore</th></tr></thead><tbody>
   ${all.map(x => `<tr class="${x.own ? 'own' : ''}"><td>${x.mu ? `<a class="plain" href="${esc(x.mu)}" target="_blank" rel="noopener">${esc(gShort(x.t))}${extIcon}</a>` : esc(gShort(x.t))}</td><td class="r">${x.r ? sc(x.r) : 'n.v.t.'}</td><td><div class="meter l"><span class="t"><i style="width:${100 * (x.v || 0) / mxv}%"></i></span><b>${x.v || 0}</b></div></td><td class="r">${x.n365}</td><td class="r">${pc(x.reply)}</td><td class="r">${x.ph}</td><td class="r">${x.posts90}</td><td class="r">${pc(x.score)}</td></tr>`).join('')}
   </tbody></table></div></div>
   <div class="tcard"><div class="thead"><div><h4>Profielonderdelen</h4><p>Wat dit profiel heeft, naast het aandeel concurrenten dat het ook heeft.</p></div></div>
   <div class="checks">${fields.map(f => `<div class="ck ${f.own ? 'on' : 'off'}"><span class="mk">${f.own ? '✓' : '–'}</span><span>${esc(f.l)}</span><span class="of">${f.share == null ? '' : 'concurrenten ' + pc(f.share)}</span></div>`).join('')}</div></div>
-  <div><p class="eyebrow">Acties voor dit park</p><ul class="acts">${acts.map(a => `<li class="act ${gDone[a.id] ? 'done' : ''}"><label><input type="checkbox" data-gdone="${a.id}" ${gDone[a.id] ? 'checked' : ''}><span class="box"></span></label><div><b>${esc(a.title)}</b><p>${esc(a.why)}</p></div><div class="lv">${lvl(a.impact)}${lvl(a.effort)}</div></li>`).join('') || '<li class="of">Geen acties.</li>'}</ul></div>
+  <div><p class="eyebrow">Acties voor dit {{loc}}</p><ul class="acts">${acts.map(a => `<li class="act ${gDone[a.id] ? 'done' : ''}"><label><input type="checkbox" data-gdone="${a.id}" ${gDone[a.id] ? 'checked' : ''}><span class="box"></span></label><div><b>${esc(a.title)}</b><p>${esc(a.why)}</p></div><div class="lv">${lvl(a.impact)}${lvl(a.effort)}</div></li>`).join('') || '<li class="of">Geen acties.</li>'}</ul></div>
   ${p.desc ? `<div><p class="eyebrow">Beschrijving in het profiel</p><div class="answer"><p>${esc(p.desc)}</p></div></div>` : ''}
   <div><p class="eyebrow">Laatste reviews (${R.length})</p><div class="rvlist drawer">${R.slice(0, 12).map(r => `<details class="rv ${r.s <= 2 ? 'neg' : ''}"><summary><span class="stars">${stars(r.s)}</span><span class="rvt">${r.t ? esc(r.t.slice(0, 110)) + (r.t.length > 110 ? '…' : '') : '<span class="of">Alleen sterren</span>'}</span><span class="of">${r.d ? fmtDate(r.d) : ''}</span>${r.ans ? chip('Beantwoord', 'soft') : chip('Geen reactie', r.s <= 2 ? 'bad' : 'no')}</summary><div class="rvbody">${r.t ? `<p>${esc(r.t)}</p>` : ''}${r.a ? `<div class="ans"><b>Reactie</b><p>${esc(r.a)}</p></div>` : ''}</div></details>`).join('') || '<p class="of">Geen reviews.</p>'}</div></div>
   <p class="of"><a href="${esc(p.mu)}" target="_blank" rel="noopener">Open in Google Maps</a>${p.url ? ` · <a href="${esc(p.url)}" target="_blank" rel="noopener">Website</a>` : ''}</p>`);

@@ -72,8 +72,11 @@ def classify_source(src, sites):
     return None
 
 
-def park_of(landing):
-    m = re.match(r'^/locaties/([^/?#]+)', landing or '')
+def park_of(landing, pattern=None):
+    """Location slug from a landing page; config aggregators.location_path_pattern (first group = slug)."""
+    if pattern is None:
+        pattern = (config.load().get('aggregators') or {}).get('location_path_pattern') or r'^/locati(?:e|es|on|ons)/([^/?#]+)'
+    m = re.match(pattern, landing or '')
     return m.group(1) if m else None
 
 

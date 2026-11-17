@@ -11,23 +11,36 @@ from collections import Counter, defaultdict
 from . import config
 
 # Review themes for self storage and garage boxes (Dutch reviews). One review can have several themes.
-THEMES = [
-    ('toegang', 'Toegang en poort', r'\b(poort|hek|toegang|code|pasje?|app|slot|sleutel|deur|openen|dicht)\w*'),
+# Review themes: config gbp.review_themes ([key, label, regex] per theme) replaces these generic defaults.
+DEFAULT_THEMES = [
     ('contact', 'Contact en reactie', r'\b(contact|bereikba\w*|telefo\w*|bellen|gebeld|mail\w*|reactie|reageer\w*|antwoord\w*|communica\w*|klantenservice)'),
-    ('prijs', 'Prijs en kosten', r'(\bprijs\w*|\bduur\b|\bkosten\b|\bhuurprijs|verhog\w*|€|\beuro|\bgoedkoop|\bbetaalbaar)'),
-    ('contract', 'Contract, borg en betaling', r'\b(borg|contract\w*|opzeg\w*|factu\w*|incasso|betaling\w*|terugbeta\w*|administra\w*|beheer\w*|aanmanin\w*)'),
-    ('staat', 'Staat en onderhoud', r'\b(lek\w*|vocht\w*|schimmel|kapot|onderhoud|vies|smerig|schoon\w*|stof\w*|water|netjes|verzorgd)'),
+    ('prijs', 'Prijs en kosten', r'(\bprijs\w*|\bduur\b|\bkosten\b|verhog\w*|€|\beuro|\bgoedkoop|\bbetaalbaar)'),
+    ('staat', 'Staat en onderhoud', r'\b(kapot|onderhoud|vies|smerig|schoon\w*|netjes|verzorgd)'),
     ('veiligheid', 'Veiligheid', r'\b(inbra\w*|inbrek\w*|camera\w*|veilig\w*|beveilig\w*|diefstal|gestolen)'),
-    ('ligging', 'Ligging en bereikbaarheid', r'\b(locatie|ligging|route|parkeer\w*|parkeren|bereikbaar|vinden|snelweg|centraal)'),
-    ('ruimte', 'Ruimte en formaat', r'\b(klein\w*|ruim\w*|groot|grote|formaat|m2|m²|hoogte|afmeting\w*|ruimte)'),
-    ('service', 'Service en personeel', r'\b(vriendelijk\w*|service|behulpza\w*|medewerk\w*|beheerder\w*|personeel|geholpen|snel geregeld|klantvriendelijk)'),
+    ('ligging', 'Ligging en bereikbaarheid', r'\b(locatie|ligging|route|parkeer\w*|parkeren|bereikbaar|vinden|centraal)'),
+    ('service', 'Service en personeel', r'\b(vriendelijk\w*|service|behulpza\w*|medewerk\w*|personeel|geholpen|klantvriendelijk)'),
 ]
-THEME_RES = [(k, l, re.compile(p, re.I)) for k, l, p in THEMES]
+_CACHE = {}
+
+
+def _vocab():
+    """Themes, keyword categories and the location URL check from config (gbp section), compiled once."""
+    if 'v' not in _CACHE:
+        cfg = config.load()
+        g = cfg.get('gbp') or {}
+        themes = [tuple(t) for t in (g.get('review_themes') or DEFAULT_THEMES)]
+        kw = [tuple(k) for k in (g.get('keyword_categories') or [])]
+        if not any(k[0] == 'merk' for k in kw):
+            kw = [('merk', 'Merk', g.get('own_name_pattern') or cfg['client']['own_pattern'])] + kw
+        _CACHE['v'] = dict(themes=themes, theme_res=[(k, l, re.compile(p, re.I)) for k, l, p in themes], kw=kw,
+                           url=re.compile(g['location_url_pattern']) if g.get('location_url_pattern') else None)
+    return _CACHE['v']
+
 
 TOP_LABEL = {
     'claim': 'Profielen claimen of verifiëren', 'neg_reply': 'Reageren op negatieve reviews', 'reply': 'Elke review beantwoorden',
     'review_volume': 'Reviewvolume omhoog met een vaste reviewroute', 'rating': 'Score verbeteren', 'stale_reviews': 'Weer nieuwe reviews krijgen',
-    'description': 'Beschrijving toevoegen', 'description_template': 'Beschrijvingen per park lokaal maken', 'photos': "Meer foto's per park",
+    'description': 'Beschrijving toevoegen', 'description_template': 'Beschrijvingen per {{loc}} lokaal maken', 'photos': "Meer foto's per {{loc}}",
     'hours': 'Openingstijden invullen', 'categories': 'Extra categorie toevoegen', 'posts': 'Elke maand een post per profiel',
     'booking': 'Afspraak- of huurlink toevoegen', 'name': 'Bedrijfsnamen zonder zoekwoorden', 'url': 'Website-link naar de vestigingspagina',
     'theme': 'Terugkerende klachten oplossen',
@@ -55,7 +68,7 @@ def _d(x):
 
 
 def themes_of(text):
-    return [k for k, _, rx in THEME_RES if rx.search(text or '')]
+    return [k for k, _, rx in _vocab()['theme_res'] if rx.search(text or '')]
 
 
 def _template_key(desc, city):
@@ -136,7 +149,7 @@ def build(T, run_date=None):
     tkeys = Counter(_template_key(prof[c].get('description'), prof[c].get('city')) for c in own if prof[c].get('description'))
 
     # themes in own reviews (positive >= 4, negative <= 2) and competitor reviews
-    theme_rows = {k: dict(key=k, label=l, own_neg=0, own_pos=0, comp_neg=0, comp_pos=0) for k, l, _ in THEMES}
+    theme_rows = {k: dict(key=k, label=l, own_neg=0, own_pos=0, comp_neg=0, comp_pos=0) for k, l, _ in _vocab()['themes']}
     own_reviews = []
     for cid in own:
         for r in reviews.get(cid, []):
@@ -192,7 +205,7 @@ def build(T, run_date=None):
         if s['unanswered'] - s['neg_open'] > 0 and (s['reply'] or 0) < 0.9:
             n = s['unanswered'] - s['neg_open']
             act(cid, 'reply', f'Beantwoord {n} overige review{"s" if n > 1 else ""}',
-                f"Reactiepercentage {round(100 * (s['reply'] or 0))}%. Een vaste reactie op elke review laat zien dat het park beheerd wordt.", 'Middel', 'Laag', 'Reviews')
+                f"Reactiepercentage {round(100 * (s['reply'] or 0))}%. Een vaste reactie op elke review laat zien dat het profiel actief beheerd wordt.", 'Middel', 'Laag', 'Reviews')
         if comp_votes and votes < 0.5 * comp_votes:
             act(cid, 'review_volume', 'Reviewvolume omhoog',
                 f"{votes} reviews tegenover een mediaan van {round(comp_votes)} bij de concurrenten in de buurt"
@@ -203,7 +216,7 @@ def build(T, run_date=None):
         if rating and ((comp_rating and rating < comp_rating - 0.3) or rating < 4.0):
             act(cid, 'rating', 'Score verbeteren', f"Score {str(rating).replace('.', ',')}"
                 + (f" tegenover {str(round(comp_rating, 1)).replace('.', ',')} bij concurrenten." if comp_rating else '.')
-                + ' Kijk naar de terugkerende klachten in de reviews van dit park.', 'Hoog', 'Middel', 'Reviews')
+                + ' Kijk naar de terugkerende klachten in de reviews van deze locatie.', 'Hoog', 'Middel', 'Reviews')
         if s['n365'] == 0 and votes:
             act(cid, 'stale_reviews', 'Geen nieuwe reviews in 12 maanden', 'Recente reviews tellen zwaarder voor Google en voor huurders.', 'Middel', 'Middel', 'Reviews')
         if not p.get('description'):
@@ -211,7 +224,7 @@ def build(T, run_date=None):
         elif tkeys[_template_key(p.get('description'), p.get('city'))] >= 3:
             act(cid, 'description_template', 'Beschrijving lokaal maken',
                 f"Dezelfde tekst staat op {tkeys[_template_key(p.get('description'), p.get('city'))]} profielen, alleen de plaatsnaam verschilt. "
-                'Voeg toe wat dit park uniek maakt: formaten, voorzieningen, ligging en bereikbaarheid.', 'Middel', 'Laag', 'Profiel')
+                'Voeg toe wat deze locatie uniek maakt: formaten, voorzieningen, ligging en bereikbaarheid.', 'Middel', 'Laag', 'Profiel')
         if photos < 10 or (comp_photos and photos < 0.5 * comp_photos):
             act(cid, 'photos', 'Meer foto\'s plaatsen', f"{photos} foto's" + (f", concurrenten hebben er gemiddeld {round(comp_photos)}." if comp_photos else '.')
                 + ' Toon de poort, de boxen van binnen, de toegang en de formaten.', 'Middel', 'Laag', 'Profiel')
@@ -230,13 +243,13 @@ def build(T, run_date=None):
         if re.search(r'\s[-|]\s', p.get('title') or ''):
             act(cid, 'name', 'Bedrijfsnaam zonder zoekwoorden',
                 f"De naam \"{p.get('title')}\" bevat zoekwoorden. Google staat alleen de echte bedrijfsnaam toe; zoekwoorden in de naam kunnen tot een schorsing leiden.", 'Middel', 'Laag', 'Beheer')
-        if p.get('url') and not re.search(r'/locaties?/', p.get('url') or ''):
+        if p.get('url') and _vocab()['url'] and not _vocab()['url'].search(p.get('url') or ''):
             act(cid, 'url', 'Website-link naar de vestigingspagina', f"Het profiel linkt naar {p.get('url')}. Link naar de eigen locatiepagina, zodat profiel en pagina elkaar versterken.", 'Middel', 'Laag', 'Profiel')
         neg_th = Counter(k for r in reviews.get(cid, []) if (r.get('rating') or 5) <= 2 for k in themes_of(r.get('text')))
         if neg_th:
             k, n = neg_th.most_common(1)[0]
             if n >= 2:
-                lab = next(l for kk, l, _ in THEMES if kk == k)
+                lab = next(l for kk, l, _ in _vocab()['themes'] if kk == k)
                 act(cid, f'theme_{k}', f'Terugkerende klacht: {lab.lower()}', f'{n} negatieve reviews noemen {lab.lower()}. Los de oorzaak op en verwijs in de reacties naar wat er veranderd is.', 'Hoog', 'Middel', 'Reviews')
 
     actions.sort(key=lambda a: (IMPACT_ORDER[a['impact']], EFFORT_ORDER[a['effort']], a['group'], a['cid']))
@@ -289,14 +302,10 @@ VIEW_METRICS = {'BUSINESS_IMPRESSIONS_MOBILE_SEARCH': ('Zoeken', 'Mobiel'), 'BUS
                 'BUSINESS_IMPRESSIONS_MOBILE_MAPS': ('Maps', 'Mobiel'), 'BUSINESS_IMPRESSIONS_DESKTOP_MAPS': ('Maps', 'Desktop')}
 ACTION_METRICS = {'CALL_CLICKS': 'Gesprekken', 'BUSINESS_DIRECTION_REQUESTS': 'Routes', 'WEBSITE_CLICKS': 'Websiteklikken',
                   'BUSINESS_CONVERSATIONS': 'Berichten', 'BUSINESS_BOOKINGS': 'Afspraken'}
-KW_CATS = [('merk', 'Merk', r'garage ?park'), ('garagebox', 'Garagebox', r'garage|box'), ('opslag', 'Opslag', r'opslag|storage|stalling|loods|magazijn'),
-           ('werkruimte', 'Werk- en bedrijfsruimte', r'werkruimte|bedrijfsruimte|werkplaats|hobby|kantoor|unit')]
-
-
 def kw_cat(kw, city):
     k = (kw or '').lower()
-    for key, _, rx in KW_CATS:
-        if re.search(rx, k):
+    for key, _, rx in _vocab()['kw']:
+        if re.search(rx, k, re.I):
             return key
     if city and city.lower() in k:
         return 'plaats'
@@ -364,7 +373,7 @@ def build_perf(T, prof, cfg):
         end=end, by_cid=dict(by),
         months=[dict(m=k, **v) for k, v in sorted(months.items())],
         keywords=[dict(k=k, v=v, cat=kw_cat(k, None), n=sum(1 for c in kw_loc if k in kw_loc[c])) for k, v in sorted(kw_tot.items(), key=lambda x: -x[1])[:150]],
-        kw_cats=[dict(key=k, label=next((l for kk, l, _ in KW_CATS if kk == k), {'plaats': 'Plaats zonder product', 'overig': 'Overig'}.get(k, k)), v=v)
+        kw_cats=[dict(key=k, label=next((l for kk, l, _ in _vocab()['kw'] if kk == k), {'plaats': 'Plaats zonder product', 'overig': 'Overig'}.get(k, k)), v=v)
                  for k, v in sorted(cats.items(), key=lambda x: -x[1])],
         kw_months=[dict(m=m, **v) for m, v in sorted(kw_month.items())],
         locations=[dict(id=l['location_id'], t=l.get('title'), c=l.get('city'), cid=l.get('cid'), visible=bool(l.get('cid') and l['cid'] in prof),

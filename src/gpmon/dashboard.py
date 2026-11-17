@@ -8,6 +8,7 @@ Output: site/<DASHBOARD_PATH>/index.html, plus robots.txt and an empty root page
 import argparse
 import base64
 import json
+import re
 from collections import defaultdict
 from pathlib import Path
 
@@ -70,7 +71,7 @@ def build_data(T, detail_runs=2):
         costs[r] = sum(parts[r].values())
     # costs stay out of the page (the client sees it); they live in BigQuery (run_log, gbp_run_log, news_run_log)
     meta = dict(runs=runs, detail_runs=sorted(detail), errors=errors, own_domain=cfg['client']['own_domain'],
-                own_brand=cfg['client']['own_brand'], engines=sorted({a['e'] for a in ai}),
+                own_brand=cfg['client']['own_brand'], own_pattern=cfg['client']['own_pattern'], engines=sorted({a['e'] for a in ai}),
                 prompt_template=cfg['scrape']['prompt_template'],
                 gpt=dict(source='FolloEngine', last=(T.get('_gpt') or {}).get('last'),
                          dates=(T.get('_gpt') or {}).get('mapped') or {}) if T.get('_gpt') else None)
@@ -120,6 +121,23 @@ ROOT_PAGE = """<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta 
 <title>Niet gevonden</title></head><body style="font-family:system-ui;padding:40px;color:#4B4753">Deze pagina bestaat niet.</body></html>"""
 
 
+def client_words(text, cfg=None, strict=True):
+    """Fill the client words in the page and tab scripts ({{CLIENT}}, {{loc}} ...) from config `client`.
+    Values go into HTML and into JS string literals, so quotes and angle brackets are neutralised."""
+    c = (cfg or config.load())['client']
+    safe = lambda v: str(v).replace('\\', '').replace("'", '’').replace('"', '”').replace('`', '’').replace('<', '').replace('>', '')
+    loc, locs = c.get('location_word', 'vestiging'), c.get('location_word_plural', 'vestigingen')
+    words = {'CLIENT': c.get('name') or c['own_brand'], 'DOMAIN': c['own_domain'], 'MONO': (c.get('monogram') or c['own_brand'][:1]).upper(),
+             'loc': loc, 'locs': locs, 'Loc': loc[:1].upper() + loc[1:], 'Locs': locs[:1].upper() + locs[1:],
+             'MARKET': c.get('market_label', 'markt'), 'PRODUCT': c.get('product_phrase', 'een vestiging')}
+    for k, v in words.items():
+        text = text.replace('{{' + k + '}}', safe(v))
+    left = re.findall(r'\{\{[A-Za-z]+\}\}', text)
+    if left and strict:
+        raise SystemExit(f'Unknown client words in the dashboard template: {sorted(set(left))}')
+    return text
+
+
 def render(data, out_dir, secret_path=None):
     """Write the dashboard. With secret_path the page lives at <out>/<secret_path>/index.html and the
     site root only serves an empty page plus robots.txt, so the dashboard URL cannot be guessed."""
@@ -130,10 +148,11 @@ def render(data, out_dir, secret_path=None):
     tpl = (DASH / 'template.html').read_text(encoding='utf-8')
     tpl = tpl.replace('__LOGO_WHITE__', b64('follo-logo-white.png')).replace('__LOGO__', b64('follo-logo-transparent.png'))
     tpl = tpl.replace('__NLMAP__', (DASH / 'nlmap.json').read_text(encoding='utf-8').strip())
-    payload = json.dumps(data, ensure_ascii=False, separators=(',', ':'), default=str).replace('</', '<\\/')
-    tpl = tpl.replace('__DATA__', payload)
     tpl = tpl.replace('/*__GBP_JS__*/', (DASH / 'gbp_tab.js').read_text(encoding='utf-8'))
     tpl = tpl.replace('/*__NEWS_JS__*/', (DASH / 'news_tab.js').read_text(encoding='utf-8') + '\n' + (DASH / 'agg_tab.js').read_text(encoding='utf-8'))
+    tpl = client_words(tpl)
+    payload = json.dumps(data, ensure_ascii=False, separators=(',', ':'), default=str).replace('</', '<\\/')
+    tpl = tpl.replace('__DATA__', client_words(payload, strict=False))  # texts built in Python (actions) use the same words
     split = tpl.index('<div class="app">')  # title, fonts and styles go in <head>, the rest in <body>
     html = HEAD + tpl[:split] + '</head>\n<body>\n' + tpl[split:] + '\n</body>\n</html>\n'
     (page_dir / 'index.html').write_text(html, encoding='utf-8')

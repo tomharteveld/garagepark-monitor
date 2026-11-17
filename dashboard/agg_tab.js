@@ -19,8 +19,8 @@ function aMonthly() {
 }
 
 function vAgg() {
-  if (!AG) return `<section><div class="band"><div><p class="eyebrow">Aggregators</p><h2>Nog geen <span class="hl">data.</span></h2><p>Hier komt wat platforms als huren.nl, Marktplaats, Funda en Opslagmarkt opleveren: bezoeken, leads en conversie per platform en per park, uit Google Analytics.</p></div>
-    <div><p class="eyebrow">Wat er nodig is</p><p>Het service-account van de monitor als <b>Lezer</b> op de GA4-property <b>garagepark.nl - GA4</b> en de <b>Google Analytics Data API</b> aan in het Cloud-project. Daarna komt de data wekelijks mee (zie README, Aggregators).</p></div></div></section>`;
+  if (!AG) return `<section><div class="band"><div><p class="eyebrow">Aggregators</p><h2>Nog geen <span class="hl">data.</span></h2><p>Hier komt wat platforms als huren.nl, Marktplaats, Funda en Opslagmarkt opleveren: bezoeken, leads en conversie per platform en per {{loc}}, uit Google Analytics.</p></div>
+    <div><p class="eyebrow">Wat er nodig is</p><p>Het service-account van de monitor als <b>Lezer</b> op de GA4-property <b>{{DOMAIN}} - GA4</b> en de <b>Google Analytics Data API</b> aan in het Cloud-project. Daarna komt de data wekelijks mee (zie README, Aggregators).</p></div></div></section>`;
   const W = AG.window, site = (W['(site)'] || {}).cur || {}, siteP = (W['(site)'] || {}).prev || {};
   const sum = (k, w = 'cur') => AG.aggregators.reduce((s, a) => s + ((W[a] || {})[w] || {})[k] || 0, 0);
   const s = sum('sessions'), sp = sum('sessions', 'prev'), l = sum('leads'), lp = sum('leads', 'prev');
@@ -34,7 +34,7 @@ function vAgg() {
   const best = rows.slice().sort((a, b) => (b.c.sessions || 0) - (a.c.sessions || 0))[0];
   return `<section><div class="grid g4">
     <div class="card kpi"><span class="stat-l">Bezoeken via aggregators</span><span class="num">${s.toLocaleString('nl-NL')}</span><span class="of">laatste 28 dagen</span><div class="vs"><span>vs vorige 28 dagen</span>${aDelta(s, sp)}</div></div>
-    <div class="card kpi"><span class="stat-l">Aandeel van alle bezoeken</span><span class="num">${pc(site.sessions ? s / site.sessions : null)}</span><span class="of">${(site.sessions || 0).toLocaleString('nl-NL')} bezoeken op garagepark.nl</span></div>
+    <div class="card kpi"><span class="stat-l">Aandeel van alle bezoeken</span><span class="num">${pc(site.sessions ? s / site.sessions : null)}</span><span class="of">${(site.sessions || 0).toLocaleString('nl-NL')} bezoeken op {{DOMAIN}}</span></div>
     <div class="card kpi"><span class="stat-l">Leads via aggregators</span><span class="num">${l}</span><span class="of">huur, bezichtiging en contactaanvraag (key events in GA4)</span><div class="vs"><span>vorige 28 dagen ${lp}</span></div></div>
     <div class="card kpi"><span class="stat-l">Conversie</span><span class="num">${pc1(conv)}</span><span class="of">site gemiddeld ${pc1(sconv)}</span></div>
   </div></section>
@@ -44,8 +44,8 @@ function vAgg() {
     <div class="scroll"><table><thead><tr>${th('a', 'Platform')}${th('sessions', 'Bezoeken', 1)}<th class="r">vs vorige</th>${th('eng', 'Betrokken', 1)}${th('leads', 'Leads', 1)}${th('purchases', 'Huur', 1)}${th('conv', 'Conversie', 1)}${th('y', 'Bezoeken jaar', 1)}</tr></thead><tbody>
     ${rows.map(r => `<tr><td><b>${esc(r.a)}</b></td><td class="r">${(r.c.sessions || 0).toLocaleString('nl-NL')}</td><td class="r">${aDelta(r.c.sessions || 0, r.p.sessions || 0) || 'n.v.t.'}</td><td class="r">${pc(r.eng)}</td><td class="r">${r.c.leads || 0}</td><td class="r">${r.c.purchases || 0}</td><td class="r">${pc1(r.conv)}</td><td class="r">${r.y.toLocaleString('nl-NL')}</td></tr>`).join('')}
     </tbody></table></div></div></section>
-  <section><div class="tcard"><div class="thead"><div><h4>Per park</h4><p>Landingspagina /locaties/…, laatste 90 dagen.</p></div></div>
-      <div class="scroll"><table><thead><tr><th>Park</th>${top.map(a => `<th class="r">${esc(a)}</th>`).join('')}<th class="r">Leads</th></tr></thead><tbody>
+  <section><div class="tcard"><div class="thead"><div><h4>Per {{loc}}</h4><p>Landingspagina /locaties/…, laatste 90 dagen.</p></div></div>
+      <div class="scroll"><table><thead><tr><th>{{Loc}}</th>${top.map(a => `<th class="r">${esc(a)}</th>`).join('')}<th class="r">Leads</th></tr></thead><tbody>
       ${pl.map(p => `<tr><td>${esc(p.p.replace(/-\d+$/, '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))}</td>${top.map(a => `<td class="r">${(p.by[a] || 0).toLocaleString('nl-NL')}</td>`).join('')}<td class="r">${p.l || 0}</td></tr>`).join('')}</tbody></table></div></div></section>
   <section><div class="tcard"><div class="thead"><div><h4>Bron en medium</h4><p>Betaald (cpc, advertentie) of verwijzing, laatste 90 dagen.</p></div></div>
       <div class="scroll"><table><thead><tr><th>Platform</th><th>Bron / medium</th><th class="r">Bezoeken</th><th class="r">Leads</th></tr></thead><tbody>

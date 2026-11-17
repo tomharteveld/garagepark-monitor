@@ -32,16 +32,25 @@ from . import config
 API = 'https://api.dataforseo.com'
 TABLE = 'news_items'
 
-MARKET = re.compile(r'self[\s-]?storage|selfstorage|opslag\s?(ruimte|box|boxen|unit|units|centrum|bedrijf|loods|container)|'
-                    r'opslag huren|garage\s?box|garageboxen|garage\s?park|bedrijfsunit|bedrijfsverzamel|mini[\s-]?opslag|'
-                    r'opslagplaats|stallingsruimte|caravanstalling|bedrijfsruimte huren|opslag van (spullen|inboedel|meubels)|'
-                    r'spullen opslaan|opslag opent|opslaglocaties?|opslagbedrijf|opslagruimtes|opslagunits|bergingen', re.I)
-CONTEXT = re.compile(r'vestiging|locatie|opent|opening|bouw|vergunning|uitbreid|overname|neemt over|koopt|verkoopt|'
-                     r'huur|tarief|prijs|klant|opslag|brand|inbraak|inbrekers|politie|gemeente|bestemmingsplan|ontwikkel', re.I)
-OFF_TOPIC = re.compile(r'energieopslag|batterij|accu|thuisbatterij|stroomopslag|warmteopslag|waterstof|co2|koolstof|'
-                       r'gasopslag|data[\s-]?opslag|cloudopslag|cloud|opslagcapaciteit (van )?(stroom|energie)|zonnepanel|'
-                       r'netcongestie|kernafval|graanopslag|mestopslag|\d+\s?(gb|tb)\b|smartphone|telefoon|iphone|laptop|ssd|geheugen|'
-                       r'game|playstation|xbox|console|icloud', re.I)
+# Market vocabulary comes from config `news` (market_terms, context_terms, off_topic_terms, core_terms), so a
+# new client only needs a config change. CONTEXT_BASE are generic business-news words for every market.
+CONTEXT_BASE = r'vestiging|locatie|opent|opening|bouw|vergunning|uitbreid|overname|neemt over|koopt|verkoopt|' \
+               r'huur|tarief|prijs|klant|brand|inbraak|inbrekers|politie|gemeente|bestemmingsplan|ontwikkel'
+_VOCAB = {}
+
+
+def vocab(cfg):
+    """Compiled market regexes from config (cached per config object)."""
+    key = id(cfg)
+    if key not in _VOCAB:
+        n = cfg['news']
+        never = r'(?!x)x'  # matches nothing
+        ctx = CONTEXT_BASE + ('|' + n['context_terms'] if n.get('context_terms') else '')
+        _VOCAB[key] = dict(market=re.compile(n.get('market_terms') or never, re.I), context=re.compile(ctx, re.I),
+                           off=re.compile(n.get('off_topic_terms') or never, re.I), core=re.compile(n.get('core_terms') or never, re.I))
+    return _VOCAB[key]
+
+
 ROUNDUP = re.compile(r'niet missen|nieuwsoverzicht|nieuws overzicht|weekoverzicht|dagoverzicht|kort nieuws|liveblog|'
                      r'uitgaanstips|agenda|het nieuws van|in het kort|de ochtend|de avond|podcast', re.I)
 FOREIGN = re.compile(r'nasdaq|nyse|\breit\b|hong kong|\bvs\b|amerika|verenigd koninkrijk|brits|engeland|manchester|londen|'
@@ -200,6 +209,8 @@ def brand_res(cfg):
 
 def classify(it, cfg, today, B=None):
     B = B or brand_res(cfg)
+    V = vocab(cfg)
+    MARKET, CONTEXT, OFF_TOPIC = V['market'], V['context'], V['off']
     own = cfg['client']['own_brand']
     text = f"{it['title']} {it.get('snippet') or ''}"
     d = domain_of(it.get('url'))
@@ -215,7 +226,7 @@ def classify(it, cfg, today, B=None):
         reason = 'te oud'
     elif not is_dutch(text):
         reason = 'niet Nederlands'
-    elif OFF_TOPIC.search(text) and not re.search(r'self[\s-]?storage|garage\s?box', text, re.I):
+    elif OFF_TOPIC.search(text) and not V['core'].search(text):
         reason = 'ander soort opslag'
     elif BLOG_PATH.search(urlparse(it.get('url') or '').path):
         reason = 'blog of kennisbank'

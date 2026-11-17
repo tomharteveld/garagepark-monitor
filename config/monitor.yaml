@@ -3,6 +3,12 @@ client:
   own_domain: garagepark.nl
   own_brand: GaragePark
   own_pattern: GaragePark|Garage Park|garagepark\.nl
+  # words the dashboard uses for this client (fill these for a new client, no code changes needed)
+  monogram: G
+  location_word: park                       # singular, lower case: "per park"
+  location_word_plural: parken
+  market_label: opslagmarkt                 # "nieuws over de opslagmarkt"
+  product_phrase: garagebox of opslagruimte # "iemand zoekt een ... in de buurt"
 scrape:
   language_code: nl
   device: mobile
@@ -32,6 +38,12 @@ news:
     concurrent: ['Shurgard', 'Allsafe opslag', '1BOX opslag', 'Boxie24', 'XL Box opslag', 'Eurobox opslag', 'Storage Share opslag', 'Boxcomplex']
     eigen: ['GaragePark']
   local_query: '(garagebox OR garageboxen OR opslagruimte OR "self storage") {city}'
+  # what counts as news about this market (regexes, case-insensitive). The headline must match market_terms
+  # unless a tracked brand is in it; off_topic_terms drop other kinds of 'opslag' unless core_terms also match.
+  market_terms: 'self[\s-]?storage|selfstorage|opslag\s?(ruimte|box|boxen|unit|units|centrum|bedrijf|loods|container)|opslag huren|garage\s?box|garageboxen|garage\s?park|bedrijfsunit|bedrijfsverzamel|mini[\s-]?opslag|opslagplaats|stallingsruimte|caravanstalling|bedrijfsruimte huren|opslag van (spullen|inboedel|meubels)|spullen opslaan|opslag opent|opslaglocaties?|opslagbedrijf|opslagruimtes|opslagunits|bergingen'
+  context_terms: 'opslag'
+  off_topic_terms: 'energieopslag|batterij|accu|thuisbatterij|stroomopslag|warmteopslag|waterstof|co2|koolstof|gasopslag|data[\s-]?opslag|cloudopslag|cloud|opslagcapaciteit (van )?(stroom|energie)|zonnepanel|netcongestie|kernafval|graanopslag|mestopslag|\d+\s?(gb|tb)\b|smartphone|telefoon|iphone|laptop|ssd|geheugen|game|playstation|xbox|console|icloud'
+  core_terms: 'self[\s-]?storage|garage\s?box'
   extra_brands:             # brands that only matter for news (the AI tabs use `brands`)
     Storage Share: 'storage\s?share'
     Boxcomplex: 'box\s?complex'
@@ -41,6 +53,7 @@ news:
 # Sources are matched on sessionSource (case-insensitive regex); the first match names the platform.
 aggregators:
   property_id: 280694664
+  location_path_pattern: '^/locaties/([^/?#]+)'   # landing page of one location; group 1 = its slug
   lead_events: [purchase, appointment_request, viewing_planned, contact_request, brochure_consumer_request]
   sites:
     Huren.nl: 'hurennl|huren\.nl'
@@ -194,5 +207,21 @@ gbp:
   competitors_per_location: 5
   reviews_depth: {own_max: 200, competitor: 40}
   posts_depth: 10
+  categories: [self_storage_facility, storage_facility]   # DataForSEO categories for nearby competitors
+  location_url_pattern: '/locaties?/'                  # profile website should point to a location page
+  keyword_categories:                                  # search terms in Prestaties (merk comes from own_name_pattern)
+    - [garagebox, Garagebox, 'garage|box']
+    - [opslag, Opslag, 'opslag|storage|stalling|loods|magazijn']
+    - [werkruimte, Werk- en bedrijfsruimte, 'werkruimte|bedrijfsruimte|werkplaats|hobby|kantoor|unit']
+  review_themes:                                       # [key, label, regex]; omit to use the generic default set
+    - [toegang, 'Toegang en poort', '\b(poort|hek|toegang|code|pasje?|app|slot|sleutel|deur|openen|dicht)\w*']
+    - [contact, 'Contact en reactie', '\b(contact|bereikba\w*|telefo\w*|bellen|gebeld|mail\w*|reactie|reageer\w*|antwoord\w*|communica\w*|klantenservice)']
+    - [prijs, 'Prijs en kosten', '(\bprijs\w*|\bduur\b|\bkosten\b|\bhuurprijs|verhog\w*|€|\beuro|\bgoedkoop|\bbetaalbaar)']
+    - [contract, 'Contract, borg en betaling', '\b(borg|contract\w*|opzeg\w*|factu\w*|incasso|betaling\w*|terugbeta\w*|administra\w*|beheer\w*|aanmanin\w*)']
+    - [staat, 'Staat en onderhoud', '\b(lek\w*|vocht\w*|schimmel|kapot|onderhoud|vies|smerig|schoon\w*|stof\w*|water|netjes|verzorgd)']
+    - [veiligheid, 'Veiligheid', '\b(inbra\w*|inbrek\w*|camera\w*|veilig\w*|beveilig\w*|diefstal|gestolen)']
+    - [ligging, 'Ligging en bereikbaarheid', '\b(locatie|ligging|route|parkeer\w*|parkeren|bereikbaar|vinden|snelweg|centraal)']
+    - [ruimte, 'Ruimte en formaat', '\b(klein\w*|ruim\w*|groot|grote|formaat|m2|m²|hoogte|afmeting\w*|ruimte)']
+    - [service, 'Service en personeel', '\b(vriendelijk\w*|service|behulpza\w*|medewerk\w*|beheerder\w*|personeel|geholpen|snel geregeld|klantvriendelijk)']
   competitor_details_every_weeks: 2   # reviews and posts of competitors every 2nd week (even ISO weeks); own parks weekly
   max_queue_minutes: 50

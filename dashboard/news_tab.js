@@ -1,7 +1,7 @@
 // ==== Lokaal Nieuws ====
 const NW = D.news;
 const nst = { g: 'all', per: '90', q: '', tp: 'all', all: false };
-const NGROUP = { concurrent: 'Concurrenten', eigen: 'GaragePark', lokaal: 'Lokaal', markt: 'Markt' };
+const NGROUP = { concurrent: 'Concurrenten', eigen: '{{CLIENT}}', lokaal: 'Lokaal', markt: 'Markt' };
 const daysAgo = d => Math.round((Date.now() - new Date(d + 'T12:00:00')) / 864e5);
 
 function nItems(ignoreGroup) {
@@ -44,7 +44,7 @@ function nWeeks(items) {
 }
 
 function vNews() {
-  if (!NW || !NW.items.length) return `<section><div class="band"><div><p class="eyebrow">Lokaal Nieuws</p><h2>Nog geen <span class="hl">nieuws.</span></h2><p>Het nieuws komt mee in de wekelijkse run: Google Alerts en Google Nieuws voor de markt, de concurrenten, GaragePark zelf en de plaatsen met een park.</p></div><div><p class="eyebrow">Wat er nodig is</p><p>Run de workflow met mode <b>full</b> of <b>news</b>.</p></div></div></section>`;
+  if (!NW || !NW.items.length) return `<section><div class="band"><div><p class="eyebrow">Lokaal Nieuws</p><h2>Nog geen <span class="hl">nieuws.</span></h2><p>Het nieuws komt mee in de wekelijkse run: Google Alerts en Google Nieuws voor de markt, de concurrenten, {{CLIENT}} zelf en de plaatsen met een {{loc}}.</p></div><div><p class="eyebrow">Wat er nodig is</p><p>Run de workflow met mode <b>full</b> of <b>news</b>.</p></div></div></section>`;
   const base = nItems(true), list = nItems(false);
   const cnt = g => base.filter(x => x.g === g).length;
   const fresh = NW.runs.length > 1 ? NW.items.filter(x => x.fs === NW.last).length : null;
@@ -56,7 +56,7 @@ function vNews() {
   return `<section><div class="grid g4">
     <div class="card kpi"><span class="stat-l">Nieuw sinds vorige meting</span><span class="num">${fresh == null ? base.length : fresh}</span><span class="of">${fresh == null ? 'eerste meting, ' + per : 'berichten gevonden op ' + fmtDate(NW.last)}</span></div>
     <div class="card kpi"><span class="stat-l">Concurrenten in het nieuws</span><span class="num">${cnt('concurrent')}</span><span class="of">${bl.length ? bl.slice(0, 3).map(([b, n]) => esc(b) + ' ' + n).join(', ') : 'geen'}, ${per}</span></div>
-    <div class="card kpi"><span class="stat-l">GaragePark in het nieuws</span><span class="num">${cnt('eigen')}</span><span class="of">${per}</span></div>
+    <div class="card kpi"><span class="stat-l">{{CLIENT}} in het nieuws</span><span class="num">${cnt('eigen')}</span><span class="of">${per}</span></div>
     <div class="card kpi"><span class="stat-l">Lokaal en markt</span><span class="num">${cnt('lokaal') + cnt('markt')}</span><span class="of">${cnt('lokaal')} lokaal, ${cnt('markt')} markt</span></div>
   </div></section>
   <section><div class="grid g21 gtop">
@@ -64,8 +64,8 @@ function vNews() {
     <div class="tcard"><div class="thead"><div><h4>Concurrenten</h4><p>Berichten per merk, ${per}.</p></div></div>
       <div class="scroll"><table><tbody>${bl.length ? bl.map(([b, n]) => `<tr class="click" data-nbrand="${esc(b)}" tabindex="0"><td>${esc(b)}</td><td class="r"><b>${n}</b></td></tr>`).join('') : '<tr><td class="of">Geen concurrentnieuws in deze periode.</td></tr>'}</tbody></table></div></div>
   </div></section>
-  <section><div class="tcard"><div class="thead"><div><h4>Berichten</h4><p>Alleen nieuws over de Nederlandse opslagmarkt: geen blogs, kennisbanken of beurskoersen. Klik op een titel om het artikel te openen.</p></div>
-    <div class="filters">${seg('ng', [['all', 'Alles'], ['concurrent', 'Concurrenten'], ['eigen', 'GaragePark'], ['lokaal', 'Lokaal'], ['markt', 'Markt']], nst.g)}
+  <section><div class="tcard"><div class="thead"><div><h4>Berichten</h4><p>Alleen nieuws over de Nederlandse {{MARKET}}: geen blogs, kennisbanken of beurskoersen. Klik op een titel om het artikel te openen.</p></div>
+    <div class="filters">${seg('ng', [['all', 'Alles'], ['concurrent', 'Concurrenten'], ['eigen', '{{CLIENT}}'], ['lokaal', 'Lokaal'], ['markt', 'Markt']], nst.g)}
       ${seg('np', [['30', '30 dagen'], ['90', '90 dagen'], ['all', 'Alles']], nst.per)}
       <select id="ntp" aria-label="Onderwerp"><option value="all">Alle onderwerpen</option>${topics.map(t => `<option ${nst.tp === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
       <input type="search" id="nq" placeholder="Zoek in titel of bron…" value="${esc(nst.q)}" aria-label="Zoek nieuws"></div></div>

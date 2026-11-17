@@ -183,7 +183,7 @@ def test_gbp_transform_view_and_schema():
     V = gbp_view.build(T)
     assert len(V['own']) == 3 and V['actions'] and all(a['impact'] in ('Hoog', 'Middel', 'Laag') for a in V['actions'])
     assert all(0 <= p['score'] <= 1 for p in V['own'] + V['comp'])
-    assert {t['key'] for t in V['themes']} == {k for k, _, _ in gbp_view.THEMES}
+    assert {t['key'] for t in V['themes']} == {k for k, _, _ in gbp_view._vocab()["themes"]}
 
 
 def test_gbp_competitor_pick_skips_own_and_caps():

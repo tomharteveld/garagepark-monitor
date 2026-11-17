@@ -154,6 +154,18 @@ GitHub zet geplande workflows op publieke repositories normaal uit na 60 dagen z
 
 # Dagelijks gebruik
 
+## Nieuwe klant
+
+De code is klantneutraal: alles wat bij GaragePark hoort staat in `config/monitor.yaml`.
+- `client`: naam, domein, merk-regex, monogram en de woorden die het dashboard gebruikt (`location_word`, `location_word_plural`, `market_label`, `product_phrase`). Die vullen `{{CLIENT}}`, `{{loc}}`, `{{locs}}`, `{{MARKET}}` en `{{PRODUCT}}` in de pagina.
+- `cities`, `keywords`, `brands`, `scrape.prompt_template`.
+- `chatgpt_source.table` (FolloEngine).
+- `news`: zoektermen plus `market_terms`, `context_terms`, `off_topic_terms`, `core_terms` voor de filter.
+- `gbp`: domein en telefoon van de eigen locaties, `categories` (concurrenten in de buurt), `location_url_pattern`, `keyword_categories`, `review_themes` (zonder deze lijst gebruikt het dashboard algemene thema's).
+- `aggregators`: GA4-property, platforms, lead-events en `location_path_pattern`.
+
+Controle: `GPMON_CONFIG=pad/naar/config.yaml PYTHONPATH=src python -m gpmon.dashboard --source local --out site --path test` bouwt de pagina met een andere config; een onbekend `{{woord}}` in de template stopt de build met een melding.
+
 ## Modi van de workflow
 
 | Modus | Wat het doet | Wanneer |
