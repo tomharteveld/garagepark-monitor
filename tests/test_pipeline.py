@@ -338,3 +338,21 @@ def test_costs_are_logged(tmp_path):
     assert {f.name for f in bq.SCHEMAS['news_run_log']} >= set(T['news_run_log'][0])
     G = gbp.transform([dict(kind='search', cid=None, own=None, run_date='2026-11-16', fetched_at='x', cost=0.05, task={'searches': 2})])
     assert G['gbp_run_log'] == [dict(run_date='2026-11-16', kind='search', cid=None, is_own=None, status='ok', error=None, cost=0.05)]
+
+
+def test_poisoned_results_flag_and_marker(records):
+    """Organic jobs carry resolve_poisoned_results; items DataForSEO restored from Web mode are counted per SERP."""
+    import copy
+    from gpmon import config, scrape, transform
+    cfg = config.load()
+    org = [j for j in scrape.build_jobs(cfg) if j['engine'] == 'google_organic']
+    assert org and all(j['payload'].get('resolve_poisoned_results') is True and j['poison_check'] for j in org)
+    assert all('resolve_poisoned_results' not in j['payload'] for j in scrape.build_jobs(cfg) if j['engine'] != 'google_organic')
+    rec = copy.deepcopy(next(r for r in records if r['engine'] == 'google_organic' and r['task']))
+    rec['poison_check'] = True
+    items = [i for i in rec['task']['result'][0]['items'] if i['type'] == 'organic']
+    for i in items[:2]:
+        i['checks'] = ['from_web']
+    assert len(scrape.poisoned_items(rec['task'])) == 2
+    s = transform.transform([rec])['serp_summary'][0]
+    assert s['web_items'] == 2 and s['poison_check'] is True

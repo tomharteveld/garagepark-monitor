@@ -140,7 +140,9 @@ def transform(records, keep_raw=True):
                                           own_position=mine[0]['rank_group'] if mine else None,
                                           own_url=next((o['url'] for o in mine if o['url']), None), own_results=len(mine),
                                           in_local_pack=any(x['is_own'] for x in lp), features=sorted(feats),
-                                          has_ai_overview=aio is not None, check_url=res.get('check_url'), fetched_at=rec.get('fetched_at')))
+                                          has_ai_overview=aio is not None, check_url=res.get('check_url'), fetched_at=rec.get('fetched_at'),
+                                          web_items=sum(1 for i in items if i['type'] == 'organic' and 'from_web' in (i.get('checks') or [])),
+                                          poison_check=bool(rec.get('poison_check'))))
             T['serp_results'] += org
             T['local_pack'] += lp
             if aio:

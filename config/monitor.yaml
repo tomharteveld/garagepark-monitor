@@ -14,6 +14,7 @@ scrape:
   device: mobile
   os: ios
   depth: 20
+  resolve_poisoned_results: true  # Google sometimes swaps organic results for scrapers; DataForSEO checks against Web mode and repairs them (+1 SERP page per task)
   max_workers: 12
   queue: standard          # standard = Standard Queue (about $0.65 per run, 5 to 20 min); live = Live endpoints (about $2.15, faster)
   max_queue_minutes: 45    # tasks not ready by then are fetched Live

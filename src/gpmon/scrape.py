@@ -38,9 +38,11 @@ def build_jobs(cfg):
             base = dict(city=city, location_code=code, keyword=kw, volume=vol)
             prompt = s['prompt_template'].format(keyword=kw, city=city)
             if eng.get('google_organic'):
-                jobs.append(dict(base, engine='google_organic', path='/v3/serp/google/organic/live/advanced',
+                poison = bool(s.get('resolve_poisoned_results'))
+                jobs.append(dict(base, engine='google_organic', path='/v3/serp/google/organic/live/advanced', poison_check=poison,
                                  payload=dict(keyword=kw, location_code=code, language_code=s['language_code'],
-                                              device=s['device'], os=s['os'], depth=s['depth'], load_async_ai_overview=True)))
+                                              device=s['device'], os=s['os'], depth=s['depth'], load_async_ai_overview=True,
+                                              **({'resolve_poisoned_results': True} if poison else {}))))
             if eng.get('google_ai_mode'):
                 jobs.append(dict(base, engine='google_ai_mode', prompt=prompt, path='/v3/serp/google/ai_mode/live/advanced',
                                  payload=dict(keyword=prompt, location_code=code, language_code=s['language_code'],
@@ -86,6 +88,12 @@ class Client:
                 err = repr(e)
             time.sleep(3 * (i + 1))
         return dict(meta, run_date=run_date, fetched_at=dt.datetime.now(dt.timezone.utc).isoformat(), cost=0, task=None, error=err)
+
+
+def poisoned_items(task):
+    """Organic items that DataForSEO replaced with Web mode results because Google served a poisoned SERP."""
+    items = (((task or {}).get('result') or [{}])[0] or {}).get('items') or []
+    return [i for i in items if i.get('type') == 'organic' and 'from_web' in (i.get('checks') or [])]
 
 
 QUEUE_WAIT = {40601, 40602}  # Task Handed, Task In Queue: not ready yet
@@ -209,6 +217,10 @@ def main(argv=None):
         for r in results:
             fh.write(json.dumps(r, ensure_ascii=False) + '\n')
     print(f'Wrote {out.name} | ok {len(results) - len(errors)} | errors {len(errors)} | cost ${cost:.2f}')
+    org = [r for r in results if r['engine'] == 'google_organic' and r.get('task')]
+    if org and any(r.get('poison_check') for r in org):
+        fixed = sum(1 for r in org if poisoned_items(r['task']))
+        print(f'Poisoned Google results repaired from Web mode: {fixed} of {len(org)} SERPs', flush=True)
     for e in errors[:15]:
         print('  x', e['engine'], e['city'], e['keyword'], e['error'])
     if len(errors) > a.max_error_rate * max(len(results), 1):

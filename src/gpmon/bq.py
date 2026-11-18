@@ -20,7 +20,8 @@ KEY = [F('run_date', D, 'REQUIRED'), F('city', S), F('keyword', S)]
 
 SCHEMAS = {
     'serp_summary': KEY + [F('location_code', I), F('volume', I), F('own_position', I), F('own_url', S), F('own_results', I),
-                           F('in_local_pack', B), F('features', S, 'REPEATED'), F('has_ai_overview', B), F('check_url', S), F('fetched_at', TS)],
+                           F('in_local_pack', B), F('features', S, 'REPEATED'), F('has_ai_overview', B), F('check_url', S), F('fetched_at', TS),
+                           F('web_items', I), F('poison_check', B)],
     'serp_results': KEY + [F('rank_group', I), F('domain', S), F('url', S), F('title', S), F('website_name', S), F('is_own', B)],
     'local_pack': KEY + [F('position', I), F('title', S), F('rating', FL), F('votes', I), F('is_own', B)],
     'ai_answers': KEY + [F('engine', S), F('volume', I), F('prompt', S), F('markdown', S), F('model', S), F('mentioned', B), F('cited', B),
@@ -86,7 +87,13 @@ def setup(c=None):
         c.create_dataset(ds)
     for name, schema in SCHEMAS.items():
         try:
-            c.get_table(tid(name))
+            t = c.get_table(tid(name))
+            have = {f.name for f in t.schema}
+            extra = [f for f in schema if f.name not in have]
+            if extra:  # new nullable columns: add them in place, older rows stay NULL
+                t.schema = list(t.schema) + extra
+                c.update_table(t, ['schema'])
+                print(f'  {name}: added {", ".join(f.name for f in extra)}')
             continue
         except NotFound:
             pass
