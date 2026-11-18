@@ -9,10 +9,15 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'full = search + business profiles + news + BigQuery + dashboard · gbp = business profiles only · news = local news + aggregators (GA4) only · rebuild = dashboard from BigQuery only · backfill = load the encrypted runs in data/backfill · smoke = 6 calls, nothing stored'
+        description: 'full = search + business profiles + news + BigQuery + dashboard · gbp = business profiles only · news = local news + aggregators (GA4) only · rebuild = dashboard from BigQuery only · backfill = load the encrypted runs in data/backfill · smoke = 6 calls, nothing stored · search = Google + AI Mode only (re-measure a week)'
         type: choice
-        options: [full, gbp, news, rebuild, backfill, smoke]
+        options: [full, gbp, news, rebuild, backfill, smoke, search]
         default: full
+      run_date:
+        description: 'Optional: store the search measurement under this date (YYYY-MM-DD), replacing that week. Empty = today.'
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -33,7 +38,7 @@ env:
 
 jobs:
   scrape:
-    if: ${{ contains(fromJSON('["full","backfill","smoke"]'), inputs.mode || 'full') }}
+    if: ${{ contains(fromJSON('["full","backfill","smoke","search"]'), inputs.mode || 'full') }}
     runs-on: ubuntu-latest
     timeout-minutes: 75
     steps:
@@ -45,11 +50,12 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: Scrape DataForSEO
-        if: ${{ env.MODE == 'full' || env.MODE == 'smoke' }}
+        if: ${{ env.MODE == 'full' || env.MODE == 'smoke' || env.MODE == 'search' }}
         env:
+          RUN_DATE: ${{ inputs.run_date }}
           DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
           DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
-        run: python -m gpmon.scrape ${{ env.MODE == 'smoke' && '--limit 6 --max-error-rate 1' || '' }}
+        run: python -m gpmon.scrape ${{ env.MODE == 'smoke' && '--limit 6 --max-error-rate 1' || '' }} ${RUN_DATE:+--date "$RUN_DATE"}
 
       - name: Smoke test dashboard (built, checked, not stored)
         if: ${{ env.MODE == 'smoke' }}
@@ -68,19 +74,19 @@ jobs:
           ls -la data/raw
 
       - name: Google auth (Workload Identity Federation)
-        if: ${{ (env.MODE == 'full' || env.MODE == 'backfill') && vars.GCP_WIF_PROVIDER != '' }}
+        if: ${{ (env.MODE == 'full' || env.MODE == 'backfill' || env.MODE == 'search') && vars.GCP_WIF_PROVIDER != '' }}
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
       - name: Google auth (service account key)
-        if: ${{ (env.MODE == 'full' || env.MODE == 'backfill') && vars.GCP_WIF_PROVIDER == '' }}
+        if: ${{ (env.MODE == 'full' || env.MODE == 'backfill' || env.MODE == 'search') && vars.GCP_WIF_PROVIDER == '' }}
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Load into BigQuery
-        if: ${{ env.MODE == 'full' || env.MODE == 'backfill' }}
+        if: ${{ env.MODE == 'full' || env.MODE == 'backfill' || env.MODE == 'search' }}
         run: python -m gpmon.bq load data/raw/run_*.jsonl.gz
 
   gbp:
